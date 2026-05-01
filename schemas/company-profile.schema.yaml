@@ -1,0 +1,134 @@
+# company-profile.schema.yaml
+# 회사 프로필 스키마 (v1) — /onboard 명령이 채워 넣음.
+# 필수 필드 누락 시 캠페인 생성을 차단한다.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://upflow.io/schemas/company-profile/v1"
+title: CompanyProfile
+type: object
+required: [version, brand, taglineOneLine, industry, targetAudience, tone, banned]
+properties:
+
+  version:
+    const: 1
+
+  brand:
+    type: object
+    required: [name]
+    properties:
+      name:        { type: string, minLength: 1, description: "브랜드명 (한글 또는 영문)" }
+      legalName:   { type: string, description: "법인명 (선택)" }
+      websites:    { type: array, items: { type: string, format: uri } }
+
+  taglineOneLine:
+    type: string
+    minLength: 5
+    maxLength: 120
+    description: "회사를 한 문장으로 (카피 생성에 직접 사용됨)"
+
+  industry:
+    type: string
+    description: "산업/카테고리 (예: B2B SaaS - 결제 인프라)"
+
+  targetAudience:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required: [persona]
+      properties:
+        persona:   { type: string, description: "예: '국내 D2C 쇼핑몰 운영자'" }
+        painPoints: { type: array, items: { type: string } }
+        channelsTheyUse: { type: array, items: { type: string } }
+
+  tone:
+    type: object
+    required: [preset]
+    properties:
+      preset:
+        type: string
+        enum: [professional, friendly, witty, bold, calm, premium, custom]
+      voiceNotes:
+        type: string
+        description: "톤에 대한 자유 서술 (예: '~합니다 체. 이모지 절제. 영어 단어 최소화.')"
+      sampleSentences:
+        type: array
+        items: { type: string }
+        description: "기존에 쓰던 예시 문장 (있다면) — 모방 학습용"
+
+  banned:
+    type: object
+    required: [words]
+    properties:
+      words:
+        type: array
+        items: { type: string }
+        description: "금기어 (브랜드 가이드 위반)"
+      topics:
+        type: array
+        items: { type: string }
+        description: "금기 주제 (예: '경쟁사 비방', '정치')"
+      claims:
+        type: array
+        items: { type: string }
+        description: "금기 표현 (예: '업계 1위', '최고의')"
+
+  visual:
+    type: object
+    description: "선택 — 카드뉴스/이미지 생성 시 일관성 유지"
+    properties:
+      colors:
+        type: object
+        properties:
+          primary:    { type: string, description: "예: '#0F172A'" }
+          accent:     { type: string }
+          background: { type: string }
+      logoPath:    { type: string, description: "로컬 이미지 경로" }
+      fontFamily:  { type: string }
+
+  hashtags:
+    type: object
+    properties:
+      always: { type: array, items: { type: string }, description: "모든 포스트에 항상 부착" }
+      pool:   { type: array, items: { type: string }, description: "주제별로 선택해서 사용" }
+
+  legal:
+    type: object
+    properties:
+      adDisclosureRequired:
+        type: boolean
+        default: true
+        description: "광고/협찬 표기 의무 (한국 공정위 가이드라인 기본 true)"
+      adHashtag:
+        type: string
+        default: "#광고"
+
+  campaigns:
+    type: object
+    properties:
+      defaultGoals:
+        type: array
+        items:
+          type: string
+          enum: [awareness, lead, conversion, retention, recruiting]
+      cadencePerWeek:
+        type: integer
+        minimum: 1
+        maximum: 21
+        description: "주간 발행 횟수 목표"
+
+  competitors:
+    type: array
+    items:
+      type: object
+      properties:
+        name:    { type: string }
+        url:     { type: string, format: uri }
+        notes:   { type: string }
+
+  meta:
+    type: object
+    properties:
+      createdAt: { type: string, format: date-time }
+      updatedAt: { type: string, format: date-time }
+      filledBy:  { type: string, enum: [interview, manual] }

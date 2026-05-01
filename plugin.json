@@ -1,0 +1,38 @@
+{
+  "name": "marketing_ai",
+  "displayName": "Upflow Marketing AI",
+  "version": "0.1.0",
+  "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 생성 + Publisher",
+  "author": {
+    "name": "Upflow Inc.",
+    "email": "upflow999@gmail.com"
+  },
+  "license": "Proprietary",
+  "homepage": "https://github.com/upflow999/marketing_ai",
+  "claudeCode": {
+    "minVersion": "1.0.0"
+  },
+  "skills": [
+    "skills/onboard-company"
+  ],
+  "commands": [
+    "commands/onboard.md",
+    "commands/campaign-new.md",
+    "commands/status.md"
+  ],
+  "statusLine": "statusline/statusline.sh",
+  "channels": [
+    {
+      "id": "threads",
+      "status": "reference",
+      "path": "channels/threads"
+    },
+    {
+      "id": "linkedin",
+      "status": "planned",
+      "path": "channels/linkedin"
+    }
+  ],
+  "phase": 1,
+  "private": true
+}

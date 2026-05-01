@@ -1,0 +1,86 @@
+# 예시: 가상의 B2B SaaS "업플로우" 회사 프로필
+version: 1
+
+brand:
+  name: 업플로우
+  legalName: Upflow Inc.
+  websites:
+    - https://upflow.io
+
+taglineOneLine: "한국 SMB를 위한 AI 결제·정산 인프라 — 5분 만에 도입, 자동으로 정산까지."
+
+industry: "B2B SaaS - 결제 인프라"
+
+targetAudience:
+  - persona: "국내 D2C 쇼핑몰 운영자 (월 매출 1천만~5억)"
+    painPoints:
+      - "결제 수단별 정산 주기가 제각각이라 현금흐름 관리 어려움"
+      - "기술팀 없이도 PG·간편결제 동시 도입하고 싶음"
+    channelsTheyUse: [naver_blog, instagram, threads]
+  - persona: "초기 스타트업 CTO (시드~프리A)"
+    painPoints:
+      - "결제 통합 1주일 안에 끝내야 하는데 문서가 산만함"
+    channelsTheyUse: [linkedin, threads, x]
+
+tone:
+  preset: professional
+  voiceNotes: |
+    - '~합니다' 체 기본. 친근하지만 가볍지 않게.
+    - 이모지는 강조 1~2개만 (✅ 📊 🚀). 남발 금지.
+    - 영어 약어는 풀어쓰기 (예: "API" → "API(연동 인터페이스)").
+    - 숫자·근거 우선. 형용사 남발 금지.
+  sampleSentences:
+    - "업플로우는 PG·간편결제·정산을 한 줄로 통합합니다."
+    - "도입 첫 달, 평균 정산 주기를 5.2일에서 1.8일로 줄였습니다."
+
+banned:
+  words:
+    - "최저가"
+    - "100% 보장"
+    - "공짜"
+  topics:
+    - "경쟁사 직접 비방"
+    - "정치·종교"
+  claims:
+    - "업계 1위"
+    - "유일한"
+    - "최고의"
+
+visual:
+  colors:
+    primary:    "#0F172A"
+    accent:     "#3B82F6"
+    background: "#F8FAFC"
+  logoPath: "./assets/logo.png"
+  fontFamily: "Pretendard"
+
+hashtags:
+  always:
+    - "#업플로우"
+  pool:
+    - "#결제"
+    - "#정산자동화"
+    - "#SMB"
+    - "#스타트업"
+    - "#핀테크"
+
+legal:
+  adDisclosureRequired: true
+  adHashtag: "#광고"
+
+campaigns:
+  defaultGoals: [awareness, lead]
+  cadencePerWeek: 3
+
+competitors:
+  - name: "토스페이먼츠"
+    url: https://tosspayments.com
+    notes: "대형 가맹점 위주, SMB 온보딩 마찰 있음"
+  - name: "포트원"
+    url: https://portone.io
+    notes: "개발자 친화적, 정산 자동화는 약함"
+
+meta:
+  createdAt: "2026-05-01T10:00:00+09:00"
+  updatedAt: "2026-05-01T10:00:00+09:00"
+  filledBy: interview
