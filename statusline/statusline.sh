@@ -26,13 +26,14 @@ fi
 
 SLUG="$(basename "$(dirname "$LATEST_BRIEF")")"
 
-# Naive YAML parsing (Phase 1 — replaced with a real parser later).
-# Counts channels by terminal state.
-PUBLISHED=$(grep -cE ':\s*published\s*$' "$LATEST_BRIEF" 2>/dev/null || echo 0)
-TOTAL=$(awk '/^\s*[a-z_]+:\s*(drafting|preview|approved|scheduled|published|failed|skipped)\s*$/' \
+# Naive YAML parsing — counts channel statuses inside `status:` block.
+# Replace with a real parser when statusline grows.
+PUBLISHED=$(awk '/^[[:space:]]+[a-z_]+:[[:space:]]*published[[:space:]]*$/' \
   "$LATEST_BRIEF" 2>/dev/null | wc -l | tr -d ' ')
-CURRENT=$(awk '/^\s*[a-z_]+:\s*(drafting|preview|approved|scheduled)\s*$/{print $1 " " $2; exit}' \
-  "$LATEST_BRIEF" 2>/dev/null | sed 's/://' | sed 's/[[:space:]]*$//')
+TOTAL=$(awk '/^[[:space:]]+[a-z_]+:[[:space:]]*(drafting|preview|approved|scheduled|published|failed|skipped)[[:space:]]*$/' \
+  "$LATEST_BRIEF" 2>/dev/null | wc -l | tr -d ' ')
+CURRENT=$(awk '/^[[:space:]]+[a-z_]+:[[:space:]]*(drafting|preview|approved|scheduled)[[:space:]]*$/{
+  gsub(/:/, "", $1); print $1 " " $2; exit }' "$LATEST_BRIEF" 2>/dev/null)
 
 if [ -z "$CURRENT" ]; then
   CURRENT="대기"

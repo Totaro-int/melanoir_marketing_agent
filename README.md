@@ -11,14 +11,25 @@
 ## 빠른 시작
 
 ```bash
-# 1) Claude Code 플러그인으로 로드 (개발 모드)
+# 1) 의존성 설치 (검증/캠페인 스크립트용)
+cd /path/to/marketing_ai
+npm install
+
+# 2) Claude Code 플러그인으로 로드 (개발 모드)
 cd /path/to/your/project
 ln -s /Users/songseungju/upflow/marketing_ai .claude/plugins/marketing_ai
 
-# 2) Claude Code 안에서
-/onboard           # 회사 프로필 인터뷰
-/campaign new      # 새 캠페인 브리프 작성
-/status            # 채널별 진행 보드
+# 3) Claude Code 안에서
+/onboard                    # 회사 프로필 인터뷰
+/onboard show               # 저장된 프로필 요약
+/onboard update tone        # 부분 업데이트
+/campaign new "<주제>"      # 새 캠페인 브리프 + 채널 디렉터리
+/status                     # 채널별 진행 보드
+
+# 또는 직접 CLI
+npm run validate:example    # 샘플 프로필 검증
+npm run profile:show
+node bin/campaign-new.mjs "신제품 런칭 5월 1주차"
 ```
 
 ## 디렉터리
@@ -26,21 +37,27 @@ ln -s /Users/songseungju/upflow/marketing_ai .claude/plugins/marketing_ai
 ```
 marketing_ai/
 ├── plugin.json                 # Claude Code 플러그인 매니페스트
+├── package.json                # CLI 스크립트 의존성 (yaml, ajv)
+├── bin/                        # 검증·온보딩 보조·캠페인 생성 스크립트
+│   ├── cli.mjs                 # marketing-ai <subcmd> 디스패처
+│   ├── profile-validate.mjs    # 스키마 검증기
+│   ├── profile-show.mjs        # 프로필 요약 출력
+│   └── campaign-new.mjs        # 캠페인 디렉터리 생성
 ├── docs/ARCHITECTURE.md        # 아키텍처
-├── schemas/                    # 회사 프로필·캠페인 스키마
+├── schemas/                    # company-profile / campaign-brief 스키마
 ├── examples/                   # 샘플 회사 프로필
-├── skills/                     # Claude Skills (온보딩·카피라이팅 등)
+├── skills/                     # Claude Skills (온보딩 등)
 ├── commands/                   # /onboard, /campaign new, /status
 ├── channels/                   # 채널별 전략·템플릿·체크리스트
-│   ├── threads/                # ✅ Reference 채널 (Phase 1 완성)
-│   └── linkedin/               # ⏳ 다음 채널
+│   ├── threads/                # ✅ Reference (Threads Graph API)
+│   └── linkedin/               # ✅ Reference (UGC API, OAuth)
 └── statusline/                 # Claude Code statusline 스크립트
 ```
 
-## 단계 (현재: Phase 1)
+## 단계 (현재: Phase 2)
 
 - [x] Phase 1 — 전략 팩 스펙 + Threads reference + 온보딩 skill 초안
-- [ ] Phase 2 — 회사 프로필 검증·업데이트 명령
+- [x] Phase 2 — 스키마 검증기, /onboard update·show, /campaign new 실동작, LinkedIn reference
 - [ ] Phase 3 — Content Engine (BYO 키 어댑터 우선, 자사 API stub)
 - [ ] Phase 4 — Publisher (Threads / LinkedIn 공식 API)
 - [ ] Phase 5 — CLI 칸반 보드 (statusline + Ink 보조창)

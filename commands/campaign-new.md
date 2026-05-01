@@ -5,7 +5,7 @@ description: 새 캠페인 브리프를 생성하고 채널별 카피·이미지
 
 # /campaign new
 
-> ⚠️ **Phase 1 단계**: 현재는 브리프 파일 생성과 채널 디스패치 골격까지만 구현. 카피·이미지 생성은 Phase 3에서 활성화된다.
+> ⚠️ **현재 Phase 2**: 브리프 파일 + 채널 디렉터리 생성까지 자동. 카피·이미지 생성은 Phase 3에서 활성화.
 
 ## 사용법
 
@@ -15,13 +15,15 @@ description: 새 캠페인 브리프를 생성하고 채널별 카피·이미지
 /campaign new "<주제>" --goal lead --cadence single
 ```
 
-## 동작 (현재 Phase 1)
+## 동작 (Phase 2)
 
-1. `company-profile.yaml` 존재 확인 — 없으면 자동으로 `/onboard` 트리거
-2. `campaigns/<YYYY-MM-DD>-<slug>/brief.yaml` 생성
-3. `--channels` 미지정 시 `plugin.json`의 `channels` 중 `status: reference` 채널만 활성화
-4. 채널별 디렉터리 골격: `campaigns/<slug>/<channel>/`
-5. **다음 단계 안내** 출력: "Phase 3 활성화 후 자동 생성됩니다. 현재는 `channels/<channel>/strategy.md`를 참고해 수동으로 작성하세요."
+내부적으로 `node bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...]` 를 실행한다.
+
+1. `company-profile.yaml` 존재 확인 — 없으면 `/onboard` 안내 후 종료
+2. `--channels` 미지정 시 `plugin.json`의 `status: reference|active` 채널 자동 선택
+3. `campaigns/<YYYY-MM-DD>-<slug>/brief.yaml` 생성 (스키마: `schemas/campaign-brief.schema.yaml`)
+4. 채널별 디렉터리 + placeholder README 생성: `campaigns/<slug>/<channel>/`
+5. 결과 요약 출력 + 다음 단계 안내
 
 ## brief.yaml 스키마 (초안)
 

@@ -41,6 +41,19 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
 - [ ] `banned.words`에 한국 광고법 고위험 표현(예: "최고의", "1위", "유일한")이 누락됐다면 추가 권장
 - [ ] `legal.adDisclosureRequired`가 false면 사용자에게 한 번 더 확인 (한국 공정위 가이드라인 기본값 true)
 
+## Modes
+
+| 모드 | 트리거 | 동작 |
+|------|--------|------|
+| **full** | `/onboard` (프로필 없음) | 위 7단계 전체 인터뷰 |
+| **update** | `/onboard update <섹션>` | 해당 섹션만 인터뷰. 변경 사항만 머지하고 `meta.updatedAt` 갱신 |
+| **show** | `/onboard show` | `node bin/profile-show.mjs` 실행 결과를 그대로 보여줌 (스킬은 추가 작업 없음) |
+| **resume** | `/onboard` (프로필 있음) | "전체 다시 / 부분 업데이트 / 그대로 두기" 3택 질문 |
+
+업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
+
+저장 직전 반드시 `node bin/profile-validate.mjs` 실행해 스키마 위반·소프트 경고를 확인하고, 실패 시 사용자에게 어느 필드가 깨졌는지 알리고 그 필드만 다시 묻는다.
+
 ## Output
 
 `./company-profile.yaml`로 저장. 메타데이터:

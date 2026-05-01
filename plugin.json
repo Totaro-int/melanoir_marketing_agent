@@ -1,7 +1,7 @@
 {
   "name": "marketing_ai",
   "displayName": "Upflow Marketing AI",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 생성 + Publisher",
   "author": {
     "name": "Upflow Inc.",
@@ -29,10 +29,15 @@
     },
     {
       "id": "linkedin",
-      "status": "planned",
+      "status": "reference",
       "path": "channels/linkedin"
     }
   ],
-  "phase": 1,
-  "private": true
+  "phase": 2,
+  "private": true,
+  "scripts": {
+    "validate": "node bin/profile-validate.mjs",
+    "profile-show": "node bin/profile-show.mjs",
+    "campaign-new": "node bin/campaign-new.mjs"
+  }
 }

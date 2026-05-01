@@ -1,0 +1,25 @@
+{
+  "name": "marketing_ai",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Upflow SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "marketing-ai": "bin/cli.mjs"
+  },
+  "scripts": {
+    "validate": "node bin/profile-validate.mjs",
+    "validate:example": "node bin/profile-validate.mjs examples/company-profile.example.yaml",
+    "profile:show": "node bin/profile-show.mjs",
+    "campaign:new": "node bin/campaign-new.mjs"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.6.1"
+  }
+}
