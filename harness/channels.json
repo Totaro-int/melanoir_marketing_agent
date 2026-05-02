@@ -1,0 +1,13 @@
+[
+  { "id": "threads",   "status": "reference", "path": "harness/channels/threads" },
+  { "id": "linkedin",  "status": "reference", "path": "harness/channels/linkedin" },
+  { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
+  { "id": "facebook",  "status": "active",    "path": "harness/channels/facebook" },
+  { "id": "x",         "status": "active",    "path": "harness/channels/x" },
+  { "id": "reddit",    "status": "active",    "path": "harness/channels/reddit" },
+  { "id": "bluesky",   "status": "active",    "path": "harness/channels/bluesky" },
+  { "id": "mastodon",  "status": "active",    "path": "harness/channels/mastodon" },
+  { "id": "pinterest", "status": "active",    "path": "harness/channels/pinterest" },
+  { "id": "tiktok",    "status": "active",    "path": "harness/channels/tiktok" },
+  { "id": "youtube",   "status": "active",    "path": "harness/channels/youtube" }
+]

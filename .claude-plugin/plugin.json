@@ -1,73 +1,36 @@
 {
   "name": "marketing_agent",
-  "displayName": "Totaro Marketing Agent",
   "version": "0.9.1",
-  "description": "SNS 마케팅 자동화 하네스 — 11개 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube), 온보딩에서 채널 선택, /sns-run + 스케줄 + 자동 발행 워커 + 휴먼 승인 게이트. 모든 명령은 /sns- prefix",
+  "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스. 11개 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube), 온보딩에서 채널 선택, /sns-run + 스케줄 + 자동 발행 워커 + 휴먼 승인 게이트. 모든 명령은 /sns- prefix.",
   "author": {
     "name": "Totaro Inc."
   },
-  "license": "Proprietary",
   "homepage": "https://github.com/Totaro-int/marketing_agent",
-  "claudeCode": {
-    "minVersion": "1.0.0"
-  },
-  "skills": [
-    "harness/skills/onboard-company"
+  "repository": "https://github.com/Totaro-int/marketing_agent",
+  "license": "Proprietary",
+  "keywords": ["marketing", "sns", "social", "publishing", "korean", "totaro"],
+  "commands": [
+    "./harness/commands/sns-init.md",
+    "./harness/commands/sns-doctor.md",
+    "./harness/commands/sns-onboard.md",
+    "./harness/commands/sns-run.md",
+    "./harness/commands/sns-campaign-new.md",
+    "./harness/commands/sns-generate.md",
+    "./harness/commands/sns-preview.md",
+    "./harness/commands/sns-approve.md",
+    "./harness/commands/sns-reject.md",
+    "./harness/commands/sns-publish.md",
+    "./harness/commands/sns-queue.md",
+    "./harness/commands/sns-auth.md",
+    "./harness/commands/sns-status.md"
   ],
   "agents": [
-    "harness/agents/copywriter.md",
-    "harness/agents/image-director.md",
-    "harness/agents/brand-guardian.md",
-    "harness/agents/publisher.md"
+    "./harness/agents/copywriter.md",
+    "./harness/agents/image-director.md",
+    "./harness/agents/brand-guardian.md",
+    "./harness/agents/publisher.md"
   ],
-  "commands": [
-    "harness/commands/sns-init.md",
-    "harness/commands/sns-doctor.md",
-    "harness/commands/sns-onboard.md",
-    "harness/commands/sns-run.md",
-    "harness/commands/sns-campaign-new.md",
-    "harness/commands/sns-generate.md",
-    "harness/commands/sns-preview.md",
-    "harness/commands/sns-approve.md",
-    "harness/commands/sns-reject.md",
-    "harness/commands/sns-publish.md",
-    "harness/commands/sns-queue.md",
-    "harness/commands/sns-auth.md",
-    "harness/commands/sns-status.md"
-  ],
-  "statusLine": "harness/statusline/statusline.sh",
-  "channels": [
-    { "id": "threads",   "status": "reference", "path": "harness/channels/threads" },
-    { "id": "linkedin",  "status": "reference", "path": "harness/channels/linkedin" },
-    { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
-    { "id": "facebook",  "status": "active",    "path": "harness/channels/facebook" },
-    { "id": "x",         "status": "active",    "path": "harness/channels/x" },
-    { "id": "reddit",    "status": "active",    "path": "harness/channels/reddit" },
-    { "id": "bluesky",   "status": "active",    "path": "harness/channels/bluesky" },
-    { "id": "mastodon",  "status": "active",    "path": "harness/channels/mastodon" },
-    { "id": "pinterest", "status": "active",    "path": "harness/channels/pinterest" },
-    { "id": "tiktok",    "status": "active",    "path": "harness/channels/tiktok" },
-    { "id": "youtube",   "status": "active",    "path": "harness/channels/youtube" }
-  ],
-  "phase": 8,
-  "private": true,
-  "scripts": {
-    "validate":     "node harness/bin/profile-validate.mjs",
-    "profile-show": "node harness/bin/profile-show.mjs",
-    "campaign-new": "node harness/bin/campaign-new.mjs",
-    "generate":     "node harness/bin/generate.mjs",
-    "preview":      "node harness/bin/preview.mjs",
-    "approve":      "node harness/bin/approve.mjs",
-    "reject":       "node harness/bin/reject.mjs",
-    "publish":      "node harness/bin/publish.mjs",
-    "auth":         "node harness/bin/auth.mjs",
-    "status":       "node harness/bin/board.mjs",
-    "doctor":       "node harness/bin/doctor.mjs",
-    "setup":        "node harness/bin/setup.mjs",
-    "run":          "node harness/bin/run.mjs",
-    "schedule":     "node harness/bin/schedule-plan.mjs",
-    "queue":        "node harness/bin/queue-tick.mjs",
-    "install-cron": "node harness/bin/install-cron.mjs",
-    "sync-posts":   "node harness/bin/sync-posts.mjs"
-  }
+  "skills": [
+    "./harness/skills/onboard-company"
+  ]
 }

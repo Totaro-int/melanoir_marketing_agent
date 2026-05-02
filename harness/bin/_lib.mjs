@@ -46,6 +46,7 @@ export const PATHS = {
   campaignsDir:        resolve(ROOT, 'posts/campaigns'),
   postsByChannelDir:   resolve(ROOT, 'posts/by-channel'),
   pluginManifest:      resolve(ROOT, '.claude-plugin/plugin.json'),
+  channelsManifest:    resolve(HARNESS_ROOT, 'channels.json'),
 };
 
 export function readYaml(path) {
@@ -90,8 +91,9 @@ export function loadJson(path) {
 }
 
 export function listChannels() {
-  const manifest = loadJson(PATHS.pluginManifest);
-  return manifest.channels ?? [];
+  // 채널 메타는 Claude Code plugin.json schema 와 충돌해서 별도 파일에 둠.
+  try { return loadJson(PATHS.channelsManifest); }
+  catch { return []; }
 }
 
 export function activeChannels() {
