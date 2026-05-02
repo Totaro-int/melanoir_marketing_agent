@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Claude Code statusline for marketing_agent.
 # Shows: 📣 <slug> │ <published>/<total> ▓▓▓░░ │ <current-stage>  with color.
-# Reads the most recently modified campaigns/*/brief.yaml.
+# Reads the most recently modified posts/campaigns/*/brief.yaml.
 
 set -u
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
-CAMPAIGNS_DIR="$ROOT/campaigns"
+CAMPAIGNS_DIR="$ROOT/posts/campaigns"
 
 # ANSI color helpers — disable when stdout is not a TTY.
 if [ -t 1 ]; then
