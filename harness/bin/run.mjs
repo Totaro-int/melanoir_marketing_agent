@@ -6,7 +6,7 @@
 //                    --channels=threads,linkedin \
 //                    [--goal=awareness] [--cadence=single] \
 //                    [--approve]              # 가드 통과 채널 자동 승인
-//                    [--publish]              # 승인 + dry-run 발행 (실제 발행은 PUBLISHER_DRY_RUN=false 필요)
+//                    [--publish]              # 승인 + 발행 (실 발행: PUBLISHER_DRY_RUN unset 또는 ∉ {1,true,yes})
 //                    [--dry-run]              # publish 시 dry-run 강제
 //
 // 스케줄을 쓰려면 /schedule (bin/schedule-plan.mjs) 사용. 이 스크립트는 단건 즉시 흐름.

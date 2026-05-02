@@ -2,7 +2,7 @@
 // Publish an approved draft to its channel.
 //   node bin/publish.mjs <slug> --channel=<ch> [--dry-run]
 //
-// Default safety: if PUBLISHER_DRY_RUN is set OR --dry-run is passed, no network call is made.
+// Default safety: if PUBLISHER_DRY_RUN ∈ {1,true,yes} OR --dry-run is passed, no network call is made.
 // Even without dry-run, refuses to publish unless brief.status[<ch>] === 'approved'.
 
 import { resolve } from 'node:path';
