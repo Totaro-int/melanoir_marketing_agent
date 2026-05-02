@@ -1,0 +1,53 @@
+# draft.schema.yaml v1
+# campaigns/<slug>/<channel>/draft.yaml 의 형식.
+# bin/generate.mjs 가 작성, bin/preview.mjs / bin/approve.mjs 가 읽음.
+
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://upflow.io/schemas/draft/v1"
+title: Draft
+type: object
+required: [version, slug, channel, generatedAt, text, hashtags, assets, guardian]
+properties:
+  version:     { const: 1 }
+  slug:        { type: string }
+  channel:     { type: string }
+  generatedAt: { type: string, format: date-time }
+  provider:
+    type: object
+    properties:
+      provider:        { type: string }
+      model:           { type: string }
+      latencyMs:       { type: integer }
+      tokensIn:        { type: integer }
+      tokensOut:       { type: integer }
+      costEstimateUsd: { type: number }
+  image:
+    type: object
+    properties:
+      provider:        { type: string }
+      model:           { type: string }
+      latencyMs:       { type: integer }
+  text:        { type: string }
+  hashtags:    { type: array, items: { type: string } }
+  assets:      { type: array, items: { type: string } }
+  guardian:
+    type: object
+    required: [ok, severity, findings, summary]
+    properties:
+      ok:       { type: boolean }
+      severity: { type: string, enum: [ok, warn, block] }
+      summary:
+        type: object
+        properties:
+          blocks: { type: integer }
+          warns:  { type: integer }
+          info:   { type: integer }
+      findings:
+        type: array
+        items:
+          type: object
+          required: [severity, code]
+          properties:
+            severity: { type: string, enum: [block, warn, info] }
+            code:     { type: string }
+            detail:   { type: string }

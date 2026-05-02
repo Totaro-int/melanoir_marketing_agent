@@ -1,6 +1,6 @@
 // Shared helpers for marketing_ai CLI scripts.
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
@@ -25,6 +25,34 @@ export function readYaml(path) {
     throw err;
   }
   return YAML.parse(readFileSync(path, 'utf8'));
+}
+
+export function writeYaml(path, data) {
+  writeFileSync(path, YAML.stringify(data, { lineWidth: 100 }), 'utf8');
+}
+
+export function readText(path) {
+  if (!existsSync(path)) return '';
+  return readFileSync(path, 'utf8');
+}
+
+export function loadChannelDocs(channel) {
+  const dir = resolve(PATHS.channelsDir, channel);
+  return {
+    strategy:  readText(resolve(dir, 'strategy.md')),
+    checklist: readText(resolve(dir, 'checklist.md')),
+    templates: readText(resolve(dir, 'templates/post.md')),
+  };
+}
+
+export function findCampaignDir(slug) {
+  const dir = resolve(PATHS.campaignsDir, slug);
+  if (!existsSync(dir)) {
+    const err = new Error(`Campaign not found: ${slug}`);
+    err.code = 'ENOENT_CAMPAIGN';
+    throw err;
+  }
+  return dir;
 }
 
 export function loadJson(path) {
