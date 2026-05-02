@@ -8,6 +8,22 @@ import pc from 'picocolors';
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
+// Auto-load .env.local once at module init (KEY=VALUE per line, # comments).
+// Existing process.env values win, so user-set env still overrides the file.
+(() => {
+  const envFile = resolve(ROOT, '.env.local');
+  if (!existsSync(envFile)) return;
+  for (const raw of readFileSync(envFile, 'utf8').split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+    if (!m) continue;
+    const [, k, v] = m;
+    if (k in process.env) continue;
+    process.env[k] = v.replace(/^["']|["']$/g, '');
+  }
+})();
+
 export const PATHS = {
   schema: resolve(ROOT, 'schemas/company-profile.schema.yaml'),
   campaignBriefSchema: resolve(ROOT, 'schemas/campaign-brief.schema.yaml'),

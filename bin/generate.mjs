@@ -69,6 +69,7 @@ for (const channel of channels) {
     text: merged.text,
     hashtags: merged.hashtags,
     assets: image.paths,
+    assetUrls: image.urls ?? [],
     guardian: report,
   };
   writeYaml(resolve(channelDir, 'draft.yaml'), draft);

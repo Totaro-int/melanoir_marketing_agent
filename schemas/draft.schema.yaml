@@ -30,6 +30,7 @@ properties:
   text:        { type: string }
   hashtags:    { type: array, items: { type: string } }
   assets:      { type: array, items: { type: string } }
+  assetUrls:   { type: array, items: { type: string, format: uri }, description: "Public CDN URLs (optional). Required for image publishing." }
   guardian:
     type: object
     required: [ok, severity, findings, summary]

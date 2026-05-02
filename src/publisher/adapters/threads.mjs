@@ -6,14 +6,22 @@
 //   { "accessToken": "...", "userId": "<numeric IG/Threads user id>" }
 
 import { assertAdapter } from '../publisher.mjs';
+import { withRetry } from '../retry.mjs';
 
 const BASE = 'https://graph.threads.net/v1.0';
 
+function pickMediaType(draft) {
+  const n = draft.assetUrls?.length ?? 0;
+  if (n === 0) return 'TEXT';
+  if (n === 1) return 'IMAGE';
+  return 'CAROUSEL';
+}
+
 function buildPayload({ draft }) {
   return {
-    media_type: draft.assets?.length ? (draft.assets.length > 1 ? 'CAROUSEL' : 'IMAGE') : 'TEXT',
+    media_type: pickMediaType(draft),
     text: draft.text,
-    image_count: draft.assets?.length ?? 0,
+    image_urls: draft.assetUrls ?? [],
   };
 }
 
@@ -29,34 +37,40 @@ export const adapter = assertAdapter({
 
   async publish({ draft, credentials }) {
     const { accessToken, userId } = credentials;
+    const mediaType = pickMediaType(draft);
 
-    // Phase 4 scope: text-only and single-image text+image. Carousel/upload of local
-    // assets requires hosted public URLs — flagged as TODO when Phase 4.1 takes it on.
-    const isImage = draft.assets?.length === 1;
-    const createUrl = `${BASE}/${encodeURIComponent(userId)}/threads`;
-    const params = new URLSearchParams({
-      media_type: isImage ? 'IMAGE' : 'TEXT',
+    // Carousel needs per-item containers + parent CAROUSEL container.
+    // Phase 4.1 ships TEXT and single-IMAGE; carousel is staged for Phase 4.2.
+    if (mediaType === 'CAROUSEL') {
+      throw new Error('threads adapter: CAROUSEL is Phase 4.2. Reduce to 1 image or none for now.');
+    }
+
+    if (mediaType === 'IMAGE' && !draft.assetUrls?.[0]?.startsWith('http')) {
+      throw new Error('threads adapter: assetUrls[0] must be a public https URL (use the fal provider).');
+    }
+
+    // Step 1: create media container.
+    const createParams = new URLSearchParams({
+      media_type: mediaType,
       text: draft.text,
       access_token: accessToken,
     });
-    if (isImage) {
-      // NOTE: Threads requires a publicly reachable image URL.
-      // Local SVG/PNG paths must be uploaded to a CDN first (Phase 4.1).
-      throw new Error(
-        'threads adapter: image posting needs a public image URL. ' +
-        'Phase 4.1 will add a CDN upload step. For now, use --dry-run or remove assets.'
-      );
-    }
+    if (mediaType === 'IMAGE') createParams.set('image_url', draft.assetUrls[0]);
 
-    const created = await fetchJson(createUrl, { method: 'POST', body: params });
+    const created = await withRetry(() =>
+      fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads`, { method: 'POST', body: createParams })
+    );
     if (!created.id) throw new Error('threads create failed: ' + JSON.stringify(created));
 
-    const publishUrl = `${BASE}/${encodeURIComponent(userId)}/threads_publish`;
+    // Step 2: publish container. (Meta recommends a small wait when media is included.)
+    if (mediaType === 'IMAGE') await new Promise((res) => setTimeout(res, 1000));
     const publishParams = new URLSearchParams({
       creation_id: created.id,
       access_token: accessToken,
     });
-    const published = await fetchJson(publishUrl, { method: 'POST', body: publishParams });
+    const published = await withRetry(() =>
+      fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads_publish`, { method: 'POST', body: publishParams })
+    );
     if (!published.id) throw new Error('threads publish failed: ' + JSON.stringify(published));
 
     return {
@@ -64,7 +78,6 @@ export const adapter = assertAdapter({
       externalId: published.id,
       url: `https://www.threads.net/@${userId}/post/${published.id}`,
       raw: { created, published },
-      attempts: 1,
     };
   },
 });
@@ -77,6 +90,7 @@ async function fetchJson(url, init) {
   if (!r.ok) {
     const err = new Error(`HTTP ${r.status}: ${text.slice(0, 300)}`);
     err.response = json;
+    err.status = r.status;
     throw err;
   }
   return json;

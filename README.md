@@ -1,6 +1,6 @@
 # marketing_agent
 
-업플로우 사내·고객사 SNS 마케팅 자동화 하네스 (Claude Code 플러그인).
+토타로 사내·고객사 SNS 마케팅 자동화 하네스 (Claude Code 플러그인).
 
 ## 무엇
 
@@ -18,7 +18,7 @@ cp .env.example .env.local       # provider·BYO 키 설정 (선택, 기본 mock
 
 # 2) Claude Code 플러그인으로 로드 (개발 모드)
 cd /path/to/your/project
-ln -s /Users/songseungju/upflow/marketing_agent .claude/plugins/marketing_agent
+ln -s /Users/songseungju/totaro/marketing_agent .claude/plugins/marketing_agent
 
 # 3) Claude Code 안에서 — 캠페인 한 사이클
 /onboard                          # 회사 프로필 인터뷰
@@ -75,16 +75,14 @@ marketing_agent/
 └── statusline/
 ```
 
-## 단계 (현재: Phase 3)
+## 단계 (현재: Phase 5 + 4.1 진행중)
 
 - [x] Phase 1 — 전략 팩 스펙 + Threads reference + 온보딩 skill 초안
 - [x] Phase 2 — 스키마 검증기, /onboard update·show, /campaign new, LinkedIn reference
 - [x] Phase 3 — 콘텐츠 엔진 어댑터(mock/openai/inhouse-stub) + brand-guardian + /generate /preview /approve /reject + copywriter·image-director·brand-guardian subagent 정의
-- [x] Phase 4 — Publisher (Threads/LinkedIn 어댑터, dry-run 기본, /publish /auth, publisher subagent). 텍스트 발행만; 이미지/캐러셀은 4.1
+- [x] Phase 4 — Publisher (Threads/LinkedIn 어댑터, dry-run 기본, /publish /auth, publisher subagent). 텍스트 발행만
 - [x] Phase 5 — 칸반 보드 (`bin/board.mjs`) + statusline 색상·진행바 + `/status --watch`
-- [ ] Phase 4.1 — 이미지 업로드 (CDN 단계) + 자동 재시도 (지수 백오프)
-- [ ] Phase 6 — 사내 패키징·배포
-- [ ] Phase 5 — CLI 칸반 보드 (statusline + Ink 보조창)
+- [ ] Phase 4.1 — 이미지 업로드 (fal.ai → CDN URL → 발행) + 자동 재시도
 - [ ] Phase 6 — 사내 패키징·배포
 
 ## Provider 선택
@@ -105,4 +103,4 @@ healthcheck 실패 시 자동으로 `mock` 으로 폴백 (offline·CI 안전).
 
 ## 라이선스
 
-Proprietary — Upflow Inc. 사내·계약 고객사 전용. 외부 배포 금지.
+Proprietary — Totaro Inc. 사내·계약 고객사 전용. 외부 배포 금지.

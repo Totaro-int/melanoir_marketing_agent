@@ -1,14 +1,13 @@
 {
   "name": "marketing_agent",
-  "displayName": "Upflow Marketing Agent",
+  "displayName": "Totaro Marketing Agent",
   "version": "0.5.0",
   "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 엔진 + 휴먼 승인 게이트 + Publisher",
   "author": {
-    "name": "Upflow Inc.",
-    "email": "upflow999@gmail.com"
+    "name": "Totaro Inc."
   },
   "license": "Proprietary",
-  "homepage": "https://github.com/upflow999/marketing_agent",
+  "homepage": "https://github.com/Totaro-int/marketing_agent",
   "claudeCode": {
     "minVersion": "1.0.0"
   },
