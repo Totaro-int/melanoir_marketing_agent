@@ -11,7 +11,12 @@ import { listProviders } from '../src/content-engine/registry.mjs';
 import { knownChannels, CHANNEL_META } from '../src/publisher/registry.mjs';
 
 const rows = [];
-const add = (group, name, ok, detail = '') => rows.push({ group, name, ok, detail });
+// status: 'ok' | 'warn' | 'fail'. `add(g,n,bool,d)` 기존 호출 backward-compat: true=ok, false=fail.
+const add = (group, name, status, detail = '') => {
+  if (status === true) status = 'ok';
+  else if (status === false) status = 'fail';
+  rows.push({ group, name, status, detail });
+};
 
 // 1) Node + package
 add('runtime', 'Node version', process.version >= 'v20', process.version);
@@ -27,35 +32,42 @@ add('profile', 'company-profile.yaml', existsSync(PATHS.profile),
 add('env', '.env.local', existsSync(resolve(ROOT, '.env.local')),
   existsSync(resolve(ROOT, '.env.local')) ? '' : 'cp .env.example .env.local');
 add('env', 'CONTENT_ENGINE_PROVIDER', !!process.env.CONTENT_ENGINE_PROVIDER, process.env.CONTENT_ENGINE_PROVIDER ?? '(unset → mock)');
+const activeProvider = process.env.CONTENT_ENGINE_PROVIDER ?? 'mock';
 for (const p of listProviders()) {
-  add('content-engine', `provider: ${p.id}`, p.health.ok, p.health.ok ? '' : (p.health.reason ?? ''));
+  // 활성 provider 만 fail, 나머지는 warn (선택 안 한 provider 가 미설정인 건 사고가 아님).
+  const status = p.health.ok ? 'ok' : (p.id === activeProvider ? 'fail' : 'warn');
+  add('content-engine', `provider: ${p.id}`, status, p.health.ok ? '' : (p.health.reason ?? ''));
 }
 
 // 4) Publisher credentials
 const authDir = resolve(ROOT, 'auth');
 const authFiles = existsSync(authDir) ? readdirSync(authDir).filter((f) => f.endsWith('.json')) : [];
-add('publisher', 'auth/ dir', existsSync(authDir), authFiles.length ? authFiles.join(', ') : 'empty (run: /auth add <channel>)');
+add('publisher', 'auth/ dir', existsSync(authDir) ? (authFiles.length ? 'ok' : 'warn') : 'fail',
+  authFiles.length ? authFiles.join(', ') : 'empty (run: /auth add <channel>)');
 for (const f of authFiles) {
   const p = resolve(authDir, f);
   const mode = (statSync(p).mode & 0o777).toString(8);
   add('publisher', `mode 0600: ${f}`, mode === '600', `mode ${mode}`);
 }
-add('publisher', 'PUBLISHER_DRY_RUN', true, process.env.PUBLISHER_DRY_RUN ? 'ON (safe)' : 'off (real publish enabled)');
+add('publisher', 'PUBLISHER_DRY_RUN', process.env.PUBLISHER_DRY_RUN ? 'ok' : 'warn',
+  process.env.PUBLISHER_DRY_RUN ? 'ON (safe)' : 'off (real publish enabled)');
 
 // Enabled channels (from profile) — 토큰 등록 여부 채널별 점검.
 let profile = null;
 try { if (existsSync(PATHS.profile)) profile = readYaml(PATHS.profile); } catch {}
 const enabled = enabledChannels(profile);
 if (!enabled.length) {
-  add('channels', 'enabled in profile', false, '/onboard 또는 /onboard update channels — 1개 이상 필요');
+  add('channels', 'enabled in profile', 'fail', '/onboard 또는 /onboard update channels — 1개 이상 필요');
 } else {
-  add('channels', 'enabled in profile', true, enabled.join(', '));
+  add('channels', 'enabled in profile', 'ok', enabled.join(', '));
   for (const ch of enabled) {
     const known = knownChannels().includes(ch);
-    if (!known) { add('channels', `[${ch}] adapter`, false, '등록되지 않은 채널 ID'); continue; }
+    if (!known) { add('channels', `[${ch}] adapter`, 'fail', '등록되지 않은 채널 ID'); continue; }
     const hasAuth = authFiles.includes(`${ch}.json`);
     const meta = CHANNEL_META[ch];
-    add('channels', `[${ch}] auth/${ch}.json`, hasAuth, hasAuth ? meta?.media ?? '' : `없음 — /auth add ${ch} (${meta?.auth ?? ''})`);
+    // 토큰 미등록은 warn (자동 dry-run fallback). 사용자가 의도적으로 미등록일 수 있음.
+    add('channels', `[${ch}] auth/${ch}.json`, hasAuth ? 'ok' : 'warn',
+      hasAuth ? meta?.media ?? '' : `없음 — /auth add ${ch} (${meta?.auth ?? ''})`);
   }
 }
 
@@ -83,9 +95,13 @@ if (existsSync(PATHS.campaignsDir)) {
     } catch {}
   }
 }
-add('queue', 'scheduled items', true, `${scheduled} 대기 · ${attention} needs_attention`);
+add('queue', 'scheduled items', attention > 0 ? 'warn' : 'ok',
+  `${scheduled} 대기 · ${attention} needs_attention`);
 
-// Render
+// Render — 라벨 컬럼 폭은 가시폭 기준으로 통일.
+const ICON = { ok: pc.green('✓'), warn: pc.yellow('⚠'), fail: pc.red('✗') };
+const labelW = Math.max(28, ...rows.map((r) => visibleWidth(r.name)));
+
 console.log();
 console.log(pc.bold(pc.cyan('🩺 marketing_agent doctor')));
 console.log();
@@ -96,17 +112,48 @@ for (const r of rows) {
     console.log(pc.dim(`── ${r.group} ─────────────────────────────────`));
     lastGroup = r.group;
   }
-  const dot = r.ok ? pc.green('●') : pc.red('●');
-  console.log(`  ${dot}  ${r.name.padEnd(28)}  ${pc.dim(r.detail)}`);
+  const pad = ' '.repeat(Math.max(1, labelW - visibleWidth(r.name) + 2));
+  console.log(`  ${ICON[r.status]}  ${r.name}${pad}${pc.dim(r.detail)}`);
 }
 console.log();
 
-const failures = rows.filter((r) => !r.ok).length;
-if (failures) { ui.warn(`${failures} 항목이 비활성/누락 — 위 detail 참고`); process.exit(1); }
+const fails = rows.filter((r) => r.status === 'fail').length;
+const warns = rows.filter((r) => r.status === 'warn').length;
+if (fails) {
+  ui.err(`${fails} 항목 실패${warns ? ` · ${warns} 경고` : ''} — 위 detail 참고`);
+  process.exit(1);
+}
+if (warns) {
+  ui.warn(`모든 필수 항목 OK · ${warns} 경고 (선택 항목)`);
+  process.exit(0);
+}
 ui.ok('모든 항목 정상');
 
 // ---- helpers ----
 function readPkg() {
   try { return JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')); }
   catch { return null; }
+}
+
+// CJK + 이모지를 2칸으로 카운트 (board.mjs 의 wcwidth 와 동일 로직).
+function visibleWidth(s) {
+  let n = 0;
+  for (const ch of s) {
+    const cp = ch.codePointAt(0);
+    const wide =
+      (cp >= 0x1100 && cp <= 0x115F) ||
+      (cp >= 0x2300 && cp <= 0x23FF) ||
+      (cp >= 0x2600 && cp <= 0x26FF) ||
+      (cp >= 0x2700 && cp <= 0x27BF) ||
+      (cp >= 0x3000 && cp <= 0x9FFF) ||
+      (cp >= 0xAC00 && cp <= 0xD7AF) ||
+      (cp >= 0xF900 && cp <= 0xFAFF) ||
+      (cp >= 0xFE30 && cp <= 0xFE4F) ||
+      (cp >= 0xFF00 && cp <= 0xFFEF) ||
+      (cp >= 0x1F300 && cp <= 0x1F6FF) ||
+      (cp >= 0x1F900 && cp <= 0x1F9FF) ||
+      (cp >= 0x1FA00 && cp <= 0x1FAFF);
+    n += wide ? 2 : 1;
+  }
+  return n;
 }
