@@ -14,7 +14,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from '
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { homedir, platform } from 'node:os';
-import { ROOT, ui } from './_lib.mjs';
+import { ROOT, HARNESS_ROOT, ui } from './_lib.mjs';
 
 const cmd = process.argv[2];
 const flags = Object.fromEntries(
@@ -25,7 +25,7 @@ const flags = Object.fromEntries(
 );
 
 const everyMin = Math.max(1, parseInt(flags.every, 10) || 15);
-const tickScript = resolve(ROOT, 'bin/queue-tick.mjs');
+const tickScript = resolve(HARNESS_ROOT, 'bin/queue-tick.mjs');
 const logFile = resolve(ROOT, 'out/queue-tick.log');
 
 if (!cmd || !['install', 'uninstall', 'status'].includes(cmd)) {

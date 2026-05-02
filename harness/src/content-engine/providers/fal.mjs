@@ -11,7 +11,7 @@ import { Buffer } from 'node:buffer';
 import { provider as mock } from './mock.mjs';
 import { assertProvider } from '../provider.mjs';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../..');
+const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 const KEY = () => process.env.FAL_KEY ?? '';
 const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/flux/schnell';
 

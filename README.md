@@ -32,13 +32,22 @@ git clone https://github.com/Totaro-int/marketing_agent.git
 cd marketing_agent
 
 # 2) 한 번에 설치 (의존성 + 폴더 + 권한 자동)
-node bin/setup.mjs
+node harness/bin/setup.mjs
 
 # 3) 환경 점검
-node bin/doctor.mjs
+node harness/bin/doctor.mjs
 ```
 
-빨간 점이 없으면 OK. 자세한 내용은 [INSTALL.md](INSTALL.md).
+빨간 점이 없으면 OK. 자세한 내용은 [harness/docs/INSTALL.md](harness/docs/INSTALL.md).
+
+### 폴더 구조 (한 줄 요약)
+
+| 폴더 | 무엇 |
+|------|------|
+| `posts/` | **사람이 보는 결과물** — `campaigns/<slug>/` 원본 + `by-channel/<채널>/` 채널별 한눈 보기 (symlink) |
+| `harness/` | **하네스 본체** — bin/src/schemas/commands/skills/agents/channels/examples/statusline/docs |
+| `auth/` | 자격증명 (gitignored, 본인만 보임) |
+| 루트 파일 | README, LICENSE, package.json, plugin.json, .env.example, .gitignore |
 
 ### 이미지 생성을 쓰려면 키 한 개
 

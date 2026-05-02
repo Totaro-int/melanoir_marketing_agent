@@ -1,7 +1,7 @@
 {
   "name": "marketing_agent",
   "displayName": "Totaro Marketing Agent",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "SNS 마케팅 자동화 하네스 — 11개 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube), 온보딩에서 채널 선택, /run + 스케줄 + 자동 발행 워커 + 휴먼 승인 게이트",
   "author": {
     "name": "Totaro Inc."
@@ -12,61 +12,62 @@
     "minVersion": "1.0.0"
   },
   "skills": [
-    "skills/onboard-company"
+    "harness/skills/onboard-company"
   ],
   "agents": [
-    "agents/copywriter.md",
-    "agents/image-director.md",
-    "agents/brand-guardian.md",
-    "agents/publisher.md"
+    "harness/agents/copywriter.md",
+    "harness/agents/image-director.md",
+    "harness/agents/brand-guardian.md",
+    "harness/agents/publisher.md"
   ],
   "commands": [
-    "commands/init.md",
-    "commands/doctor.md",
-    "commands/onboard.md",
-    "commands/run.md",
-    "commands/campaign-new.md",
-    "commands/generate.md",
-    "commands/preview.md",
-    "commands/approve.md",
-    "commands/reject.md",
-    "commands/publish.md",
-    "commands/queue.md",
-    "commands/auth.md",
-    "commands/status.md"
+    "harness/commands/init.md",
+    "harness/commands/doctor.md",
+    "harness/commands/onboard.md",
+    "harness/commands/run.md",
+    "harness/commands/campaign-new.md",
+    "harness/commands/generate.md",
+    "harness/commands/preview.md",
+    "harness/commands/approve.md",
+    "harness/commands/reject.md",
+    "harness/commands/publish.md",
+    "harness/commands/queue.md",
+    "harness/commands/auth.md",
+    "harness/commands/status.md"
   ],
-  "statusLine": "statusline/statusline.sh",
+  "statusLine": "harness/statusline/statusline.sh",
   "channels": [
-    { "id": "threads",   "status": "reference", "path": "channels/threads" },
-    { "id": "linkedin",  "status": "reference", "path": "channels/linkedin" },
-    { "id": "instagram", "status": "active",    "path": "channels/instagram" },
-    { "id": "facebook",  "status": "active",    "path": "channels/facebook" },
-    { "id": "x",         "status": "active",    "path": "channels/x" },
-    { "id": "reddit",    "status": "active",    "path": "channels/reddit" },
-    { "id": "bluesky",   "status": "active",    "path": "channels/bluesky" },
-    { "id": "mastodon",  "status": "active",    "path": "channels/mastodon" },
-    { "id": "pinterest", "status": "active",    "path": "channels/pinterest" },
-    { "id": "tiktok",    "status": "active",    "path": "channels/tiktok" },
-    { "id": "youtube",   "status": "active",    "path": "channels/youtube" }
+    { "id": "threads",   "status": "reference", "path": "harness/channels/threads" },
+    { "id": "linkedin",  "status": "reference", "path": "harness/channels/linkedin" },
+    { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
+    { "id": "facebook",  "status": "active",    "path": "harness/channels/facebook" },
+    { "id": "x",         "status": "active",    "path": "harness/channels/x" },
+    { "id": "reddit",    "status": "active",    "path": "harness/channels/reddit" },
+    { "id": "bluesky",   "status": "active",    "path": "harness/channels/bluesky" },
+    { "id": "mastodon",  "status": "active",    "path": "harness/channels/mastodon" },
+    { "id": "pinterest", "status": "active",    "path": "harness/channels/pinterest" },
+    { "id": "tiktok",    "status": "active",    "path": "harness/channels/tiktok" },
+    { "id": "youtube",   "status": "active",    "path": "harness/channels/youtube" }
   ],
   "phase": 8,
   "private": true,
   "scripts": {
-    "validate":     "node bin/profile-validate.mjs",
-    "profile-show": "node bin/profile-show.mjs",
-    "campaign-new": "node bin/campaign-new.mjs",
-    "generate":     "node bin/generate.mjs",
-    "preview":      "node bin/preview.mjs",
-    "approve":      "node bin/approve.mjs",
-    "reject":       "node bin/reject.mjs",
-    "publish":      "node bin/publish.mjs",
-    "auth":         "node bin/auth.mjs",
-    "status":       "node bin/board.mjs",
-    "doctor":       "node bin/doctor.mjs",
-    "setup":        "node bin/setup.mjs",
-    "run":          "node bin/run.mjs",
-    "schedule":     "node bin/schedule-plan.mjs",
-    "queue":        "node bin/queue-tick.mjs",
-    "install-cron": "node bin/install-cron.mjs"
+    "validate":     "node harness/bin/profile-validate.mjs",
+    "profile-show": "node harness/bin/profile-show.mjs",
+    "campaign-new": "node harness/bin/campaign-new.mjs",
+    "generate":     "node harness/bin/generate.mjs",
+    "preview":      "node harness/bin/preview.mjs",
+    "approve":      "node harness/bin/approve.mjs",
+    "reject":       "node harness/bin/reject.mjs",
+    "publish":      "node harness/bin/publish.mjs",
+    "auth":         "node harness/bin/auth.mjs",
+    "status":       "node harness/bin/board.mjs",
+    "doctor":       "node harness/bin/doctor.mjs",
+    "setup":        "node harness/bin/setup.mjs",
+    "run":          "node harness/bin/run.mjs",
+    "schedule":     "node harness/bin/schedule-plan.mjs",
+    "queue":        "node harness/bin/queue-tick.mjs",
+    "install-cron": "node harness/bin/install-cron.mjs",
+    "sync-posts":   "node harness/bin/sync-posts.mjs"
   }
 }

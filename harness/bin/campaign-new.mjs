@@ -111,10 +111,13 @@ for (const ch of channels) {
     resolve(dir, ch, 'README.md'),
     `# ${slug} / ${ch}\n\n` +
       `Phase 3 활성화 시 \`copywriter\` / \`image-director\` 가 이 디렉터리에 draft.md 와 assets/ 를 생성합니다.\n` +
-      `현재는 자동 생성이 꺼져 있으므로 \`channels/${ch}/strategy.md\` 와 \`templates/post.md\` 를 참고해 수동으로 작성하세요.\n`,
+      `현재는 자동 생성이 꺼져 있으므로 \`harness/channels/${ch}/strategy.md\` 와 \`templates/post.md\` 를 참고해 수동으로 작성하세요.\n`,
     'utf8'
   );
 }
+
+// 채널별 view 동기화 (posts/by-channel/<ch>/<slug> symlink). 실패해도 전체 흐름은 통과.
+import('./sync-posts.mjs').catch((e) => ui.warn(`sync-posts 실패 (무시): ${e.message}`));
 
 // 4) Report.
 ui.ok(`캠페인 생성: ${slug}`);

@@ -6,7 +6,18 @@ import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import pc from 'picocolors';
 
-export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+// Layout (Phase 8.1):
+//   <PROJECT_ROOT>/
+//     ├── harness/                ← 코드·스키마·예시·문서  (이 파일: harness/bin/_lib.mjs)
+//     │   ├── bin/  src/  schemas/  examples/  channels/  commands/  skills/  agents/ ...
+//     ├── posts/                  ← 사람이 보는 결과물
+//     │   ├── campaigns/<slug>/   ← 캠페인 원본 (brief.yaml + per-channel drafts/assets)
+//     │   └── by-channel/<ch>/    ← 채널별 한눈에 보기 (campaigns 로 향한 symlink)
+//     ├── auth/                   ← 자격증명 (gitignored)
+//     ├── out/                    ← 런타임 로그·이미지 (gitignored)
+//     └── package.json, plugin.json, .env.local, company-profile.yaml, README.md ...
+export const HARNESS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const ROOT = resolve(HARNESS_ROOT, '..');
 
 // Auto-load .env.local once at module init (KEY=VALUE per line, # comments).
 // Existing process.env values win, so user-set env still overrides the file.
@@ -25,13 +36,16 @@ export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 })();
 
 export const PATHS = {
-  schema: resolve(ROOT, 'schemas/company-profile.schema.yaml'),
-  campaignBriefSchema: resolve(ROOT, 'schemas/campaign-brief.schema.yaml'),
-  profile: resolve(ROOT, 'company-profile.yaml'),
-  example: resolve(ROOT, 'examples/company-profile.example.yaml'),
-  campaignsDir: resolve(ROOT, 'campaigns'),
-  channelsDir: resolve(ROOT, 'channels'),
-  pluginManifest: resolve(ROOT, 'plugin.json'),
+  // harness 내부 (코드와 함께 이동)
+  schema:              resolve(HARNESS_ROOT, 'schemas/company-profile.schema.yaml'),
+  campaignBriefSchema: resolve(HARNESS_ROOT, 'schemas/campaign-brief.schema.yaml'),
+  example:             resolve(HARNESS_ROOT, 'examples/company-profile.example.yaml'),
+  channelsDir:         resolve(HARNESS_ROOT, 'channels'),
+  // PROJECT_ROOT (사용자 데이터 + 매니페스트)
+  profile:             resolve(ROOT, 'company-profile.yaml'),
+  campaignsDir:        resolve(ROOT, 'posts/campaigns'),
+  postsByChannelDir:   resolve(ROOT, 'posts/by-channel'),
+  pluginManifest:      resolve(ROOT, 'plugin.json'),
 };
 
 export function readYaml(path) {

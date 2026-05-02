@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 import { Buffer } from 'node:buffer';
 import { assertProvider } from '../provider.mjs';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../..');
+const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 const KEY = () => process.env.OPENAI_API_KEY ?? '';
 const COPY_MODEL = process.env.OPENAI_COPY_MODEL ?? 'gpt-4o-mini';
 const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1';

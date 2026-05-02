@@ -17,7 +17,7 @@ import { existsSync, mkdirSync, copyFileSync, chmodSync, symlinkSync, readdirSyn
 import { resolve, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import pc from 'picocolors';
-import { ROOT, ui } from './_lib.mjs';
+import { ROOT, HARNESS_ROOT, ui } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
 const linkTarget = argv.find((a) => a.startsWith('--link='))?.split('=')[1];
@@ -55,18 +55,18 @@ if (existsSync(envLocal)) {
   ui.warn('.env.example 없음 — 수동 설정 필요');
 }
 
-// 4) Runtime dirs
-for (const d of ['auth', 'out', 'campaigns']) {
+// 4) Runtime dirs (PROJECT_ROOT 기준)
+for (const d of ['auth', 'out', 'posts/campaigns', 'posts/by-channel']) {
   mkdirSync(resolve(ROOT, d), { recursive: true });
 }
-ui.ok('runtime dirs 준비 (auth/, out/, campaigns/)');
+ui.ok('runtime dirs 준비 (auth/, out/, posts/campaigns/, posts/by-channel/)');
 
-// 5) chmod +x
-const binDir = resolve(ROOT, 'bin');
+// 5) chmod +x (harness/ 내부)
+const binDir = resolve(HARNESS_ROOT, 'bin');
 for (const f of readdirSync(binDir)) {
   if (f.endsWith('.mjs')) try { chmodSync(resolve(binDir, f), 0o755); } catch {}
 }
-const sl = resolve(ROOT, 'statusline/statusline.sh');
+const sl = resolve(HARNESS_ROOT, 'statusline/statusline.sh');
 if (existsSync(sl)) try { chmodSync(sl, 0o755); } catch {}
 ui.ok('실행 권한 설정 (bin/*.mjs, statusline.sh)');
 

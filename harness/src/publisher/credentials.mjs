@@ -5,7 +5,8 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, chmodSync, rmSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '../..');
+// harness/src/publisher/credentials.mjs → PROJECT_ROOT 는 ../../.. (harness 한 단계 더 위)
+const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../..');
 const AUTH_DIR = resolve(ROOT, 'auth');
 
 function pathFor(channel) {

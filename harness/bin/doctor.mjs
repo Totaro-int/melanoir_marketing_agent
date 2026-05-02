@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
+import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
 import { listProviders } from '../src/content-engine/registry.mjs';
 import { knownChannels, CHANNEL_META } from '../src/publisher/registry.mjs';
 
@@ -67,7 +67,7 @@ const campCount = existsSync(PATHS.campaignsDir) ? readdirSync(PATHS.campaignsDi
 add('campaigns', 'campaigns/', true, `${campCount} item(s)`);
 
 // 7) Queue worker (auto-publish)
-const queueScript = resolve(ROOT, 'bin/queue-tick.mjs');
+const queueScript = resolve(HARNESS_ROOT, 'bin/queue-tick.mjs');
 add('queue', 'queue-tick.mjs', existsSync(queueScript), existsSync(queueScript) ? '' : 'missing');
 let scheduled = 0, attention = 0;
 if (existsSync(PATHS.campaignsDir)) {

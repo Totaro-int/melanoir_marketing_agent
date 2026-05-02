@@ -2,6 +2,18 @@
 
 All notable changes to this project. Format: Phase / version → highlights.
 
+## 0.9.1 — 루트 폴더 정리 (posts/ + harness/)
+
+- 루트가 폴더 11개 → 2개 (`posts/`, `harness/`) + 표준 파일 + gitignored 런타임으로 정리
+- `harness/`: bin/src/schemas/commands/skills/agents/channels/examples/statusline/docs 모두 이동 (git mv 로 history 보존)
+- `posts/campaigns/<slug>/`: 캠페인 원본 (이전 `campaigns/`)
+- `posts/by-channel/<채널>/<slug>`: 채널별 한눈 보기 — `posts/campaigns/<slug>/<채널>` 로 향한 symlink
+- `harness/bin/sync-posts.mjs`: by-channel symlink 자동 동기화. campaign-new 종료 시 호출, `--prune` 옵션으로 dangling 정리
+- 경로 분리: `_lib.mjs` 가 `HARNESS_ROOT` (코드/스키마) vs `ROOT` (사용자 데이터/매니페스트) 둘 다 export
+- `plugin.json` / `package.json` 의 모든 path 에 `harness/` prefix
+- README 에 폴더 구조 한 줄 요약 추가
+- `INSTALL.md`/`OPERATIONS.md`/`CHANGELOG.md` → `harness/docs/`
+
 ## 0.9.0 — Phase 8 (11개 채널 + 온보딩 채널 선택)
 
 - 새 publisher adapter 9개: instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube (각 dry-run buildPayload + healthcheck + 실 publish, withRetry 적용)

@@ -7,7 +7,8 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { assertProvider } from '../provider.mjs';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../..');
+// harness/src/content-engine/providers/mock.mjs → PROJECT_ROOT 는 ../../../..
+const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 
 function pickTone(profile) {
   const preset = profile?.tone?.preset ?? 'professional';
