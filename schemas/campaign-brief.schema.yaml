@@ -31,14 +31,23 @@ properties:
     type: object
     additionalProperties:
       type: string
-      enum: [drafting, preview, approved, scheduled, published, failed, skipped]
+      enum: [drafting, preview, approved, scheduled, published, failed, needs_attention, skipped]
     description: "채널 id → 상태"
   schedule:
     type: object
-    description: "예약 발행 (선택)"
+    description: "예약 발행 시각 (채널별 ISO date-time, 선택)"
     additionalProperties:
       type: string
       format: date-time
+  autoPublish:
+    type: boolean
+    default: true
+    description: "schedule 도달 시 자동 발행 여부. false면 알림만, 사람이 /publish 손으로 호출."
+  attentionReason:
+    type: object
+    description: "needs_attention 사유 (자동 발행 실패 등)"
+    additionalProperties:
+      type: string
   meta:
     type: object
     properties:

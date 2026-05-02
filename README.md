@@ -54,22 +54,62 @@ FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 
 ## 매일 쓰는 흐름
 
-Claude Code 안에서 슬래시 명령으로:
+### 1줄로 끝내기 — `/run`
 
 ```
-/onboard                    회사 정보 첫 입력 (또는 /onboard show 로 확인)
-/campaign new "신제품 런칭"  새 캠페인 시작
-/generate <slug>            글 + 이미지 자동 생성
-/preview <slug>             결과 보기
-/approve <slug> --channel=threads     OK
+/run "신제품 런칭" --channels=threads --approve --publish --dry-run
+```
+
+회사 프로필 확인 → 캠페인 생성 → 글·이미지 생성 → 가드 검사 → 자동 승인 → dry-run 발행까지 한 번에.
+
+### 단계별로 가고 싶으면
+
+```
+/onboard                                회사 정보 첫 입력
+/campaign new "신제품 런칭"              새 캠페인
+/generate <slug>                         글 + 이미지 자동 생성
+/preview <slug>                          결과 보기
+/approve <slug> --channel=threads        OK
 /publish <slug> --channel=threads --dry-run    먼저 미리보기
-/publish <slug> --channel=threads             진짜 올리기
-/status --watch             실시간 진행 보드
+/publish <slug> --channel=threads        진짜 올리기
+/status --watch                          실시간 진행 보드
 ```
 
-`<slug>`는 캠페인 이름의 폴더명입니다 (예: `2026-05-02-신제품-런칭`).
+`<slug>`는 캠페인 폴더명 (예: `2026-05-02-신제품-런칭`). 처음 사용자라면 `/init`.
 
-처음 사용자라면 `/init` 한 번 입력하면 단계별로 안내해줍니다.
+---
+
+## 일주일/한 달치 미리 예약 (스케줄)
+
+`/run` 으로는 즉시 1건만 만듭니다. 일주일·한 달치를 한 번에 깔아두려면:
+
+```
+/schedule --topic "5월 마케팅" --channels=threads --period=week --frequency=3 --titles="A편|B편|C편"
+```
+
+| 옵션 | 의미 |
+|------|------|
+| `--period=week\|month` | 7일 / 30일 |
+| `--frequency=N` | 그 기간 안에 게시 횟수 |
+| `--titles="A\|B\|C"` | 매 회 다른 주제 (없으면 seed 주제 + #1, #2…) |
+| `--time=09:00` | 발행 시각 (KST, 기본 09:00) |
+| `--no-auto-publish` | 알림만, 수동 발행 |
+
+기본은 **자동 발행**: 발행 시각에 워커가 자동 승인 → 발행. 자동이 막히면 (가드 reject, 토큰 만료 등) `needs_attention` 으로 표시되고 사람이 손으로 처리.
+
+**워커 돌리는 두 가지 방법**
+
+```bash
+# 수동 (Claude 안에서 한 번씩)
+/queue tick
+
+# 자동 (15분마다 백그라운드, macOS launchd 또는 cron)
+node bin/install-cron.mjs install --every=15
+```
+
+자동 설치 안 해도 됩니다. `/queue tick` 만 가끔 손으로 눌러도 동작.
+
+자세한 옵션은 [`commands/run.md`](commands/run.md), [`commands/queue.md`](commands/queue.md).
 
 ---
 

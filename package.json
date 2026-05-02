@@ -1,6 +1,6 @@
 {
   "name": "marketing_agent",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Totaro SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
   "type": "module",
@@ -25,7 +25,12 @@
     "status":           "node bin/board.mjs",
     "status:watch":     "node bin/board.mjs --watch",
     "doctor":           "node bin/doctor.mjs",
-    "setup":            "node bin/setup.mjs"
+    "setup":            "node bin/setup.mjs",
+    "run":              "node bin/run.mjs",
+    "schedule":         "node bin/schedule-plan.mjs",
+    "queue:tick":       "node bin/queue-tick.mjs",
+    "queue:dry":        "node bin/queue-tick.mjs --dry-run",
+    "queue:install":    "node bin/install-cron.mjs install"
   },
   "dependencies": {
     "ajv":         "^8.17.1",

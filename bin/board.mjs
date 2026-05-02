@@ -18,6 +18,7 @@ const W = 78; // box width
 const ICONS = {
   drafting: '⏳', preview: '👀', approved: '📤',
   scheduled: '📅', published: '✅', failed: '❌', skipped: '⏭',
+  needs_attention: '🔔',
   unknown: '·',
 };
 
@@ -81,10 +82,15 @@ function drawCampaign(c) {
   for (const ch of c.brief.channels) {
     const status = c.brief.status?.[ch] ?? 'unknown';
     const result = c.results?.[ch];
-    const tail = result?.url ? pc.dim(' ' + truncate(result.url, 50))
-              : result?.error ? pc.red(' ' + truncate(result.error, 50))
-              : '';
-    const line = `  ${icon(status)}  ${pc.bold(ch.padEnd(10))}${color(status)(status.padEnd(10))}${tail}`;
+    const sched = c.brief.schedule?.[ch];
+    const reason = c.brief.attentionReason?.[ch];
+    const tail =
+        result?.url   ? pc.dim(' ' + truncate(result.url, 40))
+      : reason        ? pc.red(' ' + truncate(reason, 40))
+      : result?.error ? pc.red(' ' + truncate(result.error, 40))
+      : sched         ? pc.magenta(' @ ' + sched.slice(5, 16).replace('T', ' '))
+      : '';
+    const line = `  ${icon(status)}  ${pc.bold(ch.padEnd(10))}${color(status)(status.padEnd(16))}${tail}`;
     console.log(`│${pad(line, headerWidth(c) - 2)}│`);
   }
   console.log(border('bot', headerWidth(c)));
@@ -117,7 +123,7 @@ function listCampaigns() {
 }
 
 function countByStatus(status = {}) {
-  const o = { drafting: 0, preview: 0, approved: 0, scheduled: 0, published: 0, failed: 0, skipped: 0 };
+  const o = { drafting: 0, preview: 0, approved: 0, scheduled: 0, published: 0, failed: 0, needs_attention: 0, skipped: 0 };
   for (const v of Object.values(status)) if (v in o) o[v]++;
   o.total = Object.values(status).length;
   return o;
@@ -125,21 +131,25 @@ function countByStatus(status = {}) {
 
 function summary(t) {
   const parts = [];
-  if (t.published) parts.push(pc.green(`✅ ${t.published} published`));
-  if (t.approved)  parts.push(pc.cyan(`📤 ${t.approved} approved`));
-  if (t.preview)   parts.push(pc.yellow(`👀 ${t.preview} preview`));
-  if (t.drafting)  parts.push(pc.dim(`⏳ ${t.drafting} drafting`));
-  if (t.failed)    parts.push(pc.red(`❌ ${t.failed} failed`));
+  if (t.published)       parts.push(pc.green(`✅ ${t.published} published`));
+  if (t.approved)        parts.push(pc.cyan(`📤 ${t.approved} approved`));
+  if (t.scheduled)       parts.push(pc.magenta(`📅 ${t.scheduled} scheduled`));
+  if (t.needs_attention) parts.push(pc.red(`🔔 ${t.needs_attention} needs_attention`));
+  if (t.preview)         parts.push(pc.yellow(`👀 ${t.preview} preview`));
+  if (t.drafting)        parts.push(pc.dim(`⏳ ${t.drafting} drafting`));
+  if (t.failed)          parts.push(pc.red(`❌ ${t.failed} failed`));
   return parts.length ? parts.join(' · ') : pc.dim('no channels');
 }
 
 function icon(s) { return ICONS[s] ?? ICONS.unknown; }
 function color(s) {
-  return s === 'published' ? pc.green
-       : s === 'failed'    ? pc.red
-       : s === 'approved'  ? pc.cyan
-       : s === 'preview'   ? pc.yellow
-       : s === 'drafting'  ? pc.dim
+  return s === 'published'        ? pc.green
+       : s === 'failed'           ? pc.red
+       : s === 'needs_attention'  ? pc.red
+       : s === 'approved'         ? pc.cyan
+       : s === 'scheduled'        ? pc.magenta
+       : s === 'preview'          ? pc.yellow
+       : s === 'drafting'         ? pc.dim
        : (x) => x;
 }
 

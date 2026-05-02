@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, ROOT, ui } from './_lib.mjs';
+import { PATHS, ROOT, ui, readYaml } from './_lib.mjs';
 import { listProviders } from '../src/content-engine/registry.mjs';
 
 const rows = [];
@@ -47,6 +47,25 @@ add('plugin', 'plugin.json', existsSync(PATHS.pluginManifest));
 // 6) Campaigns
 const campCount = existsSync(PATHS.campaignsDir) ? readdirSync(PATHS.campaignsDir).length : 0;
 add('campaigns', 'campaigns/', true, `${campCount} item(s)`);
+
+// 7) Queue worker (auto-publish)
+const queueScript = resolve(ROOT, 'bin/queue-tick.mjs');
+add('queue', 'queue-tick.mjs', existsSync(queueScript), existsSync(queueScript) ? '' : 'missing');
+let scheduled = 0, attention = 0;
+if (existsSync(PATHS.campaignsDir)) {
+  for (const d of readdirSync(PATHS.campaignsDir)) {
+    const bp = resolve(PATHS.campaignsDir, d, 'brief.yaml');
+    if (!existsSync(bp)) continue;
+    try {
+      const b = readYaml(bp);
+      for (const v of Object.values(b.status ?? {})) {
+        if (v === 'scheduled') scheduled++;
+        if (v === 'needs_attention') attention++;
+      }
+    } catch {}
+  }
+}
+add('queue', 'scheduled items', true, `${scheduled} 대기 · ${attention} needs_attention`);
 
 // Render
 console.log();

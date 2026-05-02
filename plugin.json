@@ -1,8 +1,8 @@
 {
   "name": "marketing_agent",
   "displayName": "Totaro Marketing Agent",
-  "version": "0.7.0",
-  "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 엔진 + 휴먼 승인 게이트 + Publisher",
+  "version": "0.8.0",
+  "description": "SNS 마케팅 자동화 하네스 — /run 단일 진입점 + 스케줄(주/월) + 자동 발행 워커 + 휴먼 승인 게이트",
   "author": {
     "name": "Totaro Inc."
   },
@@ -24,12 +24,14 @@
     "commands/init.md",
     "commands/doctor.md",
     "commands/onboard.md",
+    "commands/run.md",
     "commands/campaign-new.md",
     "commands/generate.md",
     "commands/preview.md",
     "commands/approve.md",
     "commands/reject.md",
     "commands/publish.md",
+    "commands/queue.md",
     "commands/auth.md",
     "commands/status.md"
   ],
@@ -38,7 +40,7 @@
     { "id": "threads",  "status": "reference", "path": "channels/threads" },
     { "id": "linkedin", "status": "reference", "path": "channels/linkedin" }
   ],
-  "phase": 6,
+  "phase": 7,
   "private": true,
   "scripts": {
     "validate":     "node bin/profile-validate.mjs",
@@ -52,6 +54,10 @@
     "auth":         "node bin/auth.mjs",
     "status":       "node bin/board.mjs",
     "doctor":       "node bin/doctor.mjs",
-    "setup":        "node bin/setup.mjs"
+    "setup":        "node bin/setup.mjs",
+    "run":          "node bin/run.mjs",
+    "schedule":     "node bin/schedule-plan.mjs",
+    "queue":        "node bin/queue-tick.mjs",
+    "install-cron": "node bin/install-cron.mjs"
   }
 }
