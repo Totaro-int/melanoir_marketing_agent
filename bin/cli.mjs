@@ -20,6 +20,8 @@ const map = {
   auth:           'auth.mjs',
   status:         'board.mjs',
   board:          'board.mjs',
+  doctor:         'doctor.mjs',
+  setup:          'setup.mjs',
 };
 
 if (!sub || !map[sub]) {

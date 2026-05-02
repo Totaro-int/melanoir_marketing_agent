@@ -1,7 +1,7 @@
 {
   "name": "marketing_agent",
   "displayName": "Totaro Marketing Agent",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 엔진 + 휴먼 승인 게이트 + Publisher",
   "author": {
     "name": "Totaro Inc."
@@ -21,6 +21,8 @@
     "agents/publisher.md"
   ],
   "commands": [
+    "commands/init.md",
+    "commands/doctor.md",
     "commands/onboard.md",
     "commands/campaign-new.md",
     "commands/generate.md",
@@ -36,7 +38,7 @@
     { "id": "threads",  "status": "reference", "path": "channels/threads" },
     { "id": "linkedin", "status": "reference", "path": "channels/linkedin" }
   ],
-  "phase": 5,
+  "phase": 6,
   "private": true,
   "scripts": {
     "validate":     "node bin/profile-validate.mjs",
@@ -48,6 +50,8 @@
     "reject":       "node bin/reject.mjs",
     "publish":      "node bin/publish.mjs",
     "auth":         "node bin/auth.mjs",
-    "status":       "node bin/board.mjs"
+    "status":       "node bin/board.mjs",
+    "doctor":       "node bin/doctor.mjs",
+    "setup":        "node bin/setup.mjs"
   }
 }

@@ -10,17 +10,21 @@
 
 ## 빠른 시작
 
-```bash
-# 1) 의존성 설치
-cd /path/to/marketing_agent
-npm install
-cp .env.example .env.local       # provider·BYO 키 설정 (선택, 기본 mock)
+자세한 설치 가이드는 [INSTALL.md](INSTALL.md), 운영 지침은 [OPERATIONS.md](OPERATIONS.md), 변경 이력은 [CHANGELOG.md](CHANGELOG.md).
 
-# 2) Claude Code 플러그인으로 로드 (개발 모드)
-cd /path/to/your/project
-ln -s /Users/songseungju/totaro/marketing_agent .claude/plugins/marketing_agent
+```bash
+# 1) 한 번에 setup
+cd /path/to/marketing_agent
+node bin/setup.mjs
+# 또는 작업 프로젝트에 플러그인 링크까지 한 번에:
+node bin/setup.mjs --link=/path/to/your/project
+
+# 2) 환경 진단
+node bin/doctor.mjs
 
 # 3) Claude Code 안에서 — 캠페인 한 사이클
+/init                             # (신규 사용자) 단계별 가이드
+/doctor                           # 환경 점검
 /onboard                          # 회사 프로필 인터뷰
 /campaign new "신제품 런칭"       # 브리프 + 채널 디렉터리 생성
 /generate <slug>                  # 채널별 카피·이미지 draft (provider 자동 선택)
@@ -84,7 +88,7 @@ marketing_agent/
 - [x] Phase 5 — 칸반 보드 (`bin/board.mjs`) + statusline 색상·진행바 + `/status --watch`
 - [x] Phase 4.1 — 이미지 업로드 (fal.ai → CDN URL → 발행) + 자동 재시도
 - [x] Phase 4.2 — 카드뉴스 캐러셀 (Threads CAROUSEL · LinkedIn multi-image) + cadence별 자동 카드 수
-- [ ] Phase 6 — 사내 패키징·배포
+- [x] Phase 6 — 사내 패키징 (`bin/setup.mjs`, `bin/doctor.mjs`, `/init`, `/doctor`, INSTALL/OPERATIONS/CHANGELOG)
 
 ## Provider 선택
 
