@@ -45,7 +45,7 @@ export const PATHS = {
   profile:             resolve(ROOT, 'company-profile.yaml'),
   campaignsDir:        resolve(ROOT, 'posts/campaigns'),
   postsByChannelDir:   resolve(ROOT, 'posts/by-channel'),
-  pluginManifest:      resolve(ROOT, 'plugin.json'),
+  pluginManifest:      resolve(ROOT, '.claude-plugin/plugin.json'),
 };
 
 export function readYaml(path) {

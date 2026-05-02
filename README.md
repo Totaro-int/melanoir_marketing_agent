@@ -38,21 +38,27 @@ node harness/bin/setup.mjs        # 의존성 + 폴더 + 권한 자동
 
 ### 2) Claude Code 에 플러그인 등록
 
-이 폴더 자체가 플러그인입니다. 이 폴더 안에서 Claude 를 띄우면 자동으로 인식됩니다.
+GitHub 에서 marketplace 로 설치 (한 번만):
 
-```bash
-claude                             # 현재 폴더(marketing_agent) 에서 그냥 실행
+```
+/plugin marketplace add Totaro-int/marketing_agent
+/plugin install marketing_agent@Totaro-int-marketing_agent
 ```
 
-다른 작업 폴더에서 쓰고 싶으면 심볼릭 링크 한 줄:
+설치 후 Claude 를 재시작 (또는 `/reload-plugins`). 다음을 입력해 13개 명령이 보이면 OK:
 
-```bash
-node harness/bin/setup.mjs --link=/Users/me/work/my-project
-# → /Users/me/work/my-project/.claude/plugins/marketing_agent 로 링크
-cd /Users/me/work/my-project && claude
+```
+/help            # 명령 목록에 sns-* 13개가 그룹으로 보여야 함
+/sns-doctor      # 환경 진단 (잘 등록됐는지 1차 확인)
 ```
 
-Claude 안에서 `/help` 쳐서 `/sns-onboard`, `/sns-run`, `/sns-campaign-new`, `/sns-status`, `/sns-doctor` 같은 명령이 보이면 인식 OK.
+**로컬 개발 (이 repo 자체를 수정하면서 테스트하는 경우)**
+
+```bash
+claude --plugin-dir /path/to/marketing_agent
+```
+
+수정 후 `/reload-plugins` 으로 재로드.
 
 ### 3) 환경 점검 + 첫 사용
 
@@ -75,7 +81,8 @@ Claude 안에서:
 | `posts/` | **사람이 보는 결과물** — `campaigns/<slug>/` 원본 + `by-channel/<채널>/` 채널별 한눈 보기 (symlink) |
 | `harness/` | **하네스 본체** — bin/src/schemas/commands/skills/agents/channels/examples/statusline/docs |
 | `auth/` | 자격증명 (gitignored, 본인만 보임) |
-| 루트 파일 | README, LICENSE, package.json, plugin.json, .env.example, .gitignore |
+| `.claude-plugin/` | Claude Code 플러그인 매니페스트 (`plugin.json`) |
+| 루트 파일 | README, LICENSE, package.json, .env.example, .gitignore |
 
 ### 이미지 생성을 쓰려면 키 한 개
 
