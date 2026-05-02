@@ -1,0 +1,24 @@
+{
+  "name": "marketing_agent",
+  "id": "marketing_agent",
+  "owner": {
+    "name": "Totaro Inc."
+  },
+  "metadata": {
+    "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스 (single-plugin marketplace).",
+    "version": "0.9.1"
+  },
+  "plugins": [
+    {
+      "name": "marketing_agent",
+      "source": "./",
+      "description": "11개 SNS 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube) 자동 발행, 휴먼 승인 게이트, /sns- prefix 13개 명령.",
+      "version": "0.9.1",
+      "author": {
+        "name": "Totaro Inc."
+      },
+      "keywords": ["marketing", "sns", "social", "publishing", "korean"],
+      "category": "workflow"
+    }
+  ]
+}

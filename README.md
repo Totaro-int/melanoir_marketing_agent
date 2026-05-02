@@ -38,14 +38,16 @@ node harness/bin/setup.mjs        # 의존성 + 폴더 + 권한 자동
 
 ### 2) Claude Code 에 플러그인 등록
 
-이 repo 는 현재 **private** 입니다. private repo 는 marketplace 자동 clone 이 SSH/PAT 없으면 막히기 때문에, **로컬 심볼릭 링크 방식** 을 권장합니다.
+이 repo 는 자기 자신을 marketplace 로 패키징해뒀습니다 (`.claude-plugin/marketplace.json`). private 이라 GitHub URL 은 인증이 필요하지만, **로컬 경로** 로는 인증 없이 바로 설치 가능합니다.
 
-```bash
-mkdir -p ~/.claude/plugins
-ln -s "$(pwd)" ~/.claude/plugins/marketing_agent
+Claude 안에서 입력 (`<repo-path>` 는 위에서 clone 한 폴더의 절대 경로):
+
+```
+/plugin marketplace add /Users/me/totaro/marketing_agent
+/plugin install marketing_agent@marketing_agent
 ```
 
-그 다음 Claude 를 재시작 (또는 `/plugin reload`). 어느 폴더에서 `claude` 를 띄우든 13개 `/sns-*` 명령이 보입니다.
+그 다음 Claude 를 재시작 (또는 `/plugin reload`). 13개 `/sns-*` 명령이 어느 폴더에서 `claude` 를 띄워도 보입니다.
 
 **확인**:
 
@@ -54,24 +56,22 @@ ln -s "$(pwd)" ~/.claude/plugins/marketing_agent
 /sns-doctor      # 환경 진단 (잘 등록됐는지 1차 확인)
 ```
 
-업데이트는 `git pull` 한 줄 (`/plugin reload` 로 재로드 — 재시작 불필요).
+업데이트: repo 에서 `git pull` 후 `/plugin update marketing_agent` (또는 Claude 재시작).
 
-**일회성 테스트만 (영구 설치 X)**:
+**일회성 테스트 (설치 없이 한 세션만)**:
 
 ```bash
 claude --plugin-dir "$(pwd)"
 ```
 
-**향후 public 배포 시 (참고)**
+**향후 public 배포 시**
 
-repo 가 public 이 되면 marketplace 한 줄 설치도 가능:
+repo 가 public 이 되면 GitHub URL 로 한 줄 설치 가능 (collaborator/PAT 불필요):
 
 ```
 /plugin marketplace add https://github.com/Totaro-int/marketing_agent
-/plugin install marketing_agent@Totaro-int-marketing_agent
+/plugin install marketing_agent@marketing_agent
 ```
-
-private 인 동안엔 위 명령은 인증 실패합니다.
 
 ### 3) 환경 점검 + 첫 사용
 
