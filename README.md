@@ -82,7 +82,8 @@ marketing_agent/
 - [x] Phase 3 — 콘텐츠 엔진 어댑터(mock/openai/inhouse-stub) + brand-guardian + /generate /preview /approve /reject + copywriter·image-director·brand-guardian subagent 정의
 - [x] Phase 4 — Publisher (Threads/LinkedIn 어댑터, dry-run 기본, /publish /auth, publisher subagent). 텍스트 발행만
 - [x] Phase 5 — 칸반 보드 (`bin/board.mjs`) + statusline 색상·진행바 + `/status --watch`
-- [ ] Phase 4.1 — 이미지 업로드 (fal.ai → CDN URL → 발행) + 자동 재시도
+- [x] Phase 4.1 — 이미지 업로드 (fal.ai → CDN URL → 발행) + 자동 재시도
+- [x] Phase 4.2 — 카드뉴스 캐러셀 (Threads CAROUSEL · LinkedIn multi-image) + cadence별 자동 카드 수
 - [ ] Phase 6 — 사내 패키징·배포
 
 ## Provider 선택

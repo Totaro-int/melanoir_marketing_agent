@@ -18,10 +18,22 @@ function pickMediaType(draft) {
 }
 
 function buildPayload({ draft }) {
+  const mediaType = pickMediaType(draft);
+  if (mediaType === 'CAROUSEL') {
+    return {
+      media_type: 'CAROUSEL',
+      text: draft.text,
+      children: (draft.assetUrls ?? []).map((url) => ({
+        media_type: 'IMAGE',
+        image_url: url,
+        is_carousel_item: true,
+      })),
+    };
+  }
   return {
-    media_type: pickMediaType(draft),
+    media_type: mediaType,
     text: draft.text,
-    image_urls: draft.assetUrls ?? [],
+    image_url: mediaType === 'IMAGE' ? draft.assetUrls?.[0] : undefined,
   };
 }
 
@@ -39,33 +51,62 @@ export const adapter = assertAdapter({
     const { accessToken, userId } = credentials;
     const mediaType = pickMediaType(draft);
 
-    // Carousel needs per-item containers + parent CAROUSEL container.
-    // Phase 4.1 ships TEXT and single-IMAGE; carousel is staged for Phase 4.2.
-    if (mediaType === 'CAROUSEL') {
-      throw new Error('threads adapter: CAROUSEL is Phase 4.2. Reduce to 1 image or none for now.');
+    for (const u of draft.assetUrls ?? []) {
+      if (!u?.startsWith('http')) throw new Error(`threads adapter: assetUrls must be public https URLs, got ${u}`);
     }
 
-    if (mediaType === 'IMAGE' && !draft.assetUrls?.[0]?.startsWith('http')) {
-      throw new Error('threads adapter: assetUrls[0] must be a public https URL (use the fal provider).');
+    let creationId;
+    let containers = null;
+    if (mediaType === 'TEXT' || mediaType === 'IMAGE') {
+      const params = new URLSearchParams({
+        media_type: mediaType,
+        text: draft.text,
+        access_token: accessToken,
+      });
+      if (mediaType === 'IMAGE') params.set('image_url', draft.assetUrls[0]);
+      const created = await withRetry(() =>
+        fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads`, { method: 'POST', body: params })
+      );
+      if (!created.id) throw new Error('threads create failed: ' + JSON.stringify(created));
+      creationId = created.id;
+      if (mediaType === 'IMAGE') await new Promise((res) => setTimeout(res, 1000));
+    } else if (mediaType === 'CAROUSEL') {
+      // 1) per-item IMAGE containers with is_carousel_item=true
+      containers = [];
+      for (const url of draft.assetUrls) {
+        const itemParams = new URLSearchParams({
+          media_type: 'IMAGE',
+          image_url: url,
+          is_carousel_item: 'true',
+          access_token: accessToken,
+        });
+        const item = await withRetry(() =>
+          fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads`, { method: 'POST', body: itemParams })
+        );
+        if (!item.id) throw new Error('threads carousel item create failed: ' + JSON.stringify(item));
+        containers.push(item.id);
+      }
+      // 2) wait for items, then build CAROUSEL container with children
+      await new Promise((res) => setTimeout(res, 1500));
+      const carouselParams = new URLSearchParams({
+        media_type: 'CAROUSEL',
+        text: draft.text,
+        children: containers.join(','),
+        access_token: accessToken,
+      });
+      const carousel = await withRetry(() =>
+        fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads`, { method: 'POST', body: carouselParams })
+      );
+      if (!carousel.id) throw new Error('threads carousel create failed: ' + JSON.stringify(carousel));
+      creationId = carousel.id;
+      await new Promise((res) => setTimeout(res, 1500));
+    } else {
+      throw new Error(`threads adapter: unsupported media_type ${mediaType}`);
     }
 
-    // Step 1: create media container.
-    const createParams = new URLSearchParams({
-      media_type: mediaType,
-      text: draft.text,
-      access_token: accessToken,
-    });
-    if (mediaType === 'IMAGE') createParams.set('image_url', draft.assetUrls[0]);
-
-    const created = await withRetry(() =>
-      fetchJson(`${BASE}/${encodeURIComponent(userId)}/threads`, { method: 'POST', body: createParams })
-    );
-    if (!created.id) throw new Error('threads create failed: ' + JSON.stringify(created));
-
-    // Step 2: publish container. (Meta recommends a small wait when media is included.)
-    if (mediaType === 'IMAGE') await new Promise((res) => setTimeout(res, 1000));
+    // Final publish step is the same for all media types.
     const publishParams = new URLSearchParams({
-      creation_id: created.id,
+      creation_id: creationId,
       access_token: accessToken,
     });
     const published = await withRetry(() =>
@@ -77,7 +118,7 @@ export const adapter = assertAdapter({
       ok: true,
       externalId: published.id,
       url: `https://www.threads.net/@${userId}/post/${published.id}`,
-      raw: { created, published },
+      raw: { creationId, containers, published },
     };
   },
 });

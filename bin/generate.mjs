@@ -46,12 +46,23 @@ for (const channel of channels) {
   const merged = mergeHashtags(copy.text, copy.hashtags, profile);
 
   const aspect = channel === 'linkedin' ? 'square' : 'portrait';
-  const image = await provider.generateImage({
-    prompt: imagePromptFor(channel, brief, profile),
-    visual: profile.visual ?? {},
-    aspect,
-    count: 1,
-  });
+  const cardCount = imagesFor(brief.cadence, flags.images);
+
+  // Generate one image per card so each carries its own role (hook → body → cta).
+  // We collect into a single ImageResult-shape object so downstream code stays unchanged.
+  const image = { paths: [], urls: [], meta: null };
+  for (let i = 0; i < cardCount; i++) {
+    const role = roleFor(i, cardCount);
+    const r = await provider.generateImage({
+      prompt: imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
+      visual: profile.visual ?? {},
+      aspect,
+      count: 1,
+    });
+    image.paths.push(...(r.paths ?? []));
+    image.urls.push(...(r.urls ?? []));
+    image.meta = r.meta; // last call's meta is fine for the draft summary
+  }
 
   // Brand guardian.
   const report = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
@@ -99,15 +110,43 @@ function mergeHashtags(text, fromProvider, profile) {
   return { text: finalText, hashtags: Array.from(set) };
 }
 
-function imagePromptFor(channel, brief, profile) {
+function imagesFor(cadence, override) {
+  if (override) {
+    const n = parseInt(override, 10);
+    return Number.isFinite(n) && n >= 0 && n <= 10 ? n : 1;
+  }
+  switch (cadence) {
+    case 'series-3': return 3;
+    case 'series-5': return 5;
+    case 'thread':   return 0; // text series — copywriter handles continuation
+    case 'single':
+    default:         return 1;
+  }
+}
+
+function roleFor(index, total) {
+  if (total <= 1) return 'single';
+  if (index === 0) return 'hook';
+  if (index === total - 1) return 'cta';
+  return 'body';
+}
+
+function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total = 1) {
   const brand = profile?.brand?.name ?? '브랜드';
   const palette = profile?.visual?.colors
     ? `palette ${Object.values(profile.visual.colors).filter(Boolean).join(', ')}`
     : '';
+  const roleHint = {
+    single: 'single hero card with the headline as the focal point',
+    hook:   `card ${n}/${total} — the HOOK: oversized headline, attention grab, minimal supporting copy area`,
+    body:   `card ${n}/${total} — a BODY card: data/insight layout with room for one statistic or one short paragraph`,
+    cta:    `card ${n}/${total} — the CTA card: closing message, clear visual call-to-action area, brand colors stronger`,
+  }[role] ?? 'single hero card';
   return [
     `Card visual for SNS post on ${channel}.`,
     `Brand: ${brand}.`,
     `Topic: ${brief.topic}.`,
+    `Role: ${roleHint}.`,
     `Style: minimal, modern editorial, large serif headline, plenty of negative space.`,
     palette,
     `No real logos, no gibberish text, no faces. Korean-friendly typography.`,

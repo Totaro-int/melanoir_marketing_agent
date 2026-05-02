@@ -1,8 +1,8 @@
 {
   "name": "marketing_agent",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "Upflow SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
+  "description": "Totaro SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
   "type": "module",
   "engines": {
     "node": ">=20"

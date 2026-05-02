@@ -41,14 +41,13 @@ export const adapter = assertAdapter({
   },
 
   async publish({ draft, credentials }) {
-    const hasImage = (draft.assetUrls?.length ?? 0) > 0;
-    if (hasImage && (draft.assetUrls?.length ?? 0) > 1) {
-      throw new Error('linkedin adapter: multi-image share is Phase 4.2. Reduce to 1 image.');
-    }
+    const urls = draft.assetUrls ?? [];
+    const hasImage = urls.length > 0;
 
-    let mediaEntry = null;
-    if (hasImage) {
-      // 1) register-upload to get an asset URN + uploadUrl
+    // Each image needs its own register-upload + bytes PUT, then we collect the
+    // resulting asset URNs into a single ugcPosts media[] array.
+    const mediaEntries = [];
+    for (const url of urls) {
       const reg = await withRetry(() =>
         liPost(`${BASE}/assets?action=registerUpload`, credentials.accessToken, {
           registerUploadRequest: {
@@ -67,9 +66,8 @@ export const adapter = assertAdapter({
       const asset = reg?.value?.asset;
       if (!uploadUrl || !asset) throw new Error('linkedin register-upload missing uploadUrl/asset: ' + JSON.stringify(reg).slice(0, 300));
 
-      // 2) fetch image bytes from public URL, upload to LinkedIn
-      const img = await fetch(draft.assetUrls[0]);
-      if (!img.ok) throw new Error('linkedin: failed to fetch source image: HTTP ' + img.status);
+      const img = await fetch(url);
+      if (!img.ok) throw new Error(`linkedin: failed to fetch source image ${url}: HTTP ${img.status}`);
       const bytes = Buffer.from(await img.arrayBuffer());
       const up = await fetch(uploadUrl, {
         method: 'PUT',
@@ -78,7 +76,7 @@ export const adapter = assertAdapter({
       });
       if (!up.ok) throw new Error('linkedin upload failed: HTTP ' + up.status);
 
-      mediaEntry = { status: 'READY', media: asset };
+      mediaEntries.push({ status: 'READY', media: asset });
     }
 
     const body = {
@@ -88,7 +86,7 @@ export const adapter = assertAdapter({
         'com.linkedin.ugc.ShareContent': {
           shareCommentary: { text: draft.text },
           shareMediaCategory: hasImage ? 'IMAGE' : 'NONE',
-          media: mediaEntry ? [mediaEntry] : [],
+          media: mediaEntries,
         },
       },
       visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
