@@ -9,6 +9,7 @@ import pc from 'picocolors';
 import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
 import { listProviders } from '../src/content-engine/registry.mjs';
 import { knownChannels, CHANNEL_META } from '../src/publisher/registry.mjs';
+import { visibleWidth } from '../src/util/width.mjs';
 
 const rows = [];
 // status: 'ok' | 'warn' | 'fail'. `add(g,n,bool,d)` 기존 호출 backward-compat: true=ok, false=fail.
@@ -135,25 +136,3 @@ function readPkg() {
   catch { return null; }
 }
 
-// CJK + 이모지를 2칸으로 카운트 (board.mjs 의 wcwidth 와 동일 로직).
-function visibleWidth(s) {
-  let n = 0;
-  for (const ch of s) {
-    const cp = ch.codePointAt(0);
-    const wide =
-      (cp >= 0x1100 && cp <= 0x115F) ||
-      (cp >= 0x2300 && cp <= 0x23FF) ||
-      (cp >= 0x2600 && cp <= 0x26FF) ||
-      (cp >= 0x2700 && cp <= 0x27BF) ||
-      (cp >= 0x3000 && cp <= 0x9FFF) ||
-      (cp >= 0xAC00 && cp <= 0xD7AF) ||
-      (cp >= 0xF900 && cp <= 0xFAFF) ||
-      (cp >= 0xFE30 && cp <= 0xFE4F) ||
-      (cp >= 0xFF00 && cp <= 0xFFEF) ||
-      (cp >= 0x1F300 && cp <= 0x1F6FF) ||
-      (cp >= 0x1F900 && cp <= 0x1F9FF) ||
-      (cp >= 0x1FA00 && cp <= 0x1FAFF);
-    n += wide ? 2 : 1;
-  }
-  return n;
-}

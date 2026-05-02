@@ -12,6 +12,7 @@ import { readdirSync, statSync, watch } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
 import { PATHS, readYaml, ui } from './_lib.mjs';
+import { visibleWidth as wcwidth, stripAnsi } from '../src/util/width.mjs';
 
 const W = 78; // box width
 
@@ -177,36 +178,6 @@ function truncateWide(s, w) {
   let out = s;
   while (wcwidth(stripAnsi(out)) > w) out = out.slice(0, -1);
   return out;
-}
-
-function stripAnsi(s) {
-  return s.replace(/\x1B\[[0-9;]*m/g, '');
-}
-
-// Approximate East Asian Wide width: count CJK + common emoji as 2, others as 1.
-// Covers: CJK, Hangul, Halfwidth/Fullwidth Forms, Misc Technical (⏳⏭),
-// Dingbats (✅❌), Misc Symbols & Pictographs (📣👀📤📅🔔), Emoticons,
-// Transport, Supplemental Symbols & Pictographs.
-function wcwidth(s) {
-  let n = 0;
-  for (const ch of s) {
-    const cp = ch.codePointAt(0);
-    const wide =
-      (cp >= 0x1100 && cp <= 0x115F) ||           // Hangul Jamo
-      (cp >= 0x2300 && cp <= 0x23FF) ||           // Misc Technical
-      (cp >= 0x2600 && cp <= 0x26FF) ||           // Misc Symbols
-      (cp >= 0x2700 && cp <= 0x27BF) ||           // Dingbats
-      (cp >= 0x3000 && cp <= 0x9FFF) ||           // CJK + punctuation
-      (cp >= 0xAC00 && cp <= 0xD7AF) ||           // Hangul Syllables
-      (cp >= 0xF900 && cp <= 0xFAFF) ||           // CJK Compat
-      (cp >= 0xFE30 && cp <= 0xFE4F) ||           // CJK Compat Forms
-      (cp >= 0xFF00 && cp <= 0xFFEF) ||           // Halfwidth/Fullwidth
-      (cp >= 0x1F300 && cp <= 0x1F6FF) ||         // Misc Sym & Pict / Emoticons / Transport
-      (cp >= 0x1F900 && cp <= 0x1F9FF) ||         // Supplemental Sym & Pict
-      (cp >= 0x1FA00 && cp <= 0x1FAFF);           // Symbols & Pict Extended-A
-    n += wide ? 2 : 1;
-  }
-  return n;
 }
 
 function clearScreen() { if (watchMode) process.stdout.write('\x1b[2J\x1b[H'); }
