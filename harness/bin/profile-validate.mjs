@@ -24,7 +24,7 @@ try {
 } catch (e) {
   if (e.code === 'ENOENT_YAML') {
     ui.err(`프로필 파일이 없습니다: ${target}`);
-    ui.info('먼저 /onboard 를 실행하거나 examples/company-profile.example.yaml 을 복사하세요.');
+    ui.info('먼저 /sns-onboard 를 실행하거나 examples/company-profile.example.yaml 을 복사하세요.');
     process.exit(2);
   }
   ui.err(`프로필 로드 실패: ${e.message}`);

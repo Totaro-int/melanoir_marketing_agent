@@ -15,7 +15,7 @@
 | 3. 검토 | 콘솔에 뜬 결과를 본다 | 회사 톤·금기어 자동 검사를 통과한 것만 보여준다 |
 | 4. 승인/거절 | 한 줄 명령으로 OK/되돌리기 | 거절 사유는 다음 생성에 반영된다 |
 | 5. 발행 | 한 줄 명령 | Threads / LinkedIn에 카드뉴스까지 자동 업로드 |
-| 6. 진행 확인 | `/status` | 모든 캠페인이 어느 채널에서 어느 단계인지 칸반으로 보여준다 |
+| 6. 진행 확인 | `/sns-status` | 모든 캠페인이 어느 채널에서 어느 단계인지 칸반으로 보여준다 |
 
 **중요한 약속**
 - 사람이 한 번 본 다음에만 발행됩니다 (자동 발행 없음)
@@ -52,16 +52,16 @@ node harness/bin/setup.mjs --link=/Users/me/work/my-project
 cd /Users/me/work/my-project && claude
 ```
 
-Claude 안에서 `/help` 쳐서 `/onboard`, `/run`, `/campaign new`, `/status`, `/doctor` 같은 명령이 보이면 인식 OK.
+Claude 안에서 `/help` 쳐서 `/sns-onboard`, `/sns-run`, `/sns-campaign-new`, `/sns-status`, `/sns-doctor` 같은 명령이 보이면 인식 OK.
 
 ### 3) 환경 점검 + 첫 사용
 
 Claude 안에서:
 
 ```
-/doctor                            환경 진단 (빨간 점 = 다음 액션)
-/onboard                           회사 정보 첫 입력 (스킬이 단계별로 물어봄)
-/run "신제품 런칭" --dry-run        첫 캠페인 (실 발행 X)
+/sns-doctor                            환경 진단 (빨간 점 = 다음 액션)
+/sns-onboard                           회사 정보 첫 입력 (스킬이 단계별로 물어봄)
+/sns-run "신제품 런칭" --dry-run        첫 캠페인 (실 발행 X)
 ```
 
 빨간 점이 없으면 OK. 자세한 내용은 [harness/docs/INSTALL.md](harness/docs/INSTALL.md).
@@ -91,10 +91,10 @@ FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 
 ## 매일 쓰는 흐름
 
-### 1줄로 끝내기 — `/run`
+### 1줄로 끝내기 — `/sns-run`
 
 ```
-/run "신제품 런칭" --channels=threads --approve --publish --dry-run
+/sns-run "신제품 런칭" --channels=threads --approve --publish --dry-run
 ```
 
 회사 프로필 확인 → 캠페인 생성 → 글·이미지 생성 → 가드 검사 → 자동 승인 → dry-run 발행까지 한 번에.
@@ -102,26 +102,26 @@ FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 ### 단계별로 가고 싶으면
 
 ```
-/onboard                                회사 정보 첫 입력
-/campaign new "신제품 런칭"              새 캠페인
-/generate <slug>                         글 + 이미지 자동 생성
-/preview <slug>                          결과 보기
-/approve <slug> --channel=threads        OK
-/publish <slug> --channel=threads --dry-run    먼저 미리보기
-/publish <slug> --channel=threads        진짜 올리기
-/status --watch                          실시간 진행 보드
+/sns-onboard                                회사 정보 첫 입력
+/sns-campaign-new "신제품 런칭"              새 캠페인
+/sns-generate <slug>                         글 + 이미지 자동 생성
+/sns-preview <slug>                          결과 보기
+/sns-approve <slug> --channel=threads        OK
+/sns-publish <slug> --channel=threads --dry-run    먼저 미리보기
+/sns-publish <slug> --channel=threads        진짜 올리기
+/sns-status --watch                          실시간 진행 보드
 ```
 
-`<slug>`는 캠페인 폴더명 (예: `2026-05-02-신제품-런칭`). 처음 사용자라면 `/init`.
+`<slug>`는 캠페인 폴더명 (예: `2026-05-02-신제품-런칭`). 처음 사용자라면 `/sns-init`.
 
 ---
 
 ## 일주일/한 달치 미리 예약 (스케줄)
 
-`/run` 으로는 즉시 1건만 만듭니다. 일주일·한 달치를 한 번에 깔아두려면:
+`/sns-run` 으로는 즉시 1건만 만듭니다. 일주일·한 달치를 한 번에 깔아두려면:
 
 ```
-/schedule --topic "5월 마케팅" --channels=threads --period=week --frequency=3 --titles="A편|B편|C편"
+/sns-schedule --topic "5월 마케팅" --channels=threads --period=week --frequency=3 --titles="A편|B편|C편"
 ```
 
 | 옵션 | 의미 |
@@ -138,24 +138,24 @@ FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 
 ```bash
 # 수동 (Claude 안에서 한 번씩)
-/queue tick
+/sns-queue tick
 
 # 자동 (15분마다 백그라운드, macOS launchd 또는 cron)
 node bin/install-cron.mjs install --every=15
 ```
 
-자동 설치 안 해도 됩니다. `/queue tick` 만 가끔 손으로 눌러도 동작.
+자동 설치 안 해도 됩니다. `/sns-queue tick` 만 가끔 손으로 눌러도 동작.
 
-자세한 옵션은 [`commands/run.md`](commands/run.md), [`commands/queue.md`](commands/queue.md).
+자세한 옵션은 [`harness/commands/sns-run.md`](harness/commands/sns-run.md), [`harness/commands/sns-queue.md`](harness/commands/sns-queue.md).
 
 ---
 
 ## 한 번에 카드뉴스 3장
 
-`/campaign new` 할 때 옵션을 주면 됩니다:
+`/sns-campaign-new` 할 때 옵션을 주면 됩니다:
 
 ```
-/campaign new "신제품 런칭 사례" --cadence=series-3
+/sns-campaign-new "신제품 런칭 사례" --cadence=series-3
 ```
 
 | 옵션 | 결과 |
@@ -169,10 +169,10 @@ node bin/install-cron.mjs install --every=15
 
 ## SNS 계정 연결
 
-11개 채널 지원. `/onboard` 단계에서 회사가 쓸 채널을 골라두면, `/campaign new` 의 기본 발행 대상이 됩니다. 채널마다 토큰 한 번씩 등록.
+11개 채널 지원. `/sns-onboard` 단계에서 회사가 쓸 채널을 골라두면, `/sns-campaign-new` 의 기본 발행 대상이 됩니다. 채널마다 토큰 한 번씩 등록.
 
 ```
-/auth add threads
+/sns-auth add threads
 # 키를 입력하라고 합니다 — JSON 한 줄
 ```
 
@@ -190,9 +190,9 @@ node bin/install-cron.mjs install --every=15
 | TikTok    | **영상 전용 (.mp4)**          | OAuth2 — 텍스트/이미지 X |
 | YouTube   | **영상 전용 (.mp4)**          | OAuth2 — 텍스트/이미지 X |
 
-토큰 미등록 채널은 자동으로 dry-run 으로만 동작 (`/doctor` 가 빨간 점으로 알려줌).
+토큰 미등록 채널은 자동으로 dry-run 으로만 동작 (`/sns-doctor` 가 빨간 점으로 알려줌).
 
-자세한 페이로드와 발급 절차는 [`commands/auth.md`](commands/auth.md).
+자세한 페이로드와 발급 절차는 [`harness/commands/sns-auth.md`](harness/commands/sns-auth.md).
 
 저장 위치는 `auth/<채널>.json` — 내 컴퓨터에만 있고, 권한도 본인만 읽기(0600). git에 절대 안 올라갑니다.
 
@@ -202,10 +202,10 @@ node bin/install-cron.mjs install --every=15
 
 다음 4단계가 겹쳐 있어 사고가 나기 어렵습니다:
 
-1. `/approve` 안 한 채널은 발행 거부
-2. 회사 금기어가 들어간 글은 `/approve` 자체가 거부
-3. `/publish --dry-run` 으로 페이로드만 미리 확인 가능
-4. `.env.local` 에 `PUBLISHER_DRY_RUN=true` 두면 모든 `/publish` 가 자동으로 미리보기 모드
+1. `/sns-approve` 안 한 채널은 발행 거부
+2. 회사 금기어가 들어간 글은 `/sns-approve` 자체가 거부
+3. `/sns-publish --dry-run` 으로 페이로드만 미리 확인 가능
+4. `.env.local` 에 `PUBLISHER_DRY_RUN=true` 두면 모든 `/sns-publish` 가 자동으로 미리보기 모드
 
 평상시 4번을 켜두고, 진짜 올릴 때만 잠시 끄는 운영을 권장합니다.
 

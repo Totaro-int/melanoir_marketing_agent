@@ -30,9 +30,9 @@ All notable changes to this project. Format: Phase / version → highlights.
 
 ## 0.8.0 — Phase 7 (단일 진입점 + 스케줄)
 
-- `/run` 단일 진입점 (`bin/run.mjs`): profile→campaign→generate→preview→approve→publish 한 줄
-- `/schedule` (`bin/schedule-plan.mjs`): 주/월 단위 N건 예약 생성, 매 회 다른 주제 옵션
-- `/queue tick` 워커 (`bin/queue-tick.mjs`): publishAt 도래 항목 자동 승인+발행, 실패시 `needs_attention`
+- `/sns-run` 단일 진입점 (`bin/run.mjs`): profile→campaign→generate→preview→approve→publish 한 줄
+- `/sns-schedule` (`bin/schedule-plan.mjs`): 주/월 단위 N건 예약 생성, 매 회 다른 주제 옵션
+- `/sns-queue tick` 워커 (`bin/queue-tick.mjs`): publishAt 도래 항목 자동 승인+발행, 실패시 `needs_attention`
 - `bin/install-cron.mjs`: macOS launchd / Linux crontab 옵션 설치 (안 깔아도 수동 동작)
 - `commands/run.md`, `commands/queue.md` 추가
 - 스키마: `needs_attention` status enum, `autoPublish: boolean`, `attentionReason{ch}` 추가
@@ -88,7 +88,7 @@ All notable changes to this project. Format: Phase / version → highlights.
 - `bin/{profile-validate,profile-show,campaign-new}.mjs`
 - `schemas/campaign-brief.schema.yaml`
 - `channels/linkedin/*` reference 채널 완성
-- `/onboard show` / `/onboard update <섹션>` 분기
+- `/sns-onboard show` / `/sns-onboard update <섹션>` 분기
 
 ## 0.1.0 — Phase 1 (스캐폴드)
 

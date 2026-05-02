@@ -3,14 +3,14 @@ name: auth
 description: 채널 발행용 자격증명을 로컬에만 저장 (auth/<channel>.json, mode 0600, gitignored).
 ---
 
-# /auth
+# /sns-auth
 
 ```
-/auth list
-/auth add <channel>            # JSON 을 stdin 으로 입력
-/auth show <channel>           # 토큰은 마스킹되어 출력
-/auth check <channel>          # 어댑터 healthcheck
-/auth remove <channel>
+/sns-auth list
+/sns-auth add <channel>            # JSON 을 stdin 으로 입력
+/sns-auth show <channel>           # 토큰은 마스킹되어 출력
+/sns-auth check <channel>          # 어댑터 healthcheck
+/sns-auth remove <channel>
 ```
 
 내부: `node bin/auth.mjs ...`.
@@ -96,5 +96,5 @@ Google Cloud Console > YouTube Data API v3 > OAuth2. scope: `https://www.googlea
 ## 보안
 - 평문 JSON 으로 저장하지만 파일 모드 0600 + .gitignore (`auth/`)
 - 자사 서버에 절대 전송하지 않음
-- 토큰 만료 시 `/auth add` 로 덮어쓰기 (rotation 자동화는 Phase 4.1)
+- 토큰 만료 시 `/sns-auth add` 로 덮어쓰기 (rotation 자동화는 Phase 4.1)
 - OS 키체인 연동은 Phase 6 검토 (현재는 디버깅 용이성 우선)

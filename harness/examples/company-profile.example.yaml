@@ -69,7 +69,7 @@ legal:
   adHashtag: "#광고"
 
 channels:
-  # /onboard 에서 고른 SNS. 미선택 채널은 /campaign new 에 명시해도 발행 거부됨.
+  # /sns-onboard 에서 고른 SNS. 미선택 채널은 /sns-campaign-new 에 명시해도 발행 거부됨.
   enabled: [threads, linkedin, instagram, x]
 
 campaigns:

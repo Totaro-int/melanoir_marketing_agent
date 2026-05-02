@@ -5,7 +5,7 @@
 //   - brief.autoPublish === true (false면 알림만)
 //
 // 자동 발행 실패 → status=needs_attention + attentionReason[ch]=<reason>.
-// 사람이 /preview 확인 후 /approve & /publish 수동.
+// 사람이 /sns-preview 확인 후 /sns-approve & /sns-publish 수동.
 //
 // Usage:
 //   node bin/queue-tick.mjs              # 실제 처리
@@ -62,7 +62,7 @@ for (const slug of slugs) {
 
     if (!auto) {
       results.push({ slug, channel: ch, action: 'notify-only', dueAt: at, currentStatus: status });
-      log(`🔔 ${slug} [${ch}] due — 자동발행 꺼짐, /publish 수동`);
+      log(`🔔 ${slug} [${ch}] due — 자동발행 꺼짐, /sns-publish 수동`);
       continue;
     }
 

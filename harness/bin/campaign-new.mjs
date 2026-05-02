@@ -29,7 +29,7 @@ const flags = Object.fromEntries(
 
 // 1) Profile must exist.
 if (!existsSync(PATHS.profile)) {
-  ui.err('company-profile.yaml 이 없습니다. 먼저 /onboard 를 실행하세요.');
+  ui.err('company-profile.yaml 이 없습니다. 먼저 /sns-onboard 를 실행하세요.');
   process.exit(2);
 }
 
@@ -50,7 +50,7 @@ const channels = (
     : (enabled.length ? enabled : activeChannels())
 );
 if (!channels.length) {
-  ui.err('활성 채널 없음. /onboard 또는 /onboard update channels 로 채널 선택, 또는 --channels= 플래그 사용.');
+  ui.err('활성 채널 없음. /sns-onboard 또는 /sns-onboard update channels 로 채널 선택, 또는 --channels= 플래그 사용.');
   process.exit(2);
 }
 
@@ -66,7 +66,7 @@ if (unknown.length) {
 if (enabled.length) {
   const notEnabled = channels.filter((c) => !enabled.includes(c));
   if (notEnabled.length) {
-    ui.warn(`onboard 에 없는 채널 사용: ${notEnabled.join(', ')} (이 캠페인 한정. 영구 추가는 /onboard update channels)`);
+    ui.warn(`onboard 에 없는 채널 사용: ${notEnabled.join(', ')} (이 캠페인 한정. 영구 추가는 /sns-onboard update channels)`);
   }
 }
 
@@ -125,5 +125,5 @@ ui.info(`디렉터리: ${dir}`);
 ui.info(`채널: ${channels.join(', ')}  ·  목표: ${goal}  ·  cadence: ${cadence}`);
 console.log();
 ui.dim('다음:');
-ui.dim('  · /status            진행 보드 보기');
-ui.dim('  · /preview ' + slug + '   (Phase 3 활성화 후)');
+ui.dim('  · /sns-status            진행 보드 보기');
+ui.dim('  · /sns-preview ' + slug + '   (Phase 3 활성화 후)');

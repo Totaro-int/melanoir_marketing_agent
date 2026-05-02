@@ -3,17 +3,17 @@ name: status
 description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다. --watch 로 실시간 갱신.
 ---
 
-# /status
+# /sns-status
 
 활성 캠페인을 채널별 칸반으로 한눈에 보여준다.
 
 ## 사용법
 
 ```
-/status                  # 최근 5개 캠페인
-/status <slug>           # 특정 캠페인만
-/status --watch          # 파일시스템 변경 감지 → 자동 갱신 (Ctrl-C 종료)
-/status <slug> --watch
+/sns-status                  # 최근 5개 캠페인
+/sns-status <slug>           # 특정 캠페인만
+/sns-status --watch          # 파일시스템 변경 감지 → 자동 갱신 (Ctrl-C 종료)
+/sns-status <slug> --watch
 ```
 
 내부: `node bin/board.mjs [<slug>] [--watch]`.

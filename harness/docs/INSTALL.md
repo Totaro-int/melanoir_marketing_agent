@@ -46,15 +46,15 @@ node bin/doctor.mjs
 ## 5. 첫 캠페인 사이클 (Claude Code 안에서)
 
 ```
-/onboard                         # 회사 프로필 인터뷰
-/campaign new "신제품 런칭"      # brief.yaml + 채널 디렉터리
-/generate <slug>                 # provider 호출 + brand-guardian
-/preview <slug>                  # 콘솔 렌더링
-/approve <slug> --channel=threads
-/auth add threads                # JSON stdin
-/publish <slug> --channel=threads --dry-run   # 페이로드만
-/publish <slug> --channel=threads             # 실 발행
-/status --watch                  # 칸반 보드 실시간
+/sns-onboard                         # 회사 프로필 인터뷰
+/sns-campaign-new "신제품 런칭"      # brief.yaml + 채널 디렉터리
+/sns-generate <slug>                 # provider 호출 + brand-guardian
+/sns-preview <slug>                  # 콘솔 렌더링
+/sns-approve <slug> --channel=threads
+/sns-auth add threads                # JSON stdin
+/sns-publish <slug> --channel=threads --dry-run   # 페이로드만
+/sns-publish <slug> --channel=threads             # 실 발행
+/sns-status --watch                  # 칸반 보드 실시간
 ```
 
 CLI 직접 사용:

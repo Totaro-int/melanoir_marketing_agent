@@ -33,4 +33,4 @@ if (brief.status[channel] !== 'preview') {
 brief.status[channel] = 'approved';
 brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
 writeYaml(briefPath, brief);
-ui.ok(`[${channel}] approved.  다음: /publish ${slug} --channel=${channel}  (Phase 4)`);
+ui.ok(`[${channel}] approved.  다음: /sns-publish ${slug} --channel=${channel}  (Phase 4)`);

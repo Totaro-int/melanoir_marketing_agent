@@ -96,7 +96,7 @@ for (const channel of channels) {
 
 writeYaml(briefPath, brief);
 console.log();
-ui.dim(`다음: /preview ${slug}   또는   node bin/preview.mjs ${slug}`);
+ui.dim(`다음: /sns-preview ${slug}   또는   node bin/preview.mjs ${slug}`);
 
 // ---- helpers ----
 

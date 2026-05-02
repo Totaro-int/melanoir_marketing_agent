@@ -3,13 +3,13 @@ name: generate
 description: 캠페인 1개 이상 채널에 대해 카피·이미지 draft를 생성 (provider는 env로 선택).
 ---
 
-# /generate
+# /sns-generate
 
 ```
-/generate <slug>                          # brief.channels 전부
-/generate <slug> --channel=threads
-/generate <slug> --provider=openai
-/generate <slug> --images=3               # 카드 수 강제 (cadence 자동값 무시)
+/sns-generate <slug>                          # brief.channels 전부
+/sns-generate <slug> --channel=threads
+/sns-generate <slug> --provider=openai
+/sns-generate <slug> --images=3               # 카드 수 강제 (cadence 자동값 무시)
 ```
 
 내부: `node bin/generate.mjs <slug> [--channel=...] [--provider=...] [--images=N]`.

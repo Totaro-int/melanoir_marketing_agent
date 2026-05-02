@@ -9,7 +9,7 @@
 //                    [--publish]              # 승인 + 발행 (실 발행: PUBLISHER_DRY_RUN unset 또는 ∉ {1,true,yes})
 //                    [--dry-run]              # publish 시 dry-run 강제
 //
-// 스케줄을 쓰려면 /schedule (bin/schedule-plan.mjs) 사용. 이 스크립트는 단건 즉시 흐름.
+// 스케줄을 쓰려면 /sns-schedule (bin/schedule-plan.mjs) 사용. 이 스크립트는 단건 즉시 흐름.
 
 import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
@@ -27,7 +27,7 @@ if (!flags.topic) {
 }
 
 if (!existsSync(PATHS.profile)) {
-  ui.err('company-profile.yaml 없음 — 먼저 /onboard 실행하세요.');
+  ui.err('company-profile.yaml 없음 — 먼저 /sns-onboard 실행하세요.');
   process.exit(2);
 }
 
@@ -67,7 +67,7 @@ run('preview.mjs', [slug], { stream: true });
 if (flags.approve) {
   for (const ch of channels) {
     const r = run('approve.mjs', [slug, `--channel=${ch}`]);
-    if (r.status !== 0) ui.warn(`[${ch}] 자동 승인 실패 (가드가 막았을 수 있음) — /preview 확인`);
+    if (r.status !== 0) ui.warn(`[${ch}] 자동 승인 실패 (가드가 막았을 수 있음) — /sns-preview 확인`);
   }
 }
 
@@ -77,14 +77,14 @@ if (flags.publish) {
   if (flags['dry-run']) pubArgs.push('--dry-run');
   for (const ch of channels) {
     const r = run('publish.mjs', [...pubArgs, `--channel=${ch}`]);
-    if (r.status !== 0) ui.warn(`[${ch}] publish 실패 — /preview 후 수동 처리`);
+    if (r.status !== 0) ui.warn(`[${ch}] publish 실패 — /sns-preview 후 수동 처리`);
   }
 }
 
 ui.ok(`run 완료 — ${slug}`);
 ui.dim('다음:');
-ui.dim('  · /preview ' + slug);
-ui.dim('  · /status');
+ui.dim('  · /sns-preview ' + slug);
+ui.dim('  · /sns-status');
 
 function parseFlags(args) {
   const out = {};

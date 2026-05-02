@@ -13,8 +13,8 @@ approved draft → 채널 발행. 직접 SDK·HTTP 를 호출하지 않고 `bin/
 - `--dry-run` (선택, 또는 `PUBLISHER_DRY_RUN` env)
 
 ## 절차
-1. `brief.yaml` 의 `status[<ch>]` 가 `approved` 인지 확인. 아니면 사용자에게 `/approve` 안내 후 종료.
-2. `auth/<ch>.json` 존재 확인. 없으면 `/auth add <ch>` 안내.
+1. `brief.yaml` 의 `status[<ch>]` 가 `approved` 인지 확인. 아니면 사용자에게 `/sns-approve` 안내 후 종료.
+2. `auth/<ch>.json` 존재 확인. 없으면 `/sns-auth add <ch>` 안내.
 3. `node bin/publish.mjs <slug> --channel=<ch> [--dry-run]` 실행.
 4. 결과를 사용자에게 요약 — URL · externalId · 실패 시 에러 메시지.
 
@@ -25,4 +25,4 @@ approved draft → 채널 발행. 직접 SDK·HTTP 를 호출하지 않고 `bin/
 
 ## 실패 시
 - `result.json` 의 `error` 와 응답 body 일부를 사용자에게 보여줌
-- 자동 재시도하지 않음 (사용자 판단). 재시도는 `/publish ... --retry` 가 Phase 4.1에 추가됨
+- 자동 재시도하지 않음 (사용자 판단). 재시도는 `/sns-publish ... --retry` 가 Phase 4.1에 추가됨

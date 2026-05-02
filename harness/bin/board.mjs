@@ -63,7 +63,7 @@ function render() {
     return;
   }
   if (!campaigns.length) {
-    console.log(pc.dim('(아직 캠페인이 없습니다 — /campaign new "<주제>")'));
+    console.log(pc.dim('(아직 캠페인이 없습니다 — /sns-campaign-new "<주제>")'));
     return;
   }
   console.log(pc.bold(pc.cyan('📣 marketing_agent — campaign board')) + pc.dim(`  (${campaigns.length})`));

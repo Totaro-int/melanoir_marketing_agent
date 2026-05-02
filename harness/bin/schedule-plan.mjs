@@ -32,7 +32,7 @@ if (!flags.topic || !flags.channels || !flags.period || !flags.frequency) {
 }
 
 if (!existsSync(PATHS.profile)) {
-  ui.err('company-profile.yaml 없음 — 먼저 /onboard');
+  ui.err('company-profile.yaml 없음 — 먼저 /sns-onboard');
   process.exit(2);
 }
 
@@ -119,10 +119,10 @@ if (!skipGenerate) {
     writeFileSync(bp, YAML.stringify(b, { lineWidth: 100 }), 'utf8');
   }
   ui.ok('pre-generate 완료. 각 캠페인은 status=scheduled 이지만 draft가 준비됨.');
-  ui.dim('  → /preview <slug> 로 확인 (수정하고 싶으면 /reject + /generate)');
+  ui.dim('  → /sns-preview <slug> 로 확인 (수정하고 싶으면 /sns-reject + /sns-generate)');
   ui.dim('  → publishAt 도달 시 워커가 자동 승인+발행 (가드 통과시).');
 } else {
-  ui.info('--no-generate 지정됨. 각 캠페인 draft는 /generate 로 직접 만드세요.');
+  ui.info('--no-generate 지정됨. 각 캠페인 draft는 /sns-generate 로 직접 만드세요.');
 }
 
 console.log();

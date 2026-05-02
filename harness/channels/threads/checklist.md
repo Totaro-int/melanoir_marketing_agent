@@ -1,6 +1,6 @@
 # Threads 발행 전 체크리스트
 
-휴먼 승인 게이트(`/preview <slug>` → approve)에서 사용. `copywriter` 산출물에 대해 자동 + 수동 점검.
+휴먼 승인 게이트(`/sns-preview <slug>` → approve)에서 사용. `copywriter` 산출물에 대해 자동 + 수동 점검.
 
 ## 자동 점검 (Phase 3 게이트가 차단)
 

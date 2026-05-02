@@ -91,6 +91,6 @@ console.log();
 console.log(pc.bold('다음 단계:'));
 console.log(pc.dim('  1. ') + 'node bin/doctor.mjs           ' + pc.dim('# 환경 진단'));
 console.log(pc.dim('  2. ') + '에디터로 .env.local 열어 키 채우기 (FAL_KEY 권장)');
-console.log(pc.dim('  3. ') + 'Claude Code 안에서 /onboard   ' + pc.dim('# 회사 프로필 인터뷰'));
-console.log(pc.dim('  4. ') + '/campaign new "<주제>"  →  /generate  →  /preview  →  /approve  →  /publish --dry-run');
+console.log(pc.dim('  3. ') + 'Claude Code 안에서 /sns-onboard   ' + pc.dim('# 회사 프로필 인터뷰'));
+console.log(pc.dim('  4. ') + '/sns-campaign-new "<주제>"  →  /sns-generate  →  /sns-preview  →  /sns-approve  →  /sns-publish --dry-run');
 console.log();

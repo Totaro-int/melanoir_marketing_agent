@@ -1,6 +1,6 @@
 ---
 name: onboard-company
-description: Use when the user runs `/onboard` or first-time setup, OR when a campaign command detects missing company-profile.yaml. Conducts a structured interview to fill schemas/company-profile.schema.yaml and writes company-profile.yaml at the project root.
+description: Use when the user runs `/sns-onboard` or first-time setup, OR when a campaign command detects missing company-profile.yaml. Conducts a structured interview to fill schemas/company-profile.schema.yaml and writes company-profile.yaml at the project root.
 ---
 
 # Onboard Company
@@ -9,9 +9,9 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
 
 ## When to use
 
-- 사용자가 `/onboard`를 실행했을 때
-- `company-profile.yaml`이 없는 상태에서 `/campaign new`가 호출됐을 때 (자동 트리거)
-- `/onboard update <섹션>` 으로 부분 업데이트 요청 시 (해당 섹션만 다시 인터뷰)
+- 사용자가 `/sns-onboard`를 실행했을 때
+- `company-profile.yaml`이 없는 상태에서 `/sns-campaign-new`가 호출됐을 때 (자동 트리거)
+- `/sns-onboard update <섹션>` 으로 부분 업데이트 요청 시 (해당 섹션만 다시 인터뷰)
 
 ## Inputs
 
@@ -49,7 +49,7 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
    - 영상 캠페인 계획 없으면 tiktok/youtube 는 빼는 게 좋음 (이미지/텍스트와 호환 안 됨).
    - 최소 1개 필수. 입력값은 `channels.enabled` 배열로 저장.
 
-8. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/onboard update <섹션>`으로 채워도 됩니다." 로 분기
+8. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/sns-onboard update <섹션>`으로 채워도 됩니다." 로 분기
 
 ## Validation
 
@@ -65,10 +65,10 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
 
 | 모드 | 트리거 | 동작 |
 |------|--------|------|
-| **full** | `/onboard` (프로필 없음) | 위 7단계 전체 인터뷰 |
-| **update** | `/onboard update <섹션>` | 해당 섹션만 인터뷰. 변경 사항만 머지하고 `meta.updatedAt` 갱신 |
-| **show** | `/onboard show` | `node bin/profile-show.mjs` 실행 결과를 그대로 보여줌 (스킬은 추가 작업 없음) |
-| **resume** | `/onboard` (프로필 있음) | "전체 다시 / 부분 업데이트 / 그대로 두기" 3택 질문 |
+| **full** | `/sns-onboard` (프로필 없음) | 위 7단계 전체 인터뷰 |
+| **update** | `/sns-onboard update <섹션>` | 해당 섹션만 인터뷰. 변경 사항만 머지하고 `meta.updatedAt` 갱신 |
+| **show** | `/sns-onboard show` | `node bin/profile-show.mjs` 실행 결과를 그대로 보여줌 (스킬은 추가 작업 없음) |
+| **resume** | `/sns-onboard` (프로필 있음) | "전체 다시 / 부분 업데이트 / 그대로 두기" 3택 질문 |
 
 업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `channels`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
 
@@ -90,15 +90,15 @@ meta:
 ✅ company-profile.yaml 저장 완료.
 활성 채널: <enabled 콤마 나열>
 다음 단계:
-  1) /auth add <채널>     선택한 채널마다 토큰 등록 (안 하면 dry-run 만 동작)
-  2) /campaign new "<주제>" 첫 캠페인 만들기 (채널 미지정 시 enabled 전부)
+  1) /sns-auth add <채널>     선택한 채널마다 토큰 등록 (안 하면 dry-run 만 동작)
+  2) /sns-campaign-new "<주제>" 첫 캠페인 만들기 (채널 미지정 시 enabled 전부)
 ```
 
 ## Guardrails
 
 - 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 `examples/company-profile.example.yaml`의 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓)
 - `company-profile.yaml`은 **gitignore 대상**임을 안내하고, 저장 후 `git status`에 빨간색으로 안 보이는지 확인하라고 한 줄로 안내
-- 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 별도 명령(`/auth add <channel>`, Phase 4)에서 OS 키체인으로 처리
+- 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 별도 명령(`/sns-auth add <channel>`, Phase 4)에서 OS 키체인으로 처리
 
 ## Don't
 

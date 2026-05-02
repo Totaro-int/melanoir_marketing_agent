@@ -27,7 +27,7 @@ if (!existsSync(draftPath)) { ui.err(`draft 없음: ${draftPath}`); process.exit
 const draft = readYaml(draftPath);
 
 if (brief.status[channel] !== 'approved') {
-  ui.err(`status가 approved 아님: ${brief.status[channel]} — /approve 먼저`);
+  ui.err(`status가 approved 아님: ${brief.status[channel]} — /sns-approve 먼저`);
   process.exit(1);
 }
 

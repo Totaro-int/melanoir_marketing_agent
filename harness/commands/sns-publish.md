@@ -3,18 +3,18 @@ name: publish
 description: approved draft 를 채널에 발행. dry-run 기본 모드 권장 (PUBLISHER_DRY_RUN=true).
 ---
 
-# /publish
+# /sns-publish
 
 ```
-/publish <slug> --channel=<ch>            # 실제 발행
-/publish <slug> --channel=<ch> --dry-run  # 페이로드만 출력, 네트워크 호출 없음
+/sns-publish <slug> --channel=<ch>            # 실제 발행
+/sns-publish <slug> --channel=<ch> --dry-run  # 페이로드만 출력, 네트워크 호출 없음
 ```
 
 내부: `node bin/publish.mjs <slug> --channel=<ch> [--dry-run]`.
 
 ## 안전장치
-- `brief.status[<ch>] === "approved"` 가 아니면 거부 (먼저 `/approve`)
-- `auth/<ch>.json` 없으면 거부 (먼저 `/auth add <ch>`)
+- `brief.status[<ch>] === "approved"` 가 아니면 거부 (먼저 `/sns-approve`)
+- `auth/<ch>.json` 없으면 거부 (먼저 `/sns-auth add <ch>`)
 - `PUBLISHER_DRY_RUN=true` 환경변수 또는 `--dry-run` 플래그면 네트워크 호출 없이 페이로드만 dump
 - 실패 시 `result.json` 에 에러 응답 저장하고 `status` 를 `failed` 로 갱신 (수동 재시도 가능)
 

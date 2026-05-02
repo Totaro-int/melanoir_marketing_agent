@@ -27,7 +27,7 @@ add('runtime', 'node_modules', existsSync(resolve(ROOT, 'node_modules')), exists
 
 // 2) Profile
 add('profile', 'company-profile.yaml', existsSync(PATHS.profile),
-  existsSync(PATHS.profile) ? '' : 'run: /onboard');
+  existsSync(PATHS.profile) ? '' : 'run: /sns-onboard');
 
 // 3) Env / providers
 add('env', '.env.local', existsSync(resolve(ROOT, '.env.local')),
@@ -44,7 +44,7 @@ for (const p of listProviders()) {
 const authDir = resolve(ROOT, 'auth');
 const authFiles = existsSync(authDir) ? readdirSync(authDir).filter((f) => f.endsWith('.json')) : [];
 add('publisher', 'auth/ dir', existsSync(authDir) ? (authFiles.length ? 'ok' : 'warn') : 'fail',
-  authFiles.length ? authFiles.join(', ') : 'empty (run: /auth add <channel>)');
+  authFiles.length ? authFiles.join(', ') : 'empty (run: /sns-auth add <channel>)');
 for (const f of authFiles) {
   const p = resolve(authDir, f);
   const mode = (statSync(p).mode & 0o777).toString(8);
@@ -59,7 +59,7 @@ let profile = null;
 try { if (existsSync(PATHS.profile)) profile = readYaml(PATHS.profile); } catch {}
 const enabled = enabledChannels(profile);
 if (!enabled.length) {
-  add('channels', 'enabled in profile', 'fail', '/onboard 또는 /onboard update channels — 1개 이상 필요');
+  add('channels', 'enabled in profile', 'fail', '/sns-onboard 또는 /sns-onboard update channels — 1개 이상 필요');
 } else {
   add('channels', 'enabled in profile', 'ok', enabled.join(', '));
   for (const ch of enabled) {
@@ -69,7 +69,7 @@ if (!enabled.length) {
     const meta = CHANNEL_META[ch];
     // 토큰 미등록은 warn (자동 dry-run fallback). 사용자가 의도적으로 미등록일 수 있음.
     add('channels', `[${ch}] auth/${ch}.json`, hasAuth ? 'ok' : 'warn',
-      hasAuth ? meta?.media ?? '' : `없음 — /auth add ${ch} (${meta?.auth ?? ''})`);
+      hasAuth ? meta?.media ?? '' : `없음 — /sns-auth add ${ch} (${meta?.auth ?? ''})`);
   }
 }
 
