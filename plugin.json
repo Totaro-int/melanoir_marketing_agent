@@ -1,7 +1,7 @@
 {
   "name": "marketing_agent",
   "displayName": "Upflow Marketing Agent",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "SNS 마케팅 자동화 하네스 — 채널별 전략 팩 + 회사 프로필 + 콘텐츠 엔진 + 휴먼 승인 게이트 + Publisher",
   "author": {
     "name": "Upflow Inc.",
@@ -18,7 +18,8 @@
   "agents": [
     "agents/copywriter.md",
     "agents/image-director.md",
-    "agents/brand-guardian.md"
+    "agents/brand-guardian.md",
+    "agents/publisher.md"
   ],
   "commands": [
     "commands/onboard.md",
@@ -27,6 +28,8 @@
     "commands/preview.md",
     "commands/approve.md",
     "commands/reject.md",
+    "commands/publish.md",
+    "commands/auth.md",
     "commands/status.md"
   ],
   "statusLine": "statusline/statusline.sh",
@@ -34,7 +37,7 @@
     { "id": "threads",  "status": "reference", "path": "channels/threads" },
     { "id": "linkedin", "status": "reference", "path": "channels/linkedin" }
   ],
-  "phase": 3,
+  "phase": 4,
   "private": true,
   "scripts": {
     "validate":     "node bin/profile-validate.mjs",
@@ -43,6 +46,8 @@
     "generate":     "node bin/generate.mjs",
     "preview":      "node bin/preview.mjs",
     "approve":      "node bin/approve.mjs",
-    "reject":       "node bin/reject.mjs"
+    "reject":       "node bin/reject.mjs",
+    "publish":      "node bin/publish.mjs",
+    "auth":         "node bin/auth.mjs"
   }
 }

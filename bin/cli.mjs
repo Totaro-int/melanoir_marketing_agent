@@ -16,6 +16,8 @@ const map = {
   preview:        'preview.mjs',
   approve:        'approve.mjs',
   reject:         'reject.mjs',
+  publish:        'publish.mjs',
+  auth:           'auth.mjs',
 };
 
 if (!sub || !map[sub]) {

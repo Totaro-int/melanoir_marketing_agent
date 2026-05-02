@@ -26,7 +26,9 @@ ln -s /Users/songseungju/upflow/marketing_agent .claude/plugins/marketing_agent
 /generate <slug>                  # 채널별 카피·이미지 draft (provider 자동 선택)
 /preview <slug>                   # 가디언 결과 + 카피 + 자산 콘솔 렌더링
 /approve <slug> --channel=threads # 발행 대기로 승격
-# /publish <slug> --channel=threads  # (Phase 4)
+/auth add threads                 # 자격증명 등록 (실 발행 전, JSON stdin)
+/publish <slug> --channel=threads --dry-run   # 페이로드만 검증
+/publish <slug> --channel=threads             # 실제 발행
 
 # 또는 직접 CLI
 npm run validate:example
@@ -76,7 +78,8 @@ marketing_agent/
 - [x] Phase 1 — 전략 팩 스펙 + Threads reference + 온보딩 skill 초안
 - [x] Phase 2 — 스키마 검증기, /onboard update·show, /campaign new, LinkedIn reference
 - [x] Phase 3 — 콘텐츠 엔진 어댑터(mock/openai/inhouse-stub) + brand-guardian + /generate /preview /approve /reject + copywriter·image-director·brand-guardian subagent 정의
-- [ ] Phase 4 — Publisher (Threads / LinkedIn 공식 API)
+- [x] Phase 4 — Publisher (Threads/LinkedIn 어댑터, dry-run 기본, /publish /auth, publisher subagent). 텍스트 발행만; 이미지/캐러셀은 4.1
+- [ ] Phase 4.1 — 이미지 업로드 (CDN 단계) + 자동 재시도 (지수 백오프)
 - [ ] Phase 5 — CLI 칸반 보드 (statusline + Ink 보조창)
 - [ ] Phase 6 — 사내 패키징·배포
 
