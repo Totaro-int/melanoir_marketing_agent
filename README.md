@@ -38,27 +38,40 @@ node harness/bin/setup.mjs        # 의존성 + 폴더 + 권한 자동
 
 ### 2) Claude Code 에 플러그인 등록
 
-GitHub 에서 marketplace 로 설치 (한 번만):
+이 repo 는 현재 **private** 입니다. private repo 는 marketplace 자동 clone 이 SSH/PAT 없으면 막히기 때문에, **로컬 심볼릭 링크 방식** 을 권장합니다.
+
+```bash
+mkdir -p ~/.claude/plugins
+ln -s "$(pwd)" ~/.claude/plugins/marketing_agent
+```
+
+그 다음 Claude 를 재시작 (또는 `/plugin reload`). 어느 폴더에서 `claude` 를 띄우든 13개 `/sns-*` 명령이 보입니다.
+
+**확인**:
 
 ```
-/plugin marketplace add Totaro-int/marketing_agent
-/plugin install marketing_agent@Totaro-int-marketing_agent
-```
-
-설치 후 Claude 를 재시작 (또는 `/reload-plugins`). 다음을 입력해 13개 명령이 보이면 OK:
-
-```
-/help            # 명령 목록에 sns-* 13개가 그룹으로 보여야 함
+/help            # 명령 목록에 sns- prefix 13개가 그룹으로 보여야 함
 /sns-doctor      # 환경 진단 (잘 등록됐는지 1차 확인)
 ```
 
-**로컬 개발 (이 repo 자체를 수정하면서 테스트하는 경우)**
+업데이트는 `git pull` 한 줄 (`/plugin reload` 로 재로드 — 재시작 불필요).
+
+**일회성 테스트만 (영구 설치 X)**:
 
 ```bash
-claude --plugin-dir /path/to/marketing_agent
+claude --plugin-dir "$(pwd)"
 ```
 
-수정 후 `/reload-plugins` 으로 재로드.
+**향후 public 배포 시 (참고)**
+
+repo 가 public 이 되면 marketplace 한 줄 설치도 가능:
+
+```
+/plugin marketplace add https://github.com/Totaro-int/marketing_agent
+/plugin install marketing_agent@Totaro-int-marketing_agent
+```
+
+private 인 동안엔 위 명령은 인증 실패합니다.
 
 ### 3) 환경 점검 + 첫 사용
 
