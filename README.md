@@ -1,110 +1,150 @@
 # marketing_agent
 
-토타로 사내·고객사 SNS 마케팅 자동화 하네스 (Claude Code 플러그인).
+> 회사 정보를 한 번 입력하면, Claude가 SNS 카피·이미지·카드뉴스를 만들고, 사람이 한 번 보고 승인하면 SNS에 올려주는 도구.
 
-## 무엇
+토타로(Totaro) 사내·고객사 전용. Claude Code 위에서 동작합니다.
 
-- Claude Code를 실행 엔진으로 쓰는 SNS 마케팅 자동화 도구
-- GitHub 한 개로 배포되는 **채널별 전략 팩** + **회사 프로필 온보딩** + **콘텐츠 엔진(BYO/자사)** + **휴먼 승인 게이트** + **Publisher** + **CLI 진행 보드**
-- B2B 내부 운영툴 (사내·고객사 전용, 비공개)
+---
 
-## 빠른 시작
+## 무엇을 해주나요?
 
-자세한 설치 가이드는 [INSTALL.md](INSTALL.md), 운영 지침은 [OPERATIONS.md](OPERATIONS.md), 변경 이력은 [CHANGELOG.md](CHANGELOG.md).
+| 단계 | 내가 하는 일 | 도구가 해주는 일 |
+|------|--------------|------------------|
+| 1. 회사 등록 | 회사 이름·톤·금기어를 한 번 알려준다 | 다음부터는 매번 묻지 않는다 |
+| 2. 캠페인 시작 | "이번 주 신제품 런칭 글" 한 줄 던진다 | 채널별로 글·카드뉴스를 만든다 |
+| 3. 검토 | 콘솔에 뜬 결과를 본다 | 회사 톤·금기어 자동 검사를 통과한 것만 보여준다 |
+| 4. 승인/거절 | 한 줄 명령으로 OK/되돌리기 | 거절 사유는 다음 생성에 반영된다 |
+| 5. 발행 | 한 줄 명령 | Threads / LinkedIn에 카드뉴스까지 자동 업로드 |
+| 6. 진행 확인 | `/status` | 모든 캠페인이 어느 채널에서 어느 단계인지 칸반으로 보여준다 |
+
+**중요한 약속**
+- 사람이 한 번 본 다음에만 발행됩니다 (자동 발행 없음)
+- 회사 프로필·SNS 비밀번호는 내 컴퓨터에만 저장됩니다 (서버로 안 보냄)
+- 회사가 정한 금기어가 들어간 글은 승인 자체가 거부됩니다
+
+---
+
+## 처음 한 번만 (5분)
 
 ```bash
-# 1) 한 번에 setup
-cd /path/to/marketing_agent
+# 1) 받기
+git clone https://github.com/Totaro-int/marketing_agent.git
+cd marketing_agent
+
+# 2) 한 번에 설치 (의존성 + 폴더 + 권한 자동)
 node bin/setup.mjs
-# 또는 작업 프로젝트에 플러그인 링크까지 한 번에:
-node bin/setup.mjs --link=/path/to/your/project
 
-# 2) 환경 진단
+# 3) 환경 점검
 node bin/doctor.mjs
-
-# 3) Claude Code 안에서 — 캠페인 한 사이클
-/init                             # (신규 사용자) 단계별 가이드
-/doctor                           # 환경 점검
-/onboard                          # 회사 프로필 인터뷰
-/campaign new "신제품 런칭"       # 브리프 + 채널 디렉터리 생성
-/generate <slug>                  # 채널별 카피·이미지 draft (provider 자동 선택)
-/preview <slug>                   # 가디언 결과 + 카피 + 자산 콘솔 렌더링
-/approve <slug> --channel=threads # 발행 대기로 승격
-/auth add threads                 # 자격증명 등록 (실 발행 전, JSON stdin)
-/publish <slug> --channel=threads --dry-run   # 페이로드만 검증
-/publish <slug> --channel=threads             # 실제 발행
-/status                                       # 모든 캠페인 칸반
-/status --watch                               # 실시간 갱신 (Ctrl-C)
-
-# 또는 직접 CLI
-npm run validate:example
-npm run profile:show
-node bin/campaign-new.mjs "..."
-node bin/generate.mjs <slug> --all
 ```
 
-## 디렉터리
+빨간 점이 없으면 OK. 자세한 내용은 [INSTALL.md](INSTALL.md).
+
+### 이미지 생성을 쓰려면 키 한 개
+
+`.env.local` 파일을 열어서 한 줄만 채우면 됩니다:
 
 ```
-marketing_agent/
-├── plugin.json                 # Claude Code 플러그인 매니페스트
-├── package.json                # 의존성 (yaml, ajv, picocolors)
-├── .env.example                # provider/BYO 키 템플릿
-├── bin/
-│   ├── cli.mjs                 # marketing-agent <subcmd> 디스패처
-│   ├── profile-validate.mjs    # 스키마 검증기
-│   ├── profile-show.mjs        # 프로필 요약 출력
-│   ├── campaign-new.mjs        # 캠페인 디렉터리 생성
-│   ├── generate.mjs            # 채널별 draft 생성 (provider 호출 + 가디언)
-│   ├── preview.mjs             # draft 콘솔 렌더링
-│   ├── approve.mjs             # 발행 대기로 승격
-│   └── reject.mjs              # 거절 + 피드백 기록
-├── src/content-engine/
-│   ├── provider.mjs            # Provider 인터페이스 (JSDoc 타입)
-│   ├── registry.mjs            # CONTENT_ENGINE_PROVIDER 로 선택, mock 폴백
-│   ├── brand-guardian.mjs      # 채널 룰 + 회사 금기 검사 (결정론적)
-│   └── providers/
-│       ├── mock.mjs            # 결정론적 카피·SVG (오프라인 동작)
-│       ├── openai-images.mjs   # BYO OPENAI_API_KEY (chat + gpt-image-1)
-│       └── inhouse.mjs         # 자사 게이트웨이 stub (Phase 4+)
-├── docs/ARCHITECTURE.md
-├── schemas/                    # company-profile / campaign-brief / draft
-├── examples/
-├── skills/onboard-company/     # Claude Skill
-├── agents/                     # copywriter / image-director / brand-guardian
-├── commands/                   # /onboard /campaign-new /generate /preview /approve /reject /status
-├── channels/
-│   ├── threads/                # ✅ Reference (Threads Graph API)
-│   └── linkedin/               # ✅ Reference (UGC API, OAuth)
-└── statusline/
+FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 ```
 
-## 단계 (현재: Phase 5 + 4.1 진행중)
+키 없이 시작해도 mock 모드로 전체 흐름은 돌아갑니다 (가짜 이미지가 생성됨).
 
-- [x] Phase 1 — 전략 팩 스펙 + Threads reference + 온보딩 skill 초안
-- [x] Phase 2 — 스키마 검증기, /onboard update·show, /campaign new, LinkedIn reference
-- [x] Phase 3 — 콘텐츠 엔진 어댑터(mock/openai/inhouse-stub) + brand-guardian + /generate /preview /approve /reject + copywriter·image-director·brand-guardian subagent 정의
-- [x] Phase 4 — Publisher (Threads/LinkedIn 어댑터, dry-run 기본, /publish /auth, publisher subagent). 텍스트 발행만
-- [x] Phase 5 — 칸반 보드 (`bin/board.mjs`) + statusline 색상·진행바 + `/status --watch`
-- [x] Phase 4.1 — 이미지 업로드 (fal.ai → CDN URL → 발행) + 자동 재시도
-- [x] Phase 4.2 — 카드뉴스 캐러셀 (Threads CAROUSEL · LinkedIn multi-image) + cadence별 자동 카드 수
-- [x] Phase 6 — 사내 패키징 (`bin/setup.mjs`, `bin/doctor.mjs`, `/init`, `/doctor`, INSTALL/OPERATIONS/CHANGELOG)
+---
 
-## Provider 선택
+## 매일 쓰는 흐름
+
+Claude Code 안에서 슬래시 명령으로:
+
+```
+/onboard                    회사 정보 첫 입력 (또는 /onboard show 로 확인)
+/campaign new "신제품 런칭"  새 캠페인 시작
+/generate <slug>            글 + 이미지 자동 생성
+/preview <slug>             결과 보기
+/approve <slug> --channel=threads     OK
+/publish <slug> --channel=threads --dry-run    먼저 미리보기
+/publish <slug> --channel=threads             진짜 올리기
+/status --watch             실시간 진행 보드
+```
+
+`<slug>`는 캠페인 이름의 폴더명입니다 (예: `2026-05-02-신제품-런칭`).
+
+처음 사용자라면 `/init` 한 번 입력하면 단계별로 안내해줍니다.
+
+---
+
+## 한 번에 카드뉴스 3장
+
+`/campaign new` 할 때 옵션을 주면 됩니다:
+
+```
+/campaign new "신제품 런칭 사례" --cadence=series-3
+```
+
+| 옵션 | 결과 |
+|------|------|
+| (없음) | 카드 1장 |
+| `--cadence=series-3` | 카드 3장 (도입 → 본문 → 마무리) |
+| `--cadence=series-5` | 카드 5장 |
+| `--cadence=thread` | 텍스트만 (이미지 없음) |
+
+---
+
+## SNS 계정 연결
+
+처음 한 번만:
+
+```
+/auth add threads
+# 키를 입력하라고 합니다 — JSON 한 줄
+```
+
+| 채널 | 받아둘 정보 |
+|------|------------|
+| Threads | `accessToken` + `userId` (Meta 개발자 콘솔) |
+| LinkedIn | `accessToken` + `authorUrn` (LinkedIn 개발자 콘솔) |
+
+자세한 절차는 [`commands/auth.md`](commands/auth.md).
+
+저장 위치는 `auth/<채널>.json` — 내 컴퓨터에만 있고, 권한도 본인만 읽기(0600). git에 절대 안 올라갑니다.
+
+---
+
+## 안전장치
+
+다음 4단계가 겹쳐 있어 사고가 나기 어렵습니다:
+
+1. `/approve` 안 한 채널은 발행 거부
+2. 회사 금기어가 들어간 글은 `/approve` 자체가 거부
+3. `/publish --dry-run` 으로 페이로드만 미리 확인 가능
+4. `.env.local` 에 `PUBLISHER_DRY_RUN=true` 두면 모든 `/publish` 가 자동으로 미리보기 모드
+
+평상시 4번을 켜두고, 진짜 올릴 때만 잠시 끄는 운영을 권장합니다.
+
+---
+
+## 문제가 생기면
 
 ```bash
-# .env.local
-CONTENT_ENGINE_PROVIDER=openai      # mock | openai | inhouse
-OPENAI_API_KEY=sk-...
+node bin/doctor.mjs           # 환경 진단 (빨간 점 = 다음 액션)
+node bin/auth.mjs check <ch>  # 토큰이 살아있는지
 ```
 
-healthcheck 실패 시 자동으로 `mock` 으로 폴백 (offline·CI 안전).
+자세한 트러블슈팅: [OPERATIONS.md](OPERATIONS.md).
 
-## 보안
+---
 
-- SNS 자격증명·BYO API 키는 **로컬에만 저장** (`.env.local` 또는 OS 키체인, 자사 서버 무보관)
-- 자동 발행 금지 — **휴먼 승인 게이트 필수** (`/preview` → `/approve`)
-- 가디언 차단된 draft는 `/approve` 거부됨
+## 더 알고 싶다면
+
+| 문서 | 무엇 |
+|------|------|
+| [INSTALL.md](INSTALL.md) | 설치 상세 |
+| [OPERATIONS.md](OPERATIONS.md) | 운영 (캠페인 라이프사이클, 토큰 회전, 트러블슈팅, 비용) |
+| [CHANGELOG.md](CHANGELOG.md) | 모든 단계의 변경 이력 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 시스템 구조 |
+| [channels/threads/strategy.md](channels/threads/strategy.md) | 채널 전략 (참고) |
+
+---
 
 ## 라이선스
 
