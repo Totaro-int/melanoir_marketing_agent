@@ -1,6 +1,6 @@
 // BYO fal.ai provider — image generation only (text/copy still goes through openai/mock).
 // Returns BOTH a public CDN URL (used by the publisher to post images) and a local
-// path (downloaded for /preview).
+// path (downloaded for /sns-preview).
 //
 // Env: FAL_KEY (required), FAL_IMAGE_MODEL (default fal-ai/flux/schnell)
 // Docs: https://fal.ai/models  ·  https://docs.fal.ai/
@@ -61,7 +61,7 @@ export const provider = assertProvider({
     for (const [i, img] of images.entries()) {
       const url = img.url;
       urls.push(url);
-      // Download a local copy so /preview can show something even when offline later.
+      // Download a local copy so /sns-preview can show something even when offline later.
       try {
         const r = await fetch(url);
         if (r.ok) {
