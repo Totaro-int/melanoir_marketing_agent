@@ -48,8 +48,8 @@ if (dry) {
     url: null,
     payload,
     publishedAt: nowKstIso(),
-  });
-  ui.ok(`[${channel}] dry-run 완료 — result.json 저장됨`);
+  }, /* failed */ false, /* dry */ true);
+  ui.ok(`[${channel}] dry-run 완료 — result.json 저장됨 (status 유지: approved)`);
   process.exit(0);
 }
 
@@ -80,9 +80,9 @@ try {
   process.exit(1);
 }
 
-function saveResult(dir, channel, brief, briefPath, result, failed = false) {
+function saveResult(dir, channel, brief, briefPath, result, failed = false, dry = false) {
   writeYaml(resolve(dir, channel, 'result.json'), result);
-  brief.status[channel] = failed ? 'failed' : 'published';
+  if (!dry) brief.status[channel] = failed ? 'failed' : 'published';
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
 }
