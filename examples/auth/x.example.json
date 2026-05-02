@@ -1,0 +1,9 @@
+{
+  "bearerToken": "AAAA... (텍스트 전용 트윗에는 OAuth2 user-context bearer 가능)",
+  "oauth1": {
+    "consumerKey": "...",
+    "consumerSecret": "...",
+    "accessToken": "...-...",
+    "accessSecret": "..."
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "accessToken": "ya29....",
+  "_note": "OAuth2 user access token. refresh_token 으로 갱신은 별도 (auth.mjs check)"
+}

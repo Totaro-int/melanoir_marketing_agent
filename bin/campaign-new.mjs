@@ -7,8 +7,9 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import YAML from 'yaml';
 import {
-  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, ui,
+  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui,
 } from './_lib.mjs';
+import { knownChannels } from '../src/publisher/registry.mjs';
 
 const argv = process.argv.slice(2);
 if (!argv.length || argv[0].startsWith('--')) {
@@ -41,14 +42,32 @@ try {
 }
 
 // 2) Resolve channels.
+//    우선순위: --channels 플래그 > profile.channels.enabled > plugin.json activeChannels().
+const enabled = enabledChannels(profile);
 const channels = (
   flags.channels
     ? String(flags.channels).split(',').map((s) => s.trim()).filter(Boolean)
-    : activeChannels()
+    : (enabled.length ? enabled : activeChannels())
 );
 if (!channels.length) {
-  ui.err('활성화된 채널이 없습니다. plugin.json 의 channels[] 또는 --channels 플래그를 확인하세요.');
+  ui.err('활성 채널 없음. /onboard 또는 /onboard update channels 로 채널 선택, 또는 --channels= 플래그 사용.');
   process.exit(2);
+}
+
+// 알 수 없는 채널 (registry 미등록) 차단 — 오타·미구현 채널 사고 방지.
+const known = new Set(knownChannels());
+const unknown = channels.filter((c) => !known.has(c));
+if (unknown.length) {
+  ui.err(`등록되지 않은 채널: ${unknown.join(', ')}. 사용 가능: ${[...known].join(', ')}`);
+  process.exit(2);
+}
+
+// profile 의 enabled 와 충돌하면 경고만 (사용자가 일회성 override 가능).
+if (enabled.length) {
+  const notEnabled = channels.filter((c) => !enabled.includes(c));
+  if (notEnabled.length) {
+    ui.warn(`onboard 에 없는 채널 사용: ${notEnabled.join(', ')} (이 캠페인 한정. 영구 추가는 /onboard update channels)`);
+  }
 }
 
 const goal = flags.goal ?? (profile.campaigns?.defaultGoals?.[0] ?? 'awareness');

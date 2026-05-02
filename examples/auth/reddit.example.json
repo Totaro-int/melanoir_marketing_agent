@@ -1,0 +1,8 @@
+{
+  "clientId": "abcDEFghi",
+  "clientSecret": "xyzXYZxyzXYZxyzXYZxyzXYZxyzXYZ",
+  "username": "yourbotuser",
+  "password": "yourpassword",
+  "userAgent": "marketing_agent/0.9 by yourbotuser",
+  "subreddit": "yourcompany"
+}

@@ -1,0 +1,5 @@
+{
+  "instance": "https://mastodon.social",
+  "accessToken": "...",
+  "visibility": "public"
+}

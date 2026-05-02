@@ -132,19 +132,30 @@ node bin/install-cron.mjs install --every=15
 
 ## SNS 계정 연결
 
-처음 한 번만:
+11개 채널 지원. `/onboard` 단계에서 회사가 쓸 채널을 골라두면, `/campaign new` 의 기본 발행 대상이 됩니다. 채널마다 토큰 한 번씩 등록.
 
 ```
 /auth add threads
 # 키를 입력하라고 합니다 — JSON 한 줄
 ```
 
-| 채널 | 받아둘 정보 |
-|------|------------|
-| Threads | `accessToken` + `userId` (Meta 개발자 콘솔) |
-| LinkedIn | `accessToken` + `authorUrn` (LinkedIn 개발자 콘솔) |
+| 채널 | 미디어 | 발급 |
+|------|--------|------|
+| Threads   | 텍스트+이미지+캐러셀          | Meta Graph (accessToken+userId) |
+| LinkedIn  | 텍스트+이미지(여러장)         | OAuth2 (accessToken+authorUrn) |
+| Instagram | 이미지/캐러셀 (텍스트만 X)    | Meta Graph (IG Business) |
+| Facebook  | 텍스트+이미지(여러장)         | Page token |
+| X         | 텍스트(280)+이미지<=4         | Bearer 또는 OAuth1 (이미지는 OAuth1) |
+| Reddit    | self/link 글 (서브레딧)       | OAuth2 password (script app) |
+| Bluesky   | 텍스트+이미지<=4              | App password (5초 발급) |
+| Mastodon  | 텍스트+이미지(여러장)         | Instance + access token |
+| Pinterest | 이미지 1장 (보드 지정)        | OAuth2 |
+| TikTok    | **영상 전용 (.mp4)**          | OAuth2 — 텍스트/이미지 X |
+| YouTube   | **영상 전용 (.mp4)**          | OAuth2 — 텍스트/이미지 X |
 
-자세한 절차는 [`commands/auth.md`](commands/auth.md).
+토큰 미등록 채널은 자동으로 dry-run 으로만 동작 (`/doctor` 가 빨간 점으로 알려줌).
+
+자세한 페이로드와 발급 절차는 [`commands/auth.md`](commands/auth.md).
 
 저장 위치는 `auth/<채널>.json` — 내 컴퓨터에만 있고, 권한도 본인만 읽기(0600). git에 절대 안 올라갑니다.
 

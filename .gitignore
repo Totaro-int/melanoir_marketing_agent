@@ -10,6 +10,9 @@ company-profile.local.yaml
 sessions/
 cookies/
 auth/
+# examples/auth/ 는 placeholder (실 토큰 아님) — 커밋 허용.
+!examples/auth/
+!examples/auth/*.json
 
 # 생성된 콘텐츠 (캠페인 산출물)
 out/

@@ -1,8 +1,8 @@
 {
   "name": "marketing_agent",
   "displayName": "Totaro Marketing Agent",
-  "version": "0.8.0",
-  "description": "SNS 마케팅 자동화 하네스 — /run 단일 진입점 + 스케줄(주/월) + 자동 발행 워커 + 휴먼 승인 게이트",
+  "version": "0.9.0",
+  "description": "SNS 마케팅 자동화 하네스 — 11개 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube), 온보딩에서 채널 선택, /run + 스케줄 + 자동 발행 워커 + 휴먼 승인 게이트",
   "author": {
     "name": "Totaro Inc."
   },
@@ -37,10 +37,19 @@
   ],
   "statusLine": "statusline/statusline.sh",
   "channels": [
-    { "id": "threads",  "status": "reference", "path": "channels/threads" },
-    { "id": "linkedin", "status": "reference", "path": "channels/linkedin" }
+    { "id": "threads",   "status": "reference", "path": "channels/threads" },
+    { "id": "linkedin",  "status": "reference", "path": "channels/linkedin" },
+    { "id": "instagram", "status": "active",    "path": "channels/instagram" },
+    { "id": "facebook",  "status": "active",    "path": "channels/facebook" },
+    { "id": "x",         "status": "active",    "path": "channels/x" },
+    { "id": "reddit",    "status": "active",    "path": "channels/reddit" },
+    { "id": "bluesky",   "status": "active",    "path": "channels/bluesky" },
+    { "id": "mastodon",  "status": "active",    "path": "channels/mastodon" },
+    { "id": "pinterest", "status": "active",    "path": "channels/pinterest" },
+    { "id": "tiktok",    "status": "active",    "path": "channels/tiktok" },
+    { "id": "youtube",   "status": "active",    "path": "channels/youtube" }
   ],
-  "phase": 7,
+  "phase": 8,
   "private": true,
   "scripts": {
     "validate":     "node bin/profile-validate.mjs",

@@ -6,8 +6,9 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, ROOT, ui, readYaml } from './_lib.mjs';
+import { PATHS, ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
 import { listProviders } from '../src/content-engine/registry.mjs';
+import { knownChannels, CHANNEL_META } from '../src/publisher/registry.mjs';
 
 const rows = [];
 const add = (group, name, ok, detail = '') => rows.push({ group, name, ok, detail });
@@ -40,6 +41,23 @@ for (const f of authFiles) {
   add('publisher', `mode 0600: ${f}`, mode === '600', `mode ${mode}`);
 }
 add('publisher', 'PUBLISHER_DRY_RUN', true, process.env.PUBLISHER_DRY_RUN ? 'ON (safe)' : 'off (real publish enabled)');
+
+// Enabled channels (from profile) — 토큰 등록 여부 채널별 점검.
+let profile = null;
+try { if (existsSync(PATHS.profile)) profile = readYaml(PATHS.profile); } catch {}
+const enabled = enabledChannels(profile);
+if (!enabled.length) {
+  add('channels', 'enabled in profile', false, '/onboard 또는 /onboard update channels — 1개 이상 필요');
+} else {
+  add('channels', 'enabled in profile', true, enabled.join(', '));
+  for (const ch of enabled) {
+    const known = knownChannels().includes(ch);
+    if (!known) { add('channels', `[${ch}] adapter`, false, '등록되지 않은 채널 ID'); continue; }
+    const hasAuth = authFiles.includes(`${ch}.json`);
+    const meta = CHANNEL_META[ch];
+    add('channels', `[${ch}] auth/${ch}.json`, hasAuth, hasAuth ? meta?.media ?? '' : `없음 — /auth add ${ch} (${meta?.auth ?? ''})`);
+  }
+}
 
 // 5) Plugin link (best-effort hint, since the link lives outside this repo)
 add('plugin', 'plugin.json', existsSync(PATHS.pluginManifest));

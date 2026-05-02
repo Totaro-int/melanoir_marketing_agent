@@ -86,6 +86,13 @@ export function activeChannels() {
     .map((c) => c.id);
 }
 
+// /onboard 단계에서 사용자가 고른 채널. 없으면 빈 배열 — 호출부가 fallback 결정.
+export function enabledChannels(profile) {
+  const arr = profile?.channels?.enabled;
+  if (!Array.isArray(arr)) return [];
+  return arr.filter((c) => typeof c === 'string' && c.length > 0);
+}
+
 export function slugify(text) {
   // Keep Korean characters; collapse whitespace and forbidden filename chars.
   return text

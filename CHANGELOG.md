@@ -2,6 +2,20 @@
 
 All notable changes to this project. Format: Phase / version → highlights.
 
+## 0.9.0 — Phase 8 (11개 채널 + 온보딩 채널 선택)
+
+- 새 publisher adapter 9개: instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube (각 dry-run buildPayload + healthcheck + 실 publish, withRetry 적용)
+- `src/publisher/registry.mjs`: 11채널 등록, `CHANNEL_META` (label/media/auth) export, `knownChannels()` 추가
+- 스키마: `company-profile.schema.yaml` 에 `channels.enabled[]` (11 enum) 필수 추가
+- 온보딩: `skills/onboard-company/SKILL.md` 7단계에 채널 선택 추가, 카탈로그 한눈 표시 + 추천(threads/bluesky/mastodon)
+- `bin/campaign-new.mjs`: 우선순위 `--channels` > profile.enabled > plugin.json. 미등록 채널 차단, profile 외 채널 사용 시 경고
+- `bin/_lib.mjs`: `enabledChannels(profile)` helper
+- `bin/doctor.mjs`: enabled 채널별 `auth/<ch>.json` 존재 점검 + media/auth 요건 표시
+- `commands/auth.md`: 11채널 가이드 (페이로드 + 발급 절차 + 제약)
+- `examples/auth/<channel>.example.json` 9개 추가
+- `plugin.json` channels[] 11개로 확장, version 0.9.0
+- 영상 채널(tiktok/youtube): assetUrls 가 .mp4/.mov/.webm 일 때만 동작, 텍스트/이미지 캠페인은 명시적 reject
+
 ## 0.8.0 — Phase 7 (단일 진입점 + 스케줄)
 
 - `/run` 단일 진입점 (`bin/run.mjs`): profile→campaign→generate→preview→approve→publish 한 줄

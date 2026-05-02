@@ -29,7 +29,27 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
 4. **targetAudience** (1명 이상) — 페르소나·통점·자주 쓰는 채널을 묶어서 질문
 5. **tone.preset** — 7개 프리셋 중 선택 (`professional / friendly / witty / bold / calm / premium / custom`). 선택 후 `voiceNotes`에 자유 서술 추가
 6. **banned.words / topics / claims** — "절대 쓰면 안 되는 단어·주제·표현이 있나요?" (없으면 `[]` 허용하되, `claims`에는 한국 광고법 위반 위험 표현 예시 보여주기)
-7. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/onboard update <섹션>`으로 채워도 됩니다." 로 분기
+7. **channels.enabled** — "어느 SNS에 발행할 건가요? (1개 이상 골라야 함)" — 아래 11개 카탈로그를 한 번에 보여주고 콤마 또는 줄바꿈으로 받기. 각 옵션 옆에 미디어 요건과 토큰 발급 난이도를 한 줄씩 표기.
+
+   ```
+   1) threads     텍스트+이미지+캐러셀     Meta Graph
+   2) linkedin    텍스트+이미지(여러장)    OAuth2 (회사 페이지면 organization URN)
+   3) instagram   이미지/캐러셀 (텍스트만 X)  Meta Graph (IG Business)
+   4) facebook    텍스트+이미지(여러장)    Page token
+   5) x           텍스트(280자)+이미지<=4   Bearer 또는 OAuth1 (이미지는 OAuth1 필요)
+   6) reddit      self/link 글 (서브레딧 지정) OAuth2 password
+   7) bluesky     텍스트+이미지<=4         AT Protocol (app password 발급 5초)
+   8) mastodon    텍스트+이미지(여러장)    Instance + access token
+   9) pinterest   이미지 1장 (보드 지정)   OAuth2
+   10) tiktok     영상 전용 (.mp4)         OAuth2 — 텍스트/이미지 캠페인 X
+   11) youtube    영상 전용 (.mp4)         OAuth2 — 텍스트/이미지 캠페인 X
+   ```
+
+   - 추천: 첫 캠페인이라면 토큰 발급이 쉬운 `threads, bluesky, mastodon` 부터.
+   - 영상 캠페인 계획 없으면 tiktok/youtube 는 빼는 게 좋음 (이미지/텍스트와 호환 안 됨).
+   - 최소 1개 필수. 입력값은 `channels.enabled` 배열로 저장.
+
+8. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/onboard update <섹션>`으로 채워도 됩니다." 로 분기
 
 ## Validation
 
@@ -50,7 +70,7 @@ description: Use when the user runs `/onboard` or first-time setup, OR when a ca
 | **show** | `/onboard show` | `node bin/profile-show.mjs` 실행 결과를 그대로 보여줌 (스킬은 추가 작업 없음) |
 | **resume** | `/onboard` (프로필 있음) | "전체 다시 / 부분 업데이트 / 그대로 두기" 3택 질문 |
 
-업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
+업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `channels`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
 
 저장 직전 반드시 `node bin/profile-validate.mjs` 실행해 스키마 위반·소프트 경고를 확인하고, 실패 시 사용자에게 어느 필드가 깨졌는지 알리고 그 필드만 다시 묻는다.
 
@@ -68,7 +88,10 @@ meta:
 
 ```
 ✅ company-profile.yaml 저장 완료.
-다음 단계: /campaign new "<주제>" 로 첫 캠페인을 만들어 보세요.
+활성 채널: <enabled 콤마 나열>
+다음 단계:
+  1) /auth add <채널>     선택한 채널마다 토큰 등록 (안 하면 dry-run 만 동작)
+  2) /campaign new "<주제>" 첫 캠페인 만들기 (채널 미지정 시 enabled 전부)
 ```
 
 ## Guardrails
