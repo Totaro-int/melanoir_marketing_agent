@@ -18,6 +18,8 @@ const map = {
   reject:         'reject.mjs',
   publish:        'publish.mjs',
   auth:           'auth.mjs',
+  status:         'board.mjs',
+  board:          'board.mjs',
 };
 
 if (!sub || !map[sub]) {

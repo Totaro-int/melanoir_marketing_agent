@@ -1,6 +1,6 @@
 {
   "name": "marketing_agent",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Upflow SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
   "type": "module",
@@ -21,7 +21,9 @@
     "reject":           "node bin/reject.mjs",
     "publish":          "node bin/publish.mjs",
     "publish:dry":      "PUBLISHER_DRY_RUN=true node bin/publish.mjs",
-    "auth":             "node bin/auth.mjs"
+    "auth":             "node bin/auth.mjs",
+    "status":           "node bin/board.mjs",
+    "status:watch":     "node bin/board.mjs --watch"
   },
   "dependencies": {
     "ajv":         "^8.17.1",

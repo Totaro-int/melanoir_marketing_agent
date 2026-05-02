@@ -1,30 +1,35 @@
 ---
 name: status
-description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다.
+description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다. --watch 로 실시간 갱신.
 ---
 
 # /status
 
-활성 캠페인의 채널별 진행 상황을 한눈에 보여준다.
+활성 캠페인을 채널별 칸반으로 한눈에 보여준다.
 
 ## 사용법
 
 ```
-/status                       # 모든 활성 캠페인
-/status <slug>                # 특정 캠페인
-/status --channel threads     # 특정 채널만 필터
-/status --watch               # 1초마다 갱신 (Phase 5)
+/status                  # 최근 5개 캠페인
+/status <slug>           # 특정 캠페인만
+/status --watch          # 파일시스템 변경 감지 → 자동 갱신 (Ctrl-C 종료)
+/status <slug> --watch
 ```
 
-## 출력 형식 (Phase 1: ASCII)
+내부: `node bin/board.mjs [<slug>] [--watch]`.
+
+## 출력 예시
 
 ```
-┌─ 캠페인: 신제품 런칭 5월 1주차 ─────────────────────────┐
-│ Threads    ✅ 발행완료  14:22  https://threads.net/...  │
-│ LinkedIn   ⏳ 카피 생성중  ▓▓▓░░  3/5                  │
-│ Instagram  ⏸  대기 (승인 필요)                          │
-│ X          ❌ 실패 (셀렉터)  → /retry x                 │
-└─────────────────────────────────────────────────────────┘
+📣 marketing_agent — campaign board  (3)
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ 📣 2026-05-02-신제품-런칭-5월-1주차 · 신제품 런칭 5월 1주차                    │
+│     goal: awareness  ·  cadence: single  ·  ✅ 1 published · 👀 1 preview    │
+├──────────────────────────────────────────────────────────────────────────────┤
+│  ✅  threads    published   https://www.threads.net/@1784000/post/123        │
+│  👀  linkedin   preview                                                       │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## 상태값
@@ -33,7 +38,7 @@ description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다.
 |------|--------|------|
 | drafting | ⏳ | 카피·이미지 생성중 |
 | preview  | 👀 | 사용자 승인 대기 |
-| approved | ✅ | 승인됨, 업로드 대기 |
+| approved | 📤 | 승인됨, 업로드 대기 |
 | scheduled| 📅 | 예약됨 |
 | published| ✅ | 발행 완료 |
 | failed   | ❌ | 실패 (재시도 가능) |
@@ -41,10 +46,15 @@ description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다.
 
 ## 데이터 소스
 
-`campaigns/<slug>/brief.yaml`의 `status:` 섹션과 각 채널 디렉터리의 `result.json`을 머지해 렌더링.
+- `campaigns/<slug>/brief.yaml` 의 `status:` 섹션
+- `campaigns/<slug>/<channel>/result.json` (URL · 에러 메시지)
 
-## Phase 5 확장
+## statusline (한 줄 요약)
 
-- statusline에 한 줄 요약 (`📣 2/4 채널 완료 │ LinkedIn 생성중`)
-- Ink 보조 창(`marketing_ai status --watch`)에서 풀스크린 칸반
-- Claude Code hooks(PostToolUse)로 단계 변화 자동 push
+Claude Code 하단 statusline은 `statusline/statusline.sh` 가 자동 표시:
+
+```
+📣 2026-05-02-신제품-런칭 │ 1/2 ▓▓░░░ │ linkedin preview
+```
+
+색상은 published 비율에 따라 dim → cyan → green, failed 가 있으면 red.
