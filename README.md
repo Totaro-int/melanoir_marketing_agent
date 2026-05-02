@@ -26,19 +26,47 @@
 
 ## 처음 한 번만 (5분)
 
+이 도구는 [Claude Code](https://docs.claude.com/en/docs/claude-code) 위에서 동작하는 플러그인입니다. Claude Code 가 깔려 있다고 가정합니다 (없다면 `npm i -g @anthropic-ai/claude-code`).
+
+### 1) 클론 + 설치
+
 ```bash
-# 1) 받기
 git clone https://github.com/Totaro-int/marketing_agent.git
 cd marketing_agent
+node harness/bin/setup.mjs        # 의존성 + 폴더 + 권한 자동
+```
 
-# 2) 한 번에 설치 (의존성 + 폴더 + 권한 자동)
-node harness/bin/setup.mjs
+### 2) Claude Code 에 플러그인 등록
 
-# 3) 환경 점검
-node harness/bin/doctor.mjs
+이 폴더 자체가 플러그인입니다. 이 폴더 안에서 Claude 를 띄우면 자동으로 인식됩니다.
+
+```bash
+claude                             # 현재 폴더(marketing_agent) 에서 그냥 실행
+```
+
+다른 작업 폴더에서 쓰고 싶으면 심볼릭 링크 한 줄:
+
+```bash
+node harness/bin/setup.mjs --link=/Users/me/work/my-project
+# → /Users/me/work/my-project/.claude/plugins/marketing_agent 로 링크
+cd /Users/me/work/my-project && claude
+```
+
+Claude 안에서 `/help` 쳐서 `/onboard`, `/run`, `/campaign new`, `/status`, `/doctor` 같은 명령이 보이면 인식 OK.
+
+### 3) 환경 점검 + 첫 사용
+
+Claude 안에서:
+
+```
+/doctor                            환경 진단 (빨간 점 = 다음 액션)
+/onboard                           회사 정보 첫 입력 (스킬이 단계별로 물어봄)
+/run "신제품 런칭" --dry-run        첫 캠페인 (실 발행 X)
 ```
 
 빨간 점이 없으면 OK. 자세한 내용은 [harness/docs/INSTALL.md](harness/docs/INSTALL.md).
+
+> **터미널에서 바로 돌리고 싶다면** (Claude 없이): `node harness/bin/doctor.mjs`, `node harness/bin/campaign-new.mjs "..."` 등 `harness/bin/` 의 스크립트를 직접 호출해도 동일하게 동작합니다. Claude 는 슬래시 명령으로 wrapping 만 해주는 것.
 
 ### 폴더 구조 (한 줄 요약)
 
