@@ -111,12 +111,15 @@ export function enabledChannels(profile) {
 
 export function slugify(text) {
   // Keep Korean characters; collapse whitespace and forbidden filename chars.
+  // 유니코드 dash 류 (em-, en-, figure-, minus, hyphen 등) → ASCII '-' 통일.
   return text
     .normalize('NFKC')
     .trim()
+    .replace(/[‐-―−﹘﹣－]/g, '-') // dash family → ASCII '-'
     .replace(/[\s_]+/g, '-')
     .replace(/[\\/:*?"<>|]+/g, '')
-    .replace(/-+/g, '-')
+    .replace(/-+/g, '-')                                       // 연속 dash 1개로
+    .replace(/^-+|-+$/g, '')                                   // 양 끝 dash 제거
     .slice(0, 80);
 }
 

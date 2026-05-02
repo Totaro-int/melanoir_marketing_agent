@@ -152,6 +152,8 @@ FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
 
 회사 프로필 확인 → 캠페인 생성 → 글·이미지 생성 → 가드 검사 → 자동 승인 → dry-run 발행까지 한 번에.
 
+> 💡 **비용 0 검증**: `.env.local` 에 `CONTENT_ENGINE_PROVIDER=mock` 두면 fal.ai/openai 호출 없이 mock 이미지/카피로 흐름 검증. 운영 전 dry-run 테스트 권장.
+
 ### 단계별로 가고 싶으면
 
 ```

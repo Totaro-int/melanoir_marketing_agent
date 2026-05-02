@@ -45,5 +45,5 @@ for (const ch of channels) {
   console.log();
 }
 
-ui.dim(`승인:  node bin/approve.mjs ${slug} --channel=<ch>`);
-ui.dim(`거절:  node bin/reject.mjs  ${slug} --channel=<ch> [--reason="..."]`);
+ui.dim(`승인:  /sns-approve ${slug} --channel=<ch>`);
+ui.dim(`거절:  /sns-reject  ${slug} --channel=<ch> [--reason="..."]`);
