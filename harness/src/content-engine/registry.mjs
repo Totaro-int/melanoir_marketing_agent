@@ -8,7 +8,11 @@ import { provider as inhouse } from './providers/inhouse.mjs';
 
 const ALL = { mock, openai, fal, inhouse };
 
-export function getProvider(id = process.env.CONTENT_ENGINE_PROVIDER ?? 'mock') {
+export function getActiveProviderId() {
+  return process.env.CONTENT_ENGINE_PROVIDER ?? 'mock';
+}
+
+export function getProvider(id = getActiveProviderId()) {
   const p = ALL[id];
   if (!p) {
     const known = Object.keys(ALL).join(', ');

@@ -7,8 +7,8 @@ import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
 import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
-import { listProviders } from '../src/content-engine/registry.mjs';
-import { knownChannels, CHANNEL_META } from '../src/publisher/registry.mjs';
+import { listProviders, getActiveProviderId } from '../src/content-engine/registry.mjs';
+import { knownChannels, CHANNEL_META, isDryRun } from '../src/publisher/registry.mjs';
 import { visibleWidth } from '../src/util/width.mjs';
 
 const rows = [];
@@ -33,7 +33,7 @@ add('profile', 'company-profile.yaml', existsSync(PATHS.profile),
 add('env', '.env.local', existsSync(resolve(ROOT, '.env.local')),
   existsSync(resolve(ROOT, '.env.local')) ? '' : 'cp .env.example .env.local');
 add('env', 'CONTENT_ENGINE_PROVIDER', !!process.env.CONTENT_ENGINE_PROVIDER, process.env.CONTENT_ENGINE_PROVIDER ?? '(unset → mock)');
-const activeProvider = process.env.CONTENT_ENGINE_PROVIDER ?? 'mock';
+const activeProvider = getActiveProviderId();
 for (const p of listProviders()) {
   // 활성 provider 만 fail, 나머지는 warn (선택 안 한 provider 가 미설정인 건 사고가 아님).
   const status = p.health.ok ? 'ok' : (p.id === activeProvider ? 'fail' : 'warn');
@@ -50,8 +50,9 @@ for (const f of authFiles) {
   const mode = (statSync(p).mode & 0o777).toString(8);
   add('publisher', `mode 0600: ${f}`, mode === '600', `mode ${mode}`);
 }
-add('publisher', 'PUBLISHER_DRY_RUN', process.env.PUBLISHER_DRY_RUN ? 'ok' : 'warn',
-  process.env.PUBLISHER_DRY_RUN ? 'ON (safe)' : 'off (real publish enabled)');
+const dryRun = isDryRun();
+add('publisher', 'PUBLISHER_DRY_RUN', dryRun ? 'ok' : 'warn',
+  dryRun ? 'ON (safe)' : 'off (real publish enabled)');
 
 // Enabled channels (from profile) — 토큰 등록 여부 채널별 점검.
 let profile = null;
