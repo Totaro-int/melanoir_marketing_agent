@@ -99,7 +99,9 @@ function handleLaunchd() {
 
 function handleCrontab() {
   const marker = '# marketing_agent';
-  const line = `*/${everyMin} * * * * cd ${ROOT} && ${process.execPath} ${tickScript} --json >> ${logFile} 2>&1 ${marker}`;
+  // 경로에 공백이 있어도 안전하게 single-quote 로 묶음. 내부 ' 는 '\'' 로 escape.
+  const sq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
+  const line = `*/${everyMin} * * * * cd ${sq(ROOT)} && ${sq(process.execPath)} ${sq(tickScript)} --json >> ${sq(logFile)} 2>&1 ${marker}`;
   const cur = spawnSync('crontab', ['-l'], { encoding: 'utf8' });
   const existing = cur.status === 0 ? cur.stdout : '';
   const cleaned = existing.split('\n').filter((l) => !l.includes(marker)).filter(Boolean).join('\n');

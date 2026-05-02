@@ -109,7 +109,10 @@ for (const slug of slugs) {
     } else {
       results.push({ slug, channel: ch, action: 'published', dueAt: at });
       log(`✅ ${slug} [${ch}] 발행 완료`);
-      // brief mutated by publish.mjs already
+      // publish.mjs가 디스크의 brief.yaml을 갱신했으므로 다음 채널 처리 전에 reload.
+      // 안 하면 다음 채널의 markAttention 경로에서 stale brief를 write back 해서
+      // 방금 published 된 채널 상태를 approved 로 되돌림 → 중복 발행 위험.
+      try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch {}
     }
   }
 
