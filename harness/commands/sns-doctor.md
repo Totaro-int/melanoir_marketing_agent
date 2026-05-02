@@ -1,5 +1,5 @@
 ---
-name: doctor
+name: sns-doctor
 description: 로컬 환경(Node, deps, env, 자격증명, provider 헬스체크) 한눈 진단.
 ---
 

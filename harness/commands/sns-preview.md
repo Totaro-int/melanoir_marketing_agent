@@ -1,5 +1,5 @@
 ---
-name: preview
+name: sns-preview
 description: 캠페인 채널별 draft를 콘솔에 예쁘게 렌더링. 가디언 결과·해시태그·자산 경로 포함.
 ---
 

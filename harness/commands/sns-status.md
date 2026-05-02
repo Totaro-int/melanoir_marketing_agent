@@ -1,5 +1,5 @@
 ---
-name: status
+name: sns-status
 description: 캠페인별·채널별 진행 상황을 칸반으로 보여준다. --watch 로 실시간 갱신.
 ---
 

@@ -38,40 +38,73 @@ node harness/bin/setup.mjs        # 의존성 + 폴더 + 권한 자동
 
 ### 2) Claude Code 에 플러그인 등록
 
-이 repo 는 자기 자신을 marketplace 로 패키징해뒀습니다 (`.claude-plugin/marketplace.json`). private 이라 GitHub URL 은 인증이 필요하지만, **로컬 경로** 로는 인증 없이 바로 설치 가능합니다.
+이 repo 는 자기 자신을 marketplace 로 패키징해뒀습니다 (`.claude-plugin/marketplace.json`). private repo 라 GitHub URL 은 인증 필요하지만, **로컬 경로** 로는 인증 없이 설치됩니다.
 
-Claude 안에서 입력 (`<repo-path>` 는 위에서 clone 한 폴더의 절대 경로):
+> ⚠️ 두 명령은 **반드시 따로** 입력하세요. 한 줄에 붙이면 path 가 깨집니다.
+
+#### Step 2-A. Marketplace 등록
+
+먼저 아무 폴더에서 `claude` 띄우고, 안에서:
 
 ```
 /plugin marketplace add /Users/me/totaro/marketing_agent
+```
+(끝의 경로는 본인이 위 1단계에서 clone 한 **repo 의 절대 경로**)
+
+✅ 성공 결과: `Added marketplace "marketing_agent"` 또는 비슷한 메시지.
+
+#### Step 2-B. 플러그인 설치
+
+다음 명령을 **새로** 입력 (위와 한 줄에 붙이지 말 것):
+
+```
 /plugin install marketing_agent@marketing_agent
 ```
 
-그 다음 Claude 를 재시작 (또는 `/plugin reload`). 13개 `/sns-*` 명령이 어느 폴더에서 `claude` 를 띄워도 보입니다.
+✅ 성공 결과: 플러그인 상세 카드가 뜨고 `Install` 버튼 → 클릭 → `Installed marketing_agent`.
 
-**확인**:
+#### Step 2-C. 재로드 (또는 재시작)
 
 ```
-/help            # 명령 목록에 sns- prefix 13개가 그룹으로 보여야 함
-/sns-doctor      # 환경 진단 (잘 등록됐는지 1차 확인)
+/plugin reload
 ```
+또는 Claude 종료 후 다시 실행.
 
-업데이트: repo 에서 `git pull` 후 `/plugin update marketing_agent` (또는 Claude 재시작).
+#### Step 2-D. 확인
 
-**일회성 테스트 (설치 없이 한 세션만)**:
+```
+/help
+```
+→ 명령 목록에 **`/sns-*` prefix 13개** 가 보이면 성공.
 
+```
+/sns-doctor
+```
+→ 환경 진단 출력 (체크리스트 형태).
+
+---
+
+**업데이트** (repo 변경 후): `git pull` 후 Claude 안에서 `/plugin update marketing_agent`.
+
+**일회성 테스트** (영구 설치 없이 한 세션만):
 ```bash
 claude --plugin-dir "$(pwd)"
 ```
 
-**향후 public 배포 시**
-
-repo 가 public 이 되면 GitHub URL 로 한 줄 설치 가능 (collaborator/PAT 불필요):
-
+**향후 public 전환 시**: GitHub URL 로 한 줄 설치 가능 (collaborator/PAT 불필요):
 ```
 /plugin marketplace add https://github.com/Totaro-int/marketing_agent
 /plugin install marketing_agent@marketing_agent
 ```
+
+**문제 해결**
+
+| 증상 | 원인 + 처방 |
+|------|------------|
+| `Path does not exist: ... /plugin install ...` | 두 명령을 한 줄에 붙임 → A 와 B 따로 입력 |
+| `Failed to install: invalid manifest` | repo 가 옛날 버전 → `git pull` 후 `/plugin marketplace remove marketing_agent` → 2-A 부터 다시 |
+| `Marketplace "marketing_agent" not found` | 2-A (marketplace add) 안 했거나 remove 됨 → 2-A 부터 |
+| `/help` 에 sns- 명령 0개 | `/plugin reload` 누락 → 2-C 실행 |
 
 ### 3) 환경 점검 + 첫 사용
 

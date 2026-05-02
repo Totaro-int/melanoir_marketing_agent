@@ -1,5 +1,5 @@
 ---
-name: onboard-company
+name: sns-onboard-company
 description: Use when the user runs `/sns-onboard` or first-time setup, OR when a campaign command detects missing company-profile.yaml. Conducts a structured interview to fill schemas/company-profile.schema.yaml and writes company-profile.yaml at the project root.
 ---
 

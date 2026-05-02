@@ -1,5 +1,5 @@
 ---
-name: campaign-new
+name: sns-campaign-new
 description: 새 캠페인 브리프를 생성하고 채널별 카피·이미지 초안을 만든다. (Phase 3에서 완성)
 ---
 

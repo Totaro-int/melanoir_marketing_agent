@@ -1,5 +1,5 @@
 ---
-name: reject
+name: sns-reject
 description: draft를 거절하고 사유를 brief에 기록 → 재생성 트리거.
 ---
 

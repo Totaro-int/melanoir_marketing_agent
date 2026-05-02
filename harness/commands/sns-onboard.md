@@ -1,11 +1,11 @@
 ---
-name: onboard
+name: sns-onboard
 description: 회사 프로필을 대화형으로 수집해 company-profile.yaml을 생성한다. 부분 업데이트는 /sns-onboard update <섹션>.
 ---
 
 # /sns-onboard
 
-`onboard-company` 스킬을 호출해 회사 프로필 인터뷰를 진행한다.
+`sns-onboard-company` 스킬을 호출해 회사 프로필 인터뷰를 진행한다.
 
 ## 사용법
 

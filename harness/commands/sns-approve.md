@@ -1,5 +1,5 @@
 ---
-name: approve
+name: sns-approve
 description: draft를 발행 대기(approved)로 승격. 가디언 차단된 draft는 거부됨.
 ---
 

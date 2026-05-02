@@ -1,5 +1,5 @@
 ---
-name: publish
+name: sns-publish
 description: approved draft 를 채널에 발행. dry-run 기본 모드 권장 (PUBLISHER_DRY_RUN=true).
 ---
 

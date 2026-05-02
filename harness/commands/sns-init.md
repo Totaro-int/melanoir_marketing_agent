@@ -1,5 +1,5 @@
 ---
-name: init
+name: sns-init
 description: 새 사용자(고객사)를 위한 첫 가이드. setup → onboard → 첫 캠페인 까지 단계별 안내.
 ---
 

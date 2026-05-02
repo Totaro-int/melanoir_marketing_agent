@@ -31,6 +31,6 @@
     "./harness/agents/publisher.md"
   ],
   "skills": [
-    "./harness/skills/onboard-company"
+    "./harness/skills/sns-onboard-company"
   ]
 }

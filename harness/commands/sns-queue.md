@@ -1,5 +1,5 @@
 ---
-name: queue
+name: sns-queue
 description: 스케줄된 캠페인을 도래 시점에 자동 발행하는 워커. 수동/자동(launchd, crontab) 두 가지 실행 방식.
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: generate
+name: sns-generate
 description: 캠페인 1개 이상 채널에 대해 카피·이미지 draft를 생성 (provider는 env로 선택).
 ---
 

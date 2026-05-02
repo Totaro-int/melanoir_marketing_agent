@@ -1,5 +1,5 @@
 ---
-name: run
+name: sns-run
 description: 단일 진입점. 회사 프로필부터 발행까지 한 번에 실행. 스케줄(주/월) 옵션.
 ---
 

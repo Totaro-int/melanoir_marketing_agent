@@ -1,5 +1,5 @@
 ---
-name: auth
+name: sns-auth
 description: 채널 발행용 자격증명을 로컬에만 저장 (auth/<channel>.json, mode 0600, gitignored).
 ---
 
