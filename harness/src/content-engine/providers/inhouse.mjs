@@ -1,4 +1,4 @@
-// In-house provider stub — placeholder for the future Upflow content API gateway.
+// In-house provider stub — placeholder for the future Samplepay content API gateway.
 // Wired so the registry can route to it, but every method returns a sentinel error
 // asking the caller to set CONTENT_ENGINE_PROVIDER=mock or supply BYO keys.
 

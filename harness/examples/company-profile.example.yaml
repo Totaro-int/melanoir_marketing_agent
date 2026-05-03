@@ -1,11 +1,11 @@
-# 예시: 가상의 B2B SaaS "업플로우" 회사 프로필
+# 예시: 가상의 B2B SaaS "샘플페이" 회사 프로필
 version: 1
 
 brand:
-  name: 업플로우
-  legalName: Upflow Inc.
+  name: 샘플페이
+  legalName: Samplepay Inc.
   websites:
-    - https://upflow.io
+    - https://example.com
 
 taglineOneLine: "한국 SMB를 위한 AI 결제·정산 인프라 — 5분 만에 도입, 자동으로 정산까지."
 
@@ -30,7 +30,7 @@ tone:
     - 영어 약어는 풀어쓰기 (예: "API" → "API(연동 인터페이스)").
     - 숫자·근거 우선. 형용사 남발 금지.
   sampleSentences:
-    - "업플로우는 PG·간편결제·정산을 한 줄로 통합합니다."
+    - "샘플페이는 PG·간편결제·정산을 한 줄로 통합합니다."
     - "도입 첫 달, 평균 정산 주기를 5.2일에서 1.8일로 줄였습니다."
 
 banned:
@@ -56,7 +56,7 @@ visual:
 
 hashtags:
   always:
-    - "#업플로우"
+    - "#샘플페이"
   pool:
     - "#결제"
     - "#정산자동화"
@@ -77,10 +77,10 @@ campaigns:
   cadencePerWeek: 3
 
 competitors:
-  - name: "토스페이먼츠"
+  - name: "예시결제A"
     url: https://tosspayments.com
     notes: "대형 가맹점 위주, SMB 온보딩 마찰 있음"
-  - name: "포트원"
+  - name: "예시결제B"
     url: https://portone.io
     notes: "개발자 친화적, 정산 자동화는 약함"
 
