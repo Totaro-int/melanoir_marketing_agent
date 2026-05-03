@@ -147,15 +147,44 @@ function roleFor(index, total) {
 }
 
 function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total = 1) {
-  const colors = profile?.visual?.colors ?? {};
-  const primary    = colors.primary    ?? '#0F172A';
-  const accent     = colors.accent     ?? '#3B82F6';
-  const background = colors.background ?? '#F8FAFC';
-  const font = profile?.visual?.fontFamily ?? 'sans-serif';
+  const colors    = profile?.visual?.colors ?? {};
+  const font      = profile?.visual?.fontFamily ?? '';
+  const imgStyle  = profile?.imageStyle ?? {};
+  const industry  = profile?.industry ?? '';
+  const audiences = profile?.targetAudience ?? [];
 
-  const imgStyle = profile?.imageStyle ?? {};
+  // ── 색상 ──────────────────────────────────────────────────────────────
+  const hasColors = colors.primary || colors.accent || colors.background;
+  let colorDesc;
+  if (imgStyle.colorMood && hasColors) {
+    const { primary = '#333', accent = '#666', background = '#fff' } = colors;
+    colorDesc = {
+      brand_only:    `Strict brand palette: background ${background}, dominant ${primary}, accent ${accent}. Exact hex values.`,
+      cool:          `Cool palette — blues and grays. Accent: ${accent}.`,
+      warm:          `Warm palette — creams and ambers. Accent: ${accent}.`,
+      neutral:       `Monochrome — blacks, whites, grays. Accent pop: ${accent}.`,
+      high_contrast: `High contrast black and white. Single accent: ${accent}.`,
+    }[imgStyle.colorMood] ?? `Palette: background ${background}, primary ${primary}, accent ${accent}.`;
+  } else if (hasColors) {
+    const { primary, accent, background } = colors;
+    colorDesc = [
+      background ? `Background: ${background}.` : '',
+      primary    ? `Primary: ${primary}.` : '',
+      accent     ? `Accent: ${accent}.` : '',
+    ].filter(Boolean).join(' ') + ' Use exact hex values.';
+  } else {
+    // 브랜드 색상 미설정 — 업종/오디언스 기반으로 AI에게 판단 위임
+    const industryColorHint = {
+      fintech:    'Professional fintech palette — deep navy or slate, clean white space, one sharp accent.',
+      ecommerce:  'Vibrant ecommerce palette — warm energetic tones, clear contrast.',
+      healthcare: 'Calm healthcare palette — soft blues and greens, high readability.',
+      education:  'Approachable education palette — bright but not harsh, friendly warmth.',
+      saas:       'Modern SaaS palette — clean neutrals, one strong brand accent.',
+    }[industry?.toLowerCase()] ?? 'Choose a professional, high-contrast palette appropriate for Korean SNS.';
+    colorDesc = industryColorHint;
+  }
 
-  // aesthetic → style direction
+  // ── 스타일 방향 ────────────────────────────────────────────────────────
   const aestheticMap = {
     minimal_editorial: 'minimal editorial — generous white space, restrained palette, quiet authority',
     bold_graphic:      'bold graphic design — strong color blocks, oversized type, high visual energy',
@@ -165,63 +194,62 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
     swiss_type:        'Swiss International Typographic Style — grid-based, clean serif/sans, typography as hero',
   };
   const aestheticDesc = imgStyle.aesthetic === 'custom'
-    ? (imgStyle.customAesthetic ?? 'editorial')
-    : (aestheticMap[imgStyle.aesthetic] ?? 'minimal editorial');
+    ? (imgStyle.customAesthetic ?? 'modern editorial')
+    : (aestheticMap[imgStyle.aesthetic] ?? 'modern editorial — purposeful composition, strong visual hierarchy');
 
-  // colorMood
-  const colorMoodMap = {
-    brand_only:    `Strict brand palette only: ${background} bg, ${primary} dominant, ${accent} accent.`,
-    cool:          `Cool tones — blues, grays, and brand accent ${accent}.`,
-    warm:          `Warm tones — creams, ambers, warm whites. Accent: ${accent}.`,
-    neutral:       `Neutral monochrome — blacks, whites, mid-grays. Accent: ${accent} sparingly.`,
-    high_contrast: `High contrast black and white. Single accent pop: ${accent}.`,
-  };
-  const colorDesc = colorMoodMap[imgStyle.colorMood]
-    ?? `Color palette: background ${background}, primary ${primary}, accent ${accent}. Use exact hex values.`;
-
-  // abstract vs concrete
+  // ── 이미지 성격 (abstract / concrete) ─────────────────────────────────
   const abstractDesc = imgStyle.preferAbstract === false
-    ? 'Concrete imagery: objects, spaces, or situational scenes that relate to the topic.'
-    : 'Abstract composition: typography, geometric shapes, and negative space as the primary elements.';
+    ? `Concrete imagery: real objects, spaces, or scenes that represent "${brief.topic}". Situational, relatable.`
+    : `Abstract composition centered on typography and geometric shapes that evoke "${brief.topic}". No literal depiction.`;
 
-  // reference brands
+  // ── 레퍼런스 브랜드 ────────────────────────────────────────────────────
   const refsDesc = imgStyle.referencesBrands?.length
-    ? `Visual references: ${imgStyle.referencesBrands.join(', ')} — capture their aesthetic spirit without copying.`
+    ? `Visual spirit of: ${imgStyle.referencesBrands.join(', ')} — aesthetic reference only, no copying.`
     : '';
 
-  // avoid elements (merge with hard safety avoids)
+  // ── 오디언스 ────────────────────────────────────────────────────────────
+  const audienceHint = audiences.length
+    ? `Target audience: ${audiences.map((a) => a.segment ?? a.name).filter(Boolean).join(', ')}.`
+    : '';
+
+  // ── 회피 요소 ──────────────────────────────────────────────────────────
   const userAvoid = imgStyle.avoidElements?.join(', ') ?? '';
   const avoidDesc = [
-    'Human faces, real people, real logos, brand names as readable text, illegible small text, watermarks.',
+    'Human faces, real people, real logos, brand names as readable text, illegible text, watermarks.',
     userAvoid ? `Also avoid: ${userAvoid}.` : '',
   ].filter(Boolean).join(' ');
 
+  // ── 채널·역할 ──────────────────────────────────────────────────────────
   const channelNote = channel === 'linkedin'
     ? 'Professional B2B context — clean, credible, boardroom-ready.'
-    : 'Korean SNS card — immediate visual hook, scroll-stopping.';
+    : 'Korean SNS card — scroll-stopping, immediate visual hook.';
 
   const roleComposition = {
-    single: `Full-bleed hero composition. One dominant element anchors the center. Negative space 60%+.`,
-    hook:   `HOOK card ${n}/${total}. Oversized single word or number dominates 70% of frame. Immediate visual impact.`,
-    body:   `BODY card ${n}/${total}. Grid-structured data layout. Room for one statistic or short insight.`,
-    cta:    `CTA card ${n}/${total}. Brand color dominance stronger than other cards. Clear CTA zone at bottom third.`,
-  }[role] ?? 'Hero card. Strong focal point.';
+    single: 'Full-bleed hero. One dominant focal element, 60%+ negative space.',
+    hook:   `HOOK card ${n}/${total}. Single bold keyword or number dominates 70% of frame. Maximum immediate impact.`,
+    body:   `BODY card ${n}/${total}. Structured layout with visual space for one key insight or statistic.`,
+    cta:    `CTA card ${n}/${total}. Stronger brand color presence than other cards. Clear action zone at bottom third.`,
+  }[role] ?? 'Hero card. Strong single focal point.';
+
+  // ── 폰트 힌트 ─────────────────────────────────────────────────────────
+  const fontNote = font ? `Typography feel: ${font}.` : 'Typography: clean, modern, Korean-friendly.';
 
   return [
     `SNS card visual. ${channelNote}`,
     `TOPIC: ${brief.topic}`,
-    ``,
+    audienceHint,
+    '',
     `STYLE: ${aestheticDesc}`,
-    `TYPOGRAPHY: Large-scale composition. Font feel: ${font}. Korean-friendly layout.`,
-    ``,
+    `${fontNote} Large-scale composition.`,
+    '',
     `COMPOSITION: ${roleComposition}`,
-    ``,
+    '',
     `COLOR: ${colorDesc}`,
-    ``,
-    `IMAGERY: ${abstractDesc} The visual should relate to the topic: "${brief.topic}".`,
+    '',
+    `IMAGERY: ${abstractDesc}`,
     refsDesc,
-    ``,
-    `QUALITY: Sharp edges, high contrast, print-ready. No lens blur.`,
+    '',
+    'QUALITY: Sharp edges, high contrast, print-ready. No lens blur. No gradients unless intentional.',
     `AVOID: ${avoidDesc}`,
   ].filter(Boolean).join('\n');
 }
