@@ -1,7 +1,7 @@
 {
   "name": "marketing_agent",
   "version": "0.9.1",
-  "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스. 11개 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube), 온보딩에서 채널 선택, /sns-run + 스케줄 + 자동 발행 워커 + 휴먼 승인 게이트. 모든 명령은 /sns- prefix.",
+  "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스. 11개 채널 지원. /sns-start로 시작, /sns-repeat으로 반복, /sns-edit으로 수정, /sns-doctor로 환경 진단.",
   "author": {
     "name": "Totaro Inc."
   },
@@ -10,19 +10,10 @@
   "license": "Proprietary",
   "keywords": ["marketing", "sns", "social", "publishing", "korean", "totaro"],
   "commands": [
-    "./harness/commands/sns-init.md",
-    "./harness/commands/sns-doctor.md",
-    "./harness/commands/sns-onboard.md",
-    "./harness/commands/sns-run.md",
-    "./harness/commands/sns-campaign-new.md",
-    "./harness/commands/sns-generate.md",
-    "./harness/commands/sns-preview.md",
-    "./harness/commands/sns-approve.md",
-    "./harness/commands/sns-reject.md",
-    "./harness/commands/sns-publish.md",
-    "./harness/commands/sns-queue.md",
-    "./harness/commands/sns-auth.md",
-    "./harness/commands/sns-status.md"
+    "./harness/commands/sns-start.md",
+    "./harness/commands/sns-repeat.md",
+    "./harness/commands/sns-edit.md",
+    "./harness/commands/sns-doctor.md"
   ],
   "agents": [
     "./harness/agents/copywriter.md",
