@@ -1,12 +1,13 @@
 // Provider registry — picks the active provider from env, with a safe mock fallback.
-// Env: CONTENT_ENGINE_PROVIDER = mock | openai | fal | inhouse  (default: mock)
+// Env: CONTENT_ENGINE_PROVIDER = mock | openai | fal | anthropic | inhouse  (default: mock)
 
 import { provider as mock } from './providers/mock.mjs';
 import { provider as openai } from './providers/openai-images.mjs';
 import { provider as fal } from './providers/fal.mjs';
+import { provider as anthropic } from './providers/anthropic.mjs';
 import { provider as inhouse } from './providers/inhouse.mjs';
 
-const ALL = { mock, openai, fal, inhouse };
+const ALL = { mock, openai, fal, anthropic, inhouse };
 
 export function getActiveProviderId() {
   return process.env.CONTENT_ENGINE_PROVIDER ?? 'mock';

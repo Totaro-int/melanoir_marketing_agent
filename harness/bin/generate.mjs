@@ -209,6 +209,7 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
 
   return [
     `SNS card visual. ${channelNote}`,
+    `TOPIC: ${brief.topic}`,
     ``,
     `STYLE: ${aestheticDesc}`,
     `TYPOGRAPHY: Large-scale composition. Font feel: ${font}. Korean-friendly layout.`,
@@ -217,12 +218,12 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
     ``,
     `COLOR: ${colorDesc}`,
     ``,
-    `IMAGERY: ${abstractDesc}`,
+    `IMAGERY: ${abstractDesc} The visual should relate to the topic: "${brief.topic}".`,
     refsDesc,
     ``,
     `QUALITY: Sharp edges, high contrast, print-ready. No lens blur.`,
     `AVOID: ${avoidDesc}`,
-  ].filter((l) => l !== undefined && !(l === '' && false)).join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 function renderDraftMd(d) {
