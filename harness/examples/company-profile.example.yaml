@@ -78,10 +78,10 @@ campaigns:
 
 competitors:
   - name: "예시결제A"
-    url: https://tosspayments.com
+    url: https://example.com/예시결제A
     notes: "대형 가맹점 위주, SMB 온보딩 마찰 있음"
   - name: "예시결제B"
-    url: https://portone.io
+    url: https://example.com/예시결제B
     notes: "개발자 친화적, 정산 자동화는 약함"
 
 meta:

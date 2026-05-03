@@ -1,49 +1,53 @@
 ---
 name: sns-campaign-new
-description: 새 캠페인 브리프를 생성하고 채널별 카피·이미지 초안을 만든다. (Phase 3에서 완성)
+description: 새 캠페인 브리프와 채널 디렉터리만 생성. 카피/이미지 생성은 /sns-generate 또는 /sns-run.
 ---
 
 # /sns-campaign-new
 
-> ⚠️ **현재 Phase 2**: 브리프 파일 + 채널 디렉터리 생성까지 자동. 카피·이미지 생성은 Phase 3에서 활성화.
+캠페인 brief.yaml + 채널별 폴더 skeleton 만 생성. 카피/이미지/발행은 별도 명령.
 
-## 사용법
+## 동작 원칙 (Claude 가 따를 것)
+
+`/sns-campaign-new` 호출 시:
+
+1. **주제가 있으면** 바로 다음 실행:
+   ```bash
+   node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...]
+   ```
+2. **주제가 없으면** "주제 한 줄로 알려주세요" 만 묻기. 답 받자마자 위 실행.
+3. **추가 정보를 묻지 말 것**. 채널/goal/cadence 는 사용자가 안 정하면:
+   - 채널: `profile.channels.enabled` (없으면 11개 전체)
+   - goal: `profile.campaigns.defaultGoals[0]` (보통 `awareness`)
+   - cadence: `single`
+
+## 사용 예시
 
 ```
-/sns-campaign-new "<주제>"
-/sns-campaign-new "<주제>" --channels threads,linkedin
-/sns-campaign-new "<주제>" --goal lead --cadence single
+/sns-campaign-new "신제품 런칭"
+/sns-campaign-new "신제품 런칭" --channels=threads,bluesky
+/sns-campaign-new "신제품 런칭" --cadence=series-3 --goal=lead
 ```
 
-## 동작 (Phase 2)
+## 결과
 
-내부적으로 `node bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...]` 를 실행한다.
+- `posts/campaigns/<YYYY-MM-DD>-<slug>/brief.yaml` 생성
+- `posts/campaigns/<slug>/<채널>/README.md` 채널별 placeholder
+- `posts/by-channel/<채널>/<slug>` symlink 자동 동기화
 
-1. `company-profile.yaml` 존재 확인 — 없으면 `/sns-onboard` 안내 후 종료
-2. `--channels` 미지정 시 `plugin.json`의 `status: reference|active` 채널 자동 선택
-3. `campaigns/<YYYY-MM-DD>-<slug>/brief.yaml` 생성 (스키마: `schemas/campaign-brief.schema.yaml`)
-4. 채널별 디렉터리 + placeholder README 생성: `campaigns/<slug>/<channel>/`
-5. 결과 요약 출력 + 다음 단계 안내
+## 다음 단계
 
-## brief.yaml 스키마 (초안)
-
-```yaml
-version: 1
-slug: 2026-05-01-신제품-런칭
-topic: "신제품 런칭 5월 1주차"
-goal: awareness         # awareness | lead | conversion | retention | recruiting
-channels: [threads]
-cadence: single         # single | thread | series-3 | series-5
-constraints:
-  maxLengthOverride: null
-  mustInclude: []
-  mustExclude: []
-status:
-  threads: drafting     # drafting | preview | approved | scheduled | published | failed
+```
+/sns-generate <slug>      카피 + 이미지 생성
+/sns-preview <slug>       결과 보기
+/sns-approve <slug> --channel=<ch>
+/sns-publish <slug> --channel=<ch> [--dry-run]
 ```
 
-## 다음 단계 (Phase 3+)
+또는 한 줄로: `/sns-run "<주제>"` (위 단계 자동).
 
-- 채널별 `copywriter` 서브에이전트가 카피 생성
-- `image-director`가 카드뉴스 프롬프트 생성 → content-engine 호출
-- 휴먼 승인 게이트 → `/sns-preview <slug>` → `/sns-publish <slug>`
+## 직접 실행
+
+```bash
+node harness/bin/campaign-new.mjs "신제품 런칭" --channels=threads,bluesky --cadence=series-3
+```

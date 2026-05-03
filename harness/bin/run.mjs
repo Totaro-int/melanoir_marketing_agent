@@ -15,7 +15,7 @@ import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { PATHS, ui } from './_lib.mjs';
+import { PATHS, ui, readYaml, enabledChannels, activeChannels } from './_lib.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -31,9 +31,18 @@ if (!existsSync(PATHS.profile)) {
   process.exit(2);
 }
 
-const channels = (flags.channels ? String(flags.channels).split(',').map((s) => s.trim()).filter(Boolean) : []);
+// 채널 우선순위: --channels 플래그 > profile.channels.enabled > plugin manifest active.
+let channels = [];
+if (flags.channels) {
+  channels = String(flags.channels).split(',').map((s) => s.trim()).filter(Boolean);
+} else {
+  let profile = null;
+  try { profile = readYaml(PATHS.profile); } catch {}
+  channels = enabledChannels(profile);
+  if (!channels.length) channels = activeChannels();
+}
 if (!channels.length) {
-  ui.err('--channels 가 필요합니다 (예: --channels=threads,linkedin)');
+  ui.err('활성 채널 없음. /sns-onboard 또는 --channels= 플래그 사용.');
   process.exit(2);
 }
 
