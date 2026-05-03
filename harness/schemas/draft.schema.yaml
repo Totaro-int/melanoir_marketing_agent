@@ -3,7 +3,7 @@
 # bin/generate.mjs 가 작성, bin/preview.mjs / bin/approve.mjs 가 읽음.
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://upflow.io/schemas/draft/v1"
+$id: "https://totaro.example.com/schemas/marketing_agent/draft/v1"
 title: Draft
 type: object
 required: [version, slug, channel, generatedAt, text, hashtags, assets, guardian]

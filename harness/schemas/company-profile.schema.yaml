@@ -3,7 +3,7 @@
 # 필수 필드 누락 시 캠페인 생성을 차단한다.
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://upflow.io/schemas/company-profile/v1"
+$id: "https://totaro.example.com/schemas/marketing_agent/company-profile/v1"
 title: CompanyProfile
 type: object
 required: [version, brand, taglineOneLine, industry, targetAudience, tone, banned, channels]

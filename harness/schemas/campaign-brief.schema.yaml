@@ -2,7 +2,7 @@
 # /sns-campaign-new 가 생성하고, /sns-preview, /sns-publish 가 갱신.
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
-$id: "https://upflow.io/schemas/campaign-brief/v1"
+$id: "https://totaro.example.com/schemas/marketing_agent/campaign-brief/v1"
 title: CampaignBrief
 type: object
 required: [version, slug, topic, goal, channels, cadence, status]
