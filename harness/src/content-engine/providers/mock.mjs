@@ -19,7 +19,8 @@ function pickTone(profile) {
 function pickHashtags(profile, channel) {
   const always = profile?.hashtags?.always ?? [];
   const pool = profile?.hashtags?.pool ?? [];
-  const limits = { threads: 3, linkedin: 5 };
+  // 채널별 권장 해시태그 상한. bluesky 는 본문 내 inline 1~2개가 자연스러움.
+  const limits = { threads: 3, linkedin: 5, bluesky: 2 };
   const max = limits[channel] ?? 3;
   const seen = new Set();
   const out = [];
@@ -65,10 +66,24 @@ function copyForLinkedIn(brief, profile) {
   ].join('\n');
 }
 
+// Bluesky: 300자 제약. 짧고 직접적, 마케팅 톤 X. 조사 issue 회피용으로 쉼표 구조.
+function copyForBluesky(brief, profile) {
+  const brand = profile?.brand?.name ?? '브랜드';
+  const tagline = profile?.taglineOneLine ?? '한 줄 소개';
+  const pain = profile?.targetAudience?.[0]?.painPoints?.[0] ?? '';
+  const lines = [`${brief.topic}.`];
+  if (pain) lines.push('', pain);
+  lines.push('', `${brand} — ${tagline}`);
+  // 300자 안전 여유 (해시태그·줄바꿈 포함 대비 280)
+  const text = lines.join('\n');
+  return text.length > 280 ? text.slice(0, 277) + '…' : text;
+}
+
 function copyFor(channel, brief, profile) {
   switch (channel) {
     case 'threads':  return copyForThreads(brief, profile);
     case 'linkedin': return copyForLinkedIn(brief, profile);
+    case 'bluesky':  return copyForBluesky(brief, profile);
     default:         return `[${channel}] ${brief.topic}\n\n(mock provider has no template for this channel — falling back to a single line.)`;
   }
 }
