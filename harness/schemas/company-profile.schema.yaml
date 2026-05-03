@@ -73,6 +73,62 @@ properties:
         items: { type: string }
         description: "금기 표현 (예: '업계 1위', '최고의')"
 
+  writing:
+    type: object
+    description: "선택 — 글쓰기 스타일 세부 설정. copywriter가 카피 생성 시 참조."
+    properties:
+      formats:
+        type: array
+        items:
+          type: string
+          enum: [single_punchline, narrative_thread, data_driven, question_hook, listicle]
+        description: "선호 포스트 포맷 (복수 가능). single_punchline=단타 임팩트, narrative_thread=스토리텔링, data_driven=수치 중심, question_hook=질문으로 시작, listicle=리스트형"
+      sentenceLength:
+        type: string
+        enum: [short, medium, long]
+        description: "문장 길이 선호. short=짧고 끊김, medium=보통, long=긴 서술형"
+      ctaStyle:
+        type: string
+        enum: [direct, soft, implicit]
+        description: "CTA 방식. direct=직접적('지금 시작하세요'), soft=제안형('한번 살펴보세요'), implicit=암시적(CTA 없이 궁금증 유발)"
+      emojiUsage:
+        type: string
+        enum: [none, minimal, moderate]
+        description: "이모지 사용 빈도. none=없음, minimal=강조 1~2개, moderate=자연스럽게 여러 개"
+      referencePosts:
+        type: array
+        maxItems: 3
+        items: { type: string }
+        description: "좋아하는 실제 포스트 텍스트 예시 (최대 3개). copywriter가 스타일 학습용으로 사용."
+
+  imageStyle:
+    type: object
+    description: "선택 — 이미지 생성 스타일 가이드. imagePromptFor()가 참조해 프롬프트를 강화."
+    properties:
+      aesthetic:
+        type: string
+        enum: [minimal_editorial, bold_graphic, warm_lifestyle, dark_luxury, playful_bright, swiss_type, custom]
+        description: "전체 비주얼 방향. minimal_editorial=깔끔한 에디토리얼, bold_graphic=강렬한 그래픽, warm_lifestyle=따뜻한 감성, dark_luxury=다크 럭셔리, playful_bright=컬러풀 발랄, swiss_type=타이포그래피 중심, custom=아래 customAesthetic 참조"
+      customAesthetic:
+        type: string
+        description: "aesthetic=custom일 때 자유 서술 (예: '90년대 레트로 그래픽 + 뉴트럴 팔레트')"
+      colorMood:
+        type: string
+        enum: [brand_only, cool, warm, neutral, high_contrast]
+        description: "색감 분위기. brand_only=브랜드 컬러만, cool=차가운 계열, warm=따뜻한 계열, neutral=무채색, high_contrast=흑백 고대비"
+      preferAbstract:
+        type: boolean
+        description: "true=타이포그래피·도형 중심 추상, false=사물·공간·상황 표현 선호"
+      avoidElements:
+        type: array
+        items: { type: string }
+        description: "이미지에서 피할 요소 (예: ['gradient', 'human silhouette', 'stock photo feel', 'busy background'])"
+      referencesBrands:
+        type: array
+        maxItems: 3
+        items: { type: string }
+        description: "시각적으로 닮고 싶은 브랜드·매체 (예: ['Linear', 'Stripe', 'Vercel']). 프롬프트에 스타일 참조로 주입."
+
   visual:
     type: object
     description: "선택 — 카드뉴스/이미지 생성 시 일관성 유지"

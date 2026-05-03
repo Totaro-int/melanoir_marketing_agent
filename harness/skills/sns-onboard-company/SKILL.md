@@ -49,7 +49,76 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
    - 영상 캠페인 계획 없으면 tiktok/youtube 는 빼는 게 좋음 (이미지/텍스트와 호환 안 됨).
    - 최소 1개 필수. 입력값은 `channels.enabled` 배열로 저장.
 
-8. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/sns-onboard update <섹션>`으로 채워도 됩니다." 로 분기
+8. **writing** — 글쓰기 스타일 설정. 필수는 아니지만 카피 품질에 직접 영향. 아래 항목을 순서대로 하나씩 묻는다:
+
+   a. **formats** (복수 선택 가능):
+   ```
+   1) single_punchline  — 한 줄 임팩트. 짧고 강렬.
+   2) narrative_thread  — 스토리텔링. 기승전결 흐름.
+   3) data_driven       — 수치·근거 먼저. "XX% 감소" 류.
+   4) question_hook     — 질문으로 시작. "왜 XX는 실패할까요?"
+   5) listicle          — 리스트형. "3가지 이유", "5가지 방법"
+   ```
+   여러 개 선택 가능. 없으면 건너뜀.
+
+   b. **sentenceLength** — "문장 길이 선호는?"
+   ```
+   1) short  — 짧고 끊김. 호흡 빠름.
+   2) medium — 보통. 가독성 균형.
+   3) long   — 긴 서술형. 설명 충분히.
+   ```
+
+   c. **ctaStyle** — "행동 유도(CTA) 방식은?"
+   ```
+   1) direct    — 직접적. "지금 시작하세요", "무료 체험하기"
+   2) soft      — 제안형. "한번 살펴보세요", "관심 있으시면"
+   3) implicit  — 암시적. CTA 없이 궁금증만 남김.
+   ```
+
+   d. **emojiUsage** — "이모지 사용 방식은?"
+   ```
+   1) none     — 이모지 없음
+   2) minimal  — 강조 1~2개만 (✅ 📊 등)
+   3) moderate — 자연스럽게 여러 개
+   ```
+
+   e. **referencePosts** — "지금까지 쓴 글 중 잘 됐거나 마음에 드는 포스트가 있나요? 있으면 텍스트를 붙여넣어 주세요 (최대 3개, 없으면 건너뜀)." → 받은 텍스트를 `referencePosts` 배열에 저장.
+
+9. **imageStyle** — 이미지 생성 스타일 설정. 아래 항목을 순서대로 묻는다:
+
+   a. **aesthetic** — "카드/이미지의 전체 분위기는?"
+   ```
+   1) minimal_editorial — 여백 많고 정갈한 에디토리얼
+   2) bold_graphic      — 강렬한 색면·굵은 타이포그래피
+   3) warm_lifestyle    — 따뜻한 감성, 사람·일상 느낌
+   4) dark_luxury       — 어둡고 고급스러운 분위기
+   5) playful_bright    — 밝고 컬러풀, 발랄한 느낌
+   6) swiss_type        — 타이포그래피 중심, 스위스 그래픽
+   7) custom            — 직접 서술
+   ```
+   `custom` 선택 시 → `customAesthetic`에 자유 서술 받기.
+
+   b. **colorMood** — "색감 분위기는?"
+   ```
+   1) brand_only     — 브랜드 컬러만 사용
+   2) cool           — 차갑고 차분한 계열 (블루·그레이)
+   3) warm           — 따뜻한 계열 (크림·오렌지·레드)
+   4) neutral        — 무채색 (흑·백·회)
+   5) high_contrast  — 흑백 고대비
+   ```
+
+   c. **preferAbstract** — "이미지 스타일 선호는?"
+   ```
+   1) 추상·타이포그래피 중심 (도형, 글자, 여백)
+   2) 구체적 표현 (사물, 공간, 상황 묘사)
+   ```
+   → true / false 저장.
+
+   d. **avoidElements** — "이미지에서 절대 피할 요소가 있나요? (예: '사람 실루엣', '그라디언트', '스톡포토 느낌', '복잡한 배경')" → 없으면 건너뜀.
+
+   e. **referencesBrands** — "시각적으로 닮고 싶은 브랜드나 매체가 있나요? (예: Linear, Stripe, Notion, 무신사)" → 없으면 건너뜀. 최대 3개.
+
+10. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/sns-onboard update <섹션>`으로 채워도 됩니다." 로 분기
 
 ## Validation
 
@@ -65,12 +134,12 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 | 모드 | 트리거 | 동작 |
 |------|--------|------|
-| **full** | `/sns-onboard` (프로필 없음) | 위 7단계 전체 인터뷰 |
+| **full** | `/sns-onboard` (프로필 없음) | 위 9단계 전체 인터뷰 |
 | **update** | `/sns-onboard update <섹션>` | 해당 섹션만 인터뷰. 변경 사항만 머지하고 `meta.updatedAt` 갱신 |
 | **show** | `/sns-onboard show` | `node bin/profile-show.mjs` 실행 결과를 그대로 보여줌 (스킬은 추가 작업 없음) |
 | **resume** | `/sns-onboard` (프로필 있음) | "전체 다시 / 부분 업데이트 / 그대로 두기" 3택 질문 |
 
-업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `channels`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
+업데이트 가능 섹션: `brand`, `tagline`, `industry`, `audience`, `tone`, `banned`, `channels`, `writing`, `imageStyle`, `visual`, `hashtags`, `legal`, `campaigns`, `competitors`.
 
 저장 직전 반드시 `node bin/profile-validate.mjs` 실행해 스키마 위반·소프트 경고를 확인하고, 실패 시 사용자에게 어느 필드가 깨졌는지 알리고 그 필드만 다시 묻는다.
 

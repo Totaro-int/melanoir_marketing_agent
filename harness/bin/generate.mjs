@@ -139,32 +139,76 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
   const background = colors.background ?? '#F8FAFC';
   const font = profile?.visual?.fontFamily ?? 'sans-serif';
 
-  const channelStyle = channel === 'linkedin'
-    ? 'professional B2B editorial, clean corporate aesthetic'
-    : 'modern Korean SNS card, bold editorial layout';
+  const imgStyle = profile?.imageStyle ?? {};
+
+  // aesthetic → style direction
+  const aestheticMap = {
+    minimal_editorial: 'minimal editorial — generous white space, restrained palette, quiet authority',
+    bold_graphic:      'bold graphic design — strong color blocks, oversized type, high visual energy',
+    warm_lifestyle:    'warm lifestyle aesthetic — soft light, organic textures, approachable feel',
+    dark_luxury:       'dark luxury — deep blacks, refined gold or silver accents, premium atmosphere',
+    playful_bright:    'playful and bright — vivid colors, rounded forms, energetic and friendly',
+    swiss_type:        'Swiss International Typographic Style — grid-based, clean serif/sans, typography as hero',
+  };
+  const aestheticDesc = imgStyle.aesthetic === 'custom'
+    ? (imgStyle.customAesthetic ?? 'editorial')
+    : (aestheticMap[imgStyle.aesthetic] ?? 'minimal editorial');
+
+  // colorMood
+  const colorMoodMap = {
+    brand_only:    `Strict brand palette only: ${background} bg, ${primary} dominant, ${accent} accent.`,
+    cool:          `Cool tones — blues, grays, and brand accent ${accent}.`,
+    warm:          `Warm tones — creams, ambers, warm whites. Accent: ${accent}.`,
+    neutral:       `Neutral monochrome — blacks, whites, mid-grays. Accent: ${accent} sparingly.`,
+    high_contrast: `High contrast black and white. Single accent pop: ${accent}.`,
+  };
+  const colorDesc = colorMoodMap[imgStyle.colorMood]
+    ?? `Color palette: background ${background}, primary ${primary}, accent ${accent}. Use exact hex values.`;
+
+  // abstract vs concrete
+  const abstractDesc = imgStyle.preferAbstract === false
+    ? 'Concrete imagery: objects, spaces, or situational scenes that relate to the topic.'
+    : 'Abstract composition: typography, geometric shapes, and negative space as the primary elements.';
+
+  // reference brands
+  const refsDesc = imgStyle.referencesBrands?.length
+    ? `Visual references: ${imgStyle.referencesBrands.join(', ')} — capture their aesthetic spirit without copying.`
+    : '';
+
+  // avoid elements (merge with hard safety avoids)
+  const userAvoid = imgStyle.avoidElements?.join(', ') ?? '';
+  const avoidDesc = [
+    'Human faces, real people, real logos, brand names as readable text, illegible small text, watermarks.',
+    userAvoid ? `Also avoid: ${userAvoid}.` : '',
+  ].filter(Boolean).join(' ');
+
+  const channelNote = channel === 'linkedin'
+    ? 'Professional B2B context — clean, credible, boardroom-ready.'
+    : 'Korean SNS card — immediate visual hook, scroll-stopping.';
 
   const roleComposition = {
-    single: `Full-bleed hero composition. One dominant typographic element anchors the center. Large negative space (60%+). Strong focal point.`,
-    hook:   `HOOK card ${n}/${total}. Oversized single word or number dominates 70% of frame. Minimal supporting geometry. Immediate visual impact.`,
-    body:   `BODY card ${n}/${total}. Clean data-visualization layout. Grid-structured. Room for one statistic or short insight. Balanced white space.`,
-    cta:    `CTA card ${n}/${total}. Strong brand color dominance. Clear visual call-to-action zone at bottom third. Energetic closing composition.`,
-  }[role] ?? `Hero card. Strong focal point.`;
+    single: `Full-bleed hero composition. One dominant element anchors the center. Negative space 60%+.`,
+    hook:   `HOOK card ${n}/${total}. Oversized single word or number dominates 70% of frame. Immediate visual impact.`,
+    body:   `BODY card ${n}/${total}. Grid-structured data layout. Room for one statistic or short insight.`,
+    cta:    `CTA card ${n}/${total}. Brand color dominance stronger than other cards. Clear CTA zone at bottom third.`,
+  }[role] ?? 'Hero card. Strong focal point.';
 
-  const lines = [
-    `Editorial SNS card visual. ${channelStyle}.`,
+  return [
+    `SNS card visual. ${channelNote}`,
+    ``,
+    `STYLE: ${aestheticDesc}`,
+    `TYPOGRAPHY: Large-scale composition. Font feel: ${font}. Korean-friendly layout.`,
     ``,
     `COMPOSITION: ${roleComposition}`,
     ``,
-    `COLOR PALETTE: Primary background ${background}, dominant brand color ${primary}, accent pop ${accent}. Use exact hex values. No gradients unless subtle.`,
+    `COLOR: ${colorDesc}`,
     ``,
-    `TYPOGRAPHY TREATMENT: Large-scale abstract type composition. Geometric letterforms. Swiss International style meets Korean editorial. Font feel: ${font}.`,
+    `IMAGERY: ${abstractDesc}`,
+    refsDesc,
     ``,
-    `QUALITY: Sharp vector-like edges, high contrast, print-ready resolution. Studio lighting on any objects. No lens blur.`,
-    ``,
-    `AVOID: Human faces, real people, real logos, brand names as text, illegible small text, busy cluttered backgrounds, stock-photo feel, watermarks, borders, drop shadows.`,
-  ];
-
-  return lines.join('\n');
+    `QUALITY: Sharp edges, high contrast, print-ready. No lens blur.`,
+    `AVOID: ${avoidDesc}`,
+  ].filter((l) => l !== undefined && !(l === '' && false)).join('\n');
 }
 
 function renderDraftMd(d) {
