@@ -60,5 +60,6 @@ const behind = parseInt(behindStr || '0', 10);
 if (!Number.isFinite(behind) || behind <= 0) { console.log('OK'); process.exit(0); }
 
 const lastCommit = git(['log', `HEAD..origin/${defaultBranch}`, '--oneline', '-1']).stdout?.trim() || '';
-console.log(`UPDATE_AVAILABLE ${behind} ${lastCommit}`);
+// Include branch and root so command files can run `git -C <root> pull origin <branch>` exactly.
+console.log(`UPDATE_AVAILABLE ${behind} ${defaultBranch} ${ROOT} ${lastCommit}`);
 process.exit(0);

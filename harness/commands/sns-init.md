@@ -2,20 +2,21 @@
 name: sns-init
 description: 새 사용자(고객사)를 위한 첫 가이드. setup → onboard → 첫 캠페인 까지 단계별 안내.
 ---
-## 호출 직전 자동 업데이트 체크 (먼저 실행)
+## 호출 직전 자동 업데이트 체크 (반드시 먼저 실행)
+
+**아래 명령을 실행하고 결과를 확인하라:**
 
 ```bash
 node harness/bin/check-updates.mjs
 ```
 
-출력이 `OK` 면 그대로 본 명령 진행.
+- 출력이 `OK` → 그대로 본 명령 진행.
+- 출력이 `UPDATE_AVAILABLE <N> <branch> <root> <commit>` → **반드시** 사용자에게 물어라:
+  > "marketing_agent 새 버전 <N>개 업데이트가 있습니다 (최신: <commit>). 지금 업데이트할까요?"
+  - **예** → `git -C "<root>" pull origin <branch>` 실행 후 본 명령 진행.
+  - **아니오** → 그대로 본 명령 진행 (30분 내 재질문 없음).
 
-출력이 `UPDATE_AVAILABLE <N> <commit>` 면 사용자에게 묻기 — 예: "marketing_agent 새 버전 N개 (최신: <commit message>). 지금 업데이트할까요? (예/아니오)"
-
-- **예** → `git -C <repo-root> pull origin <defaultBranch>` 실행 (defaultBranch 는 보통 main). pull 성공 후 본 명령 진행.
-- **아니오** → 그대로 본 명령 진행. 30분 cache 라 다음 호출 때 다시 안 묻음.
-
-(이 체크는 30분 throttle. 매 호출 fetch 안 함.)
+(30분 throttle — 매 호출마다 fetch 하지 않음.)
 
 ---
 

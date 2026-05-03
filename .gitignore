@@ -14,9 +14,16 @@ auth/
 !harness/examples/auth/
 !harness/examples/auth/*.json
 
-# 생성된 콘텐츠 (캠페인 산출물) — 로컬 전용, 커밋 금지
+# 생성된 이미지·빌드 산출물
 out/
-posts/campaigns/
+
+# 캠페인 폴더 구조는 유지하되 생성된 드래프트·타임스탬프 파일만 제외
+posts/campaigns/**/draft.yaml
+posts/campaigns/**/draft.md
+posts/campaigns/**/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.yaml
+posts/campaigns/**/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
+
+# symlink 자동 생성물 (sync-posts.mjs)
 posts/by-channel/
 
 # 노드/툴링
