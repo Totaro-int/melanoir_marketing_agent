@@ -34,8 +34,10 @@ add('profile', 'company-profile.yaml', existsSync(PATHS.profile),
 // 3) Env / providers
 add('env', '.env.local', existsSync(resolve(ROOT, '.env.local')),
   existsSync(resolve(ROOT, '.env.local')) ? '' : 'cp .env.example .env.local');
-add('env', 'CONTENT_ENGINE_PROVIDER', !!process.env.CONTENT_ENGINE_PROVIDER, process.env.CONTENT_ENGINE_PROVIDER ?? '(unset → mock)');
-const activeProvider = getActiveProviderId();
+const envProvider = process.env.CONTENT_ENGINE_PROVIDER;
+add('env', 'CONTENT_ENGINE_PROVIDER', envProvider ? 'ok' : 'fail',
+  envProvider ?? '미설정 — .env.local 에 CONTENT_ENGINE_PROVIDER=fal 추가');
+let activeProvider = envProvider;
 for (const p of listProviders()) {
   // 활성 provider 만 fail, 나머지는 warn (선택 안 한 provider 가 미설정인 건 사고가 아님).
   const status = p.health.ok ? 'ok' : (p.id === activeProvider ? 'fail' : 'warn');

@@ -4,7 +4,6 @@
 // Env: ANTHROPIC_API_KEY (required), ANTHROPIC_COPY_MODEL (default claude-haiku-4-5-20251001)
 
 import { assertProvider } from '../provider.mjs';
-import { provider as mock } from './mock.mjs';
 
 const KEY = () => process.env.ANTHROPIC_API_KEY ?? '';
 const COPY_MODEL = () => process.env.ANTHROPIC_COPY_MODEL ?? 'claude-haiku-4-5-20251001';
@@ -91,8 +90,8 @@ export const provider = assertProvider({
     };
   },
 
-  async generateImage(req) {
-    return mock.generateImage(req);
+  async generateImage() {
+    throw new Error('anthropic provider는 이미지 생성을 지원하지 않습니다. CONTENT_ENGINE_PROVIDER=fal 또는 openai 로 설정하세요.');
   },
 
   healthcheck() {

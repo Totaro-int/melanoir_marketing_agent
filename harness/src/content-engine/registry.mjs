@@ -1,40 +1,41 @@
-// Provider registry — picks the active provider from env, with a safe mock fallback.
-// Env: CONTENT_ENGINE_PROVIDER = mock | openai | fal | anthropic | inhouse  (default: mock)
+// Provider registry — picks the active provider from env.
+// Env: CONTENT_ENGINE_PROVIDER = fal | openai | anthropic  (required, no default)
 
-import { provider as mock } from './providers/mock.mjs';
 import { provider as openai } from './providers/openai-images.mjs';
 import { provider as fal } from './providers/fal.mjs';
 import { provider as anthropic } from './providers/anthropic.mjs';
-import { provider as inhouse } from './providers/inhouse.mjs';
 
-const ALL = { mock, openai, fal, anthropic, inhouse };
+const ALL = { openai, fal, anthropic };
 
 export function getActiveProviderId() {
-  return process.env.CONTENT_ENGINE_PROVIDER ?? 'mock';
+  const id = process.env.CONTENT_ENGINE_PROVIDER;
+  if (!id) {
+    throw new Error(
+      'CONTENT_ENGINE_PROVIDER 가 설정되지 않았습니다.\n' +
+      '.env.local 에 CONTENT_ENGINE_PROVIDER=fal 을 추가하세요.\n' +
+      '지원 값: fal | openai | anthropic'
+    );
+  }
+  return id;
 }
 
 export function getProvider(id = getActiveProviderId()) {
   const p = ALL[id];
   if (!p) {
     const known = Object.keys(ALL).join(', ');
-    throw new Error(`Unknown provider "${id}". Known: ${known}`);
+    throw new Error(`알 수 없는 provider "${id}". 지원 값: ${known}`);
   }
   const hc = p.healthcheck();
   if (!hc.ok) {
-    if (id !== 'mock') {
-      console.warn(`[content-engine] ${id} unhealthy (${hc.reason}). Falling back to mock.`);
-      return mock;
-    }
+    throw new Error(`[content-engine] ${id} API 키 미설정 — ${hc.reason}`);
   }
   return p;
 }
 
 export function listProviders() {
-  return Object.entries(ALL)
-    .filter(([id]) => id !== 'inhouse')
-    .map(([id, p]) => ({
-      id,
-      byok: p.byok,
-      health: p.healthcheck(),
-    }));
+  return Object.entries(ALL).map(([id, p]) => ({
+    id,
+    byok: p.byok,
+    health: p.healthcheck(),
+  }));
 }
