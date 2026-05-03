@@ -3,8 +3,7 @@
 //   node bin/approve.mjs <slug> --channel=<ch>
 
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
-import { readYaml, writeYaml, findCampaignDir, nowKstIso, ui } from './_lib.mjs';
+import { readYaml, writeYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -18,9 +17,9 @@ if (!slug || !channel) {
 const dir = findCampaignDir(slug);
 const briefPath = resolve(dir, 'brief.yaml');
 const brief = readYaml(briefPath);
-const draftPath = resolve(dir, channel, 'draft.yaml');
+const draftPath = latestDraftYaml(resolve(dir, channel));
 
-if (!existsSync(draftPath)) { ui.err(`draft 없음: ${draftPath}`); process.exit(2); }
+if (!draftPath) { ui.err(`draft 없음: ${resolve(dir, channel)}/`); process.exit(2); }
 const draft = readYaml(draftPath);
 if (!draft.guardian.ok) {
   ui.err(`가디언 차단됨 (${draft.guardian.summary.blocks}건). 재생성 필요.`);

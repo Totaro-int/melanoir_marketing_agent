@@ -1,6 +1,6 @@
 // Shared helpers for marketing_ai CLI scripts.
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -135,6 +135,26 @@ export function nowKstIso() {
   const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
   return kst.toISOString().replace('Z', '+09:00');
 }
+
+// Returns a filesystem-safe KST timestamp: YYYYMMDD-HHmmss
+export function nowKstFilename() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const iso = kst.toISOString(); // "2026-05-03T07:03:52.975Z"
+  return iso.slice(0, 10).replace(/-/g, '') + '-' + iso.slice(11, 19).replace(/:/g, '');
+}
+
+// Returns the path to the most recently generated draft yaml in a channel dir.
+// Filename format: YYYYMMDD-HHmmss.yaml (lexicographic sort = chronological).
+export function latestDraftYaml(channelDir) {
+  if (!existsSync(channelDir)) return null;
+  const files = readdirSync(channelDir)
+    .filter((f) => /^\d{8}-\d{6}\.yaml$/.test(f))
+    .sort();
+  if (!files.length) return null;
+  return resolve(channelDir, files[files.length - 1]);
+}
+
 
 export const ui = {
   ok: (msg) => console.log(pc.green('✅ ') + msg),

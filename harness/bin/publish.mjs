@@ -6,8 +6,7 @@
 // Even without dry-run, refuses to publish unless brief.status[<ch>] === 'approved'.
 
 import { resolve } from 'node:path';
-import { existsSync } from 'node:fs';
-import { readYaml, writeYaml, findCampaignDir, nowKstIso, ui } from './_lib.mjs';
+import { readYaml, writeYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
 import { getAdapter, isDryRun } from '../src/publisher/registry.mjs';
 import { load as loadCreds } from '../src/publisher/credentials.mjs';
 
@@ -21,9 +20,9 @@ if (!slug || !channel) { ui.err('사용법: publish.mjs <slug> --channel=<ch> [-
 const dir = findCampaignDir(slug);
 const briefPath = resolve(dir, 'brief.yaml');
 const brief = readYaml(briefPath);
-const draftPath = resolve(dir, channel, 'draft.yaml');
+const draftPath = latestDraftYaml(resolve(dir, channel));
 
-if (!existsSync(draftPath)) { ui.err(`draft 없음: ${draftPath}`); process.exit(2); }
+if (!draftPath) { ui.err(`draft 없음: ${resolve(dir, channel)}/`); process.exit(2); }
 const draft = readYaml(draftPath);
 
 if (brief.status[channel] !== 'approved') {

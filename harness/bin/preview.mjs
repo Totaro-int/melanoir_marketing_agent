@@ -5,7 +5,7 @@
 import pc from 'picocolors';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
-import { readYaml, findCampaignDir, ui } from './_lib.mjs';
+import { readYaml, findCampaignDir, latestDraftYaml, ui } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -23,8 +23,8 @@ console.log(pc.dim(`  ${brief.topic} · goal: ${brief.goal} · cadence: ${brief.
 console.log();
 
 for (const ch of channels) {
-  const path = resolve(dir, ch, 'draft.yaml');
-  if (!existsSync(path)) {
+  const path = latestDraftYaml(resolve(dir, ch));
+  if (!path) {
     ui.warn(`[${ch}] draft 없음 — node bin/generate.mjs ${slug} --channel=${ch}`);
     continue;
   }

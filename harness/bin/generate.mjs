@@ -6,7 +6,7 @@
 import { resolve } from 'node:path';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import {
-  PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, ui,
+  PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect } from '../src/content-engine/brand-guardian.mjs';
@@ -70,6 +70,7 @@ for (const channel of channels) {
   // Persist draft.
   const channelDir = resolve(dir, channel);
   mkdirSync(channelDir, { recursive: true });
+  const ts = nowKstFilename();
   const draft = {
     version: 1,
     slug,
@@ -83,8 +84,8 @@ for (const channel of channels) {
     assetUrls: image.urls ?? [],
     guardian: report,
   };
-  writeYaml(resolve(channelDir, 'draft.yaml'), draft);
-  writeFileSync(resolve(channelDir, 'draft.md'), renderDraftMd(draft), 'utf8');
+  writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
+  writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
 
   // Update status: blocked drafts go back to drafting; otherwise -> preview.
   brief.status[channel] = report.ok ? 'preview' : 'drafting';
