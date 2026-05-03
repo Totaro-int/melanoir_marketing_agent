@@ -95,3 +95,8 @@ All notable changes to this project. Format: Phase / version → highlights.
 - 플러그인 매니페스트, Threads reference, 온보딩 skill, 회사 프로필 스키마
 - statusline 1줄 요약
 - `.gitignore` 자격증명·생성물 보호
+
+## [Unreleased]
+- fix: 업데이트 감지 시 exit 10으로 강제 중단 (Claude가 반드시 사용자에게 보고)
+- fix: fal.ai portrait 치수 portrait_9_16 → {width:1080, height:1350} 객체 형식
+- feat: 이미지 생성 품질 개선 (flux-pro/v1.1, OpenAI quality=high, rich prompt)
