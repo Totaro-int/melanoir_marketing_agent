@@ -18,6 +18,7 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
 import { PATHS, nowKstIso, ui, checkForUpdates } from './_lib.mjs';
+
 checkForUpdates();
 
 const here = dirname(fileURLToPath(import.meta.url));

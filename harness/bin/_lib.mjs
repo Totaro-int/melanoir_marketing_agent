@@ -146,9 +146,11 @@ export const ui = {
 };
 
 // 자동 업데이트 알림 — 30분 throttle, 네트워크 실패 시 silent skip.
-// 환경변수 MARKETING_AGENT_SKIP_UPDATE_CHECK=1 로 우회. CI 또는 재귀 spawn 시 도움.
+// 우회: MARKETING_AGENT_SKIP_UPDATE_CHECK ∈ {1,true,yes,on} (isDryRun 패턴과 일관).
+// feature 브랜치에 있어도 default branch (main/master) 기준으로 비교.
 export function checkForUpdates() {
-  if (process.env.MARKETING_AGENT_SKIP_UPDATE_CHECK === '1') return;
+  const skip = (process.env.MARKETING_AGENT_SKIP_UPDATE_CHECK ?? '').toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(skip)) return;
 
   const cacheDir = resolve(ROOT, 'out');
   const cacheFile = resolve(cacheDir, '.update-check');
@@ -166,23 +168,32 @@ export function checkForUpdates() {
   // git repo 인지 먼저. zip 다운로드 사용자는 .git 없을 수 있음.
   if (git(['rev-parse', '--git-dir'], { stdio: 'ignore' }).status !== 0) return;
 
-  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout?.trim() || 'main';
-  const fetchRes = git(['fetch', 'origin', branch, '--quiet'], { stdio: 'ignore' });
+  // origin 의 default branch 결정 (HEAD symbolic-ref → main → master 순).
+  let defaultBranch = '';
+  const sym = git(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
+  if (sym.status === 0) defaultBranch = (sym.stdout?.trim() || '').replace(/^origin\//, '');
+  if (!defaultBranch) {
+    if (git(['rev-parse', '--verify', 'origin/main'], { stdio: 'ignore' }).status === 0) defaultBranch = 'main';
+    else if (git(['rev-parse', '--verify', 'origin/master'], { stdio: 'ignore' }).status === 0) defaultBranch = 'master';
+    else defaultBranch = 'main';
+  }
+
+  const fetchRes = git(['fetch', 'origin', defaultBranch, '--quiet'], { stdio: 'ignore' });
 
   // 캐시는 fetch 시도 후 무조건 갱신 (네트워크 실패 시에도 30분간 retry 안 함).
   try { mkdirSync(cacheDir, { recursive: true }); writeFileSync(cacheFile, String(now)); } catch {}
 
   if (fetchRes.status !== 0) return; // offline / private auth 실패 등 silent
 
-  const behindStr = git(['rev-list', '--count', `HEAD..origin/${branch}`]).stdout?.trim();
+  const behindStr = git(['rev-list', '--count', `HEAD..origin/${defaultBranch}`]).stdout?.trim();
   const behind = parseInt(behindStr || '0', 10);
   if (!Number.isFinite(behind) || behind <= 0) return;
 
-  const lastCommit = git(['log', `HEAD..origin/${branch}`, '--oneline', '-1']).stdout?.trim();
+  const lastCommit = git(['log', `HEAD..origin/${defaultBranch}`, '--oneline', '-1']).stdout?.trim();
   console.log();
-  console.log(pc.yellow('⚠️  ') + pc.bold(`marketing_agent: 새 버전 ${behind}개 commit 뒤처짐`));
+  console.log(pc.yellow('⚠️  ') + pc.bold(`marketing_agent: origin/${defaultBranch} 기준 ${behind}개 commit 뒤처짐`));
   if (lastCommit) console.log(pc.dim(`   최신: ${lastCommit}`));
-  console.log(pc.dim(`   업데이트:  ${pc.cyan(`git -C "${ROOT}" pull origin ${branch}`)}`));
+  console.log(pc.dim(`   업데이트:  ${pc.cyan(`git -C "${ROOT}" pull origin ${defaultBranch}`)}`));
   console.log(pc.dim(`             또는 Claude 안에서: /plugin update marketing_agent`));
   console.log();
 }

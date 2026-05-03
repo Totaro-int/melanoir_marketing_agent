@@ -12,8 +12,9 @@ import { readdirSync, statSync, watch } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
 import { PATHS, readYaml, ui, checkForUpdates } from './_lib.mjs';
-checkForUpdates();
 import { visibleWidth as wcwidth, stripAnsi } from '../src/util/width.mjs';
+
+checkForUpdates();
 
 const W = 78; // box width
 

@@ -16,6 +16,7 @@ import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PATHS, ui, readYaml, enabledChannels, activeChannels, checkForUpdates } from './_lib.mjs';
+
 checkForUpdates();
 
 const here = dirname(fileURLToPath(import.meta.url));

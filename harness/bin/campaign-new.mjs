@@ -9,8 +9,9 @@ import YAML from 'yaml';
 import {
   PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui, checkForUpdates,
 } from './_lib.mjs';
-checkForUpdates();
 import { knownChannels } from '../src/publisher/registry.mjs';
+
+checkForUpdates();
 
 const argv = process.argv.slice(2);
 if (!argv.length || argv[0].startsWith('--')) {
