@@ -9,7 +9,7 @@ import YAML from 'yaml';
 import {
   PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui, checkForUpdates,
 } from './_lib.mjs';
-import { knownChannels } from '../src/publisher/registry.mjs';
+import { validateChannels } from '../src/publisher/registry.mjs';
 
 checkForUpdates();
 
@@ -56,20 +56,13 @@ if (!channels.length) {
   process.exit(2);
 }
 
-// 알 수 없는 채널 (registry 미등록) 차단 — 오타·미구현 채널 사고 방지.
-const known = new Set(knownChannels());
-const unknown = channels.filter((c) => !known.has(c));
+const { unknown, notEnabled } = validateChannels(channels, { enabled });
 if (unknown.length) {
-  ui.err(`등록되지 않은 채널: ${unknown.join(', ')}. 사용 가능: ${[...known].join(', ')}`);
+  ui.err(`등록되지 않은 채널: ${unknown.join(', ')}`);
   process.exit(2);
 }
-
-// profile 의 enabled 와 충돌하면 경고만 (사용자가 일회성 override 가능).
-if (enabled.length) {
-  const notEnabled = channels.filter((c) => !enabled.includes(c));
-  if (notEnabled.length) {
-    ui.warn(`onboard 에 없는 채널 사용: ${notEnabled.join(', ')} (이 캠페인 한정. 영구 추가는 /sns-onboard update channels)`);
-  }
+if (notEnabled.length) {
+  ui.warn(`onboard 에 없는 채널 사용: ${notEnabled.join(', ')} (이 캠페인 한정. 영구 추가는 /sns-onboard update channels)`);
 }
 
 const goal = flags.goal ?? (profile.campaigns?.defaultGoals?.[0] ?? 'awareness');

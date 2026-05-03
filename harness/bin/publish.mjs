@@ -30,12 +30,12 @@ if (brief.status[channel] !== 'approved') {
   process.exit(1);
 }
 
-const dry = isDryRun({ flagDryRun });
+const { dry, source } = isDryRun({ flagDryRun });
 const adapter = getAdapter(channel);
 const credentials = loadCreds(channel);
 
 if (dry) {
-  ui.warn(`DRY RUN — 실제 호출 없음 (auth/${channel}.json: ${credentials ? '있음' : '없음'})`);
+  ui.warn(`DRY RUN (source: ${source}) — 실제 호출 없음 (auth/${channel}.json: ${credentials ? '있음' : '없음'})`);
   const payload = adapter.buildPayload({ draft });
   console.log();
   console.log(JSON.stringify(payload, null, 2));

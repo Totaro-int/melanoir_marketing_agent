@@ -69,6 +69,8 @@ function render() {
     return;
   }
   console.log(pc.bold(pc.cyan('📣 marketing_agent — campaign board')) + pc.dim(`  (${campaigns.length})`));
+  const recentSlugs = campaigns.slice(0, 5).map((c) => c.slug);
+  console.log(pc.dim('recent: ') + recentSlugs.join(pc.dim(' · ')));
   console.log();
   for (const c of campaigns.slice(0, 5)) drawCampaign(c);
   if (watchMode) console.log(pc.dim(`watching ${PATHS.campaignsDir}  ·  Ctrl-C to exit`));

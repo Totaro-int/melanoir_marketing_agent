@@ -10,6 +10,7 @@ import {
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect } from '../src/content-engine/brand-guardian.mjs';
+import { validateChannels } from '../src/publisher/registry.mjs';
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -33,6 +34,19 @@ const profile = readYaml(PATHS.profile);
 const channels = flags.all
   ? brief.channels
   : (flags.channel ? [flags.channel] : brief.channels);
+
+// --channel= 으로 직접 지정한 경우만 검증 (brief 의 채널은 campaign-new 에서 이미 검증됨).
+if (flags.channel) {
+  const { unknown } = validateChannels(channels);
+  if (unknown.length) {
+    ui.err(`등록되지 않은 채널: ${unknown.join(', ')}`);
+    process.exit(2);
+  }
+  const notInBrief = channels.filter((c) => !brief.channels.includes(c));
+  if (notInBrief.length) {
+    ui.warn(`brief 에 없는 채널: ${notInBrief.join(', ')} (brief.channels: ${brief.channels.join(', ')})`);
+  }
+}
 
 const provider = getProvider(flags.provider);
 ui.info(`provider: ${provider.id}  ·  channels: ${channels.join(', ')}`);

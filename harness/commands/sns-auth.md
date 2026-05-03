@@ -2,36 +2,21 @@
 name: sns-auth
 description: 채널 발행용 자격증명을 로컬에만 저장 (auth/<channel>.json, mode 0600, gitignored).
 ---
-## 호출 직전 자동 업데이트 체크 (반드시 먼저 실행)
-
-**아래 명령을 실행하고 결과를 확인하라:**
-
-```bash
-node harness/bin/check-updates.mjs
-```
-
-- 출력이 `OK` → 그대로 본 명령 진행.
-- 출력이 `UPDATE_AVAILABLE <N> <branch> <root> <commit>` → **반드시** 사용자에게 물어라:
-  > "marketing_agent 새 버전 <N>개 업데이트가 있습니다 (최신: <commit>). 지금 업데이트할까요?"
-  - **예** → `git -C "<root>" pull origin <branch>` 실행 후 본 명령 진행.
-  - **아니오** → 그대로 본 명령 진행 (30분 내 재질문 없음).
-
-(30분 throttle — 매 호출마다 fetch 하지 않음.)
-
----
-
+> 업데이트 체크: `node harness/bin/check-updates.mjs` 실행 → `OK` 면 진행, `UPDATE_AVAILABLE` 이면 사용자에게 업데이트 여부 질문 후 진행. (상세: `harness/commands/_update-check.md`)
 
 # /sns-auth
 
 ```
 /sns-auth list
-/sns-auth add <channel>            # JSON 을 stdin 으로 입력
+/sns-auth add <channel>            # TTY → 대화형 필드 입력 / 파이프 → JSON stdin
 /sns-auth show <channel>           # 토큰은 마스킹되어 출력
 /sns-auth check <channel>          # 어댑터 healthcheck
 /sns-auth remove <channel>
 ```
 
 내부: `node bin/auth.mjs ...`.
+
+`add` 는 TTY(터미널 직접 실행)에서 채널별 필드를 하나씩 묻는 대화형 모드로 동작합니다. 저장 직후 자동으로 healthcheck 를 실행해 자격증명이 유효한지 즉시 확인합니다. 자동화/CI 환경에서는 기존처럼 JSON 을 파이프로 넘기면 됩니다.
 
 ## 채널별 페이로드 형식
 

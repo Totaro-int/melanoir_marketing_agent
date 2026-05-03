@@ -44,7 +44,16 @@ export function getAdapter(channel) {
 }
 
 export function isDryRun({ flagDryRun = false } = {}) {
-  if (flagDryRun) return true;
+  if (flagDryRun) return { dry: true, source: 'flag' };
   const v = (process.env.PUBLISHER_DRY_RUN ?? '').toLowerCase();
-  return v === '1' || v === 'true' || v === 'yes';
+  if (v === '1' || v === 'true' || v === 'yes') return { dry: true, source: 'env' };
+  return { dry: false, source: null };
+}
+
+// unknown: registry에 없는 채널 (에러). notEnabled: profile.enabled에 없는 채널 (경고).
+export function validateChannels(channels, { enabled = [] } = {}) {
+  const knownSet = new Set(knownChannels());
+  const unknown = channels.filter((c) => !knownSet.has(c));
+  const notEnabled = enabled.length ? channels.filter((c) => knownSet.has(c) && !enabled.includes(c)) : [];
+  return { unknown, notEnabled, ok: unknown.length === 0 };
 }

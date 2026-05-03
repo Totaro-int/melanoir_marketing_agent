@@ -6,9 +6,10 @@
 //   node bin/auth.mjs check <channel>           # adapter healthcheck
 //   node bin/auth.mjs remove <channel>
 
-import { ui } from './_lib.mjs';
+import { ui, promptLine } from './_lib.mjs';
 import { load, save, list, remove } from '../src/publisher/credentials.mjs';
-import { getAdapter } from '../src/publisher/registry.mjs';
+import { getAdapter, knownChannels } from '../src/publisher/registry.mjs';
+import { AUTH_SCHEMAS, setPath } from '../src/publisher/auth-schemas.mjs';
 
 const [cmd, channel] = process.argv.slice(2);
 
@@ -23,12 +24,27 @@ switch (cmd) {
   }
   case 'add': {
     if (!channel) { ui.err('channel 필요'); process.exit(2); }
-    const json = await readStdin();
-    if (!json.trim()) { ui.err('stdin 비어있음 — JSON을 파이프로 넘겨주세요'); process.exit(2); }
+    if (!knownChannels().includes(channel)) {
+      ui.err(`알 수 없는 채널: ${channel}. 사용 가능: ${knownChannels().join(', ')}`);
+      process.exit(2);
+    }
     let payload;
-    try { payload = JSON.parse(json); } catch (e) { ui.err('JSON 파싱 실패: ' + e.message); process.exit(2); }
+    if (process.stdin.isTTY) {
+      payload = await interactiveAdd(channel);
+    } else {
+      const json = await readStdin();
+      if (!json.trim()) { ui.err('stdin 비어있음 — JSON을 파이프로 넘겨주세요'); process.exit(2); }
+      try { payload = JSON.parse(json); } catch (e) { ui.err('JSON 파싱 실패: ' + e.message); process.exit(2); }
+    }
     const path = save(channel, payload);
     ui.ok(`저장: ${path}  (mode 0600, .gitignore 포함)`);
+    // 저장 직후 healthcheck 제안
+    if (process.stdin.isTTY) {
+      const adapter = getAdapter(channel);
+      const hc = await adapter.healthcheck(load(channel));
+      if (hc.ok) ui.ok(`[${channel}] healthcheck 통과`);
+      else ui.warn(`[${channel}] healthcheck 실패: ${hc.reason} — 자격증명을 확인하세요`);
+    }
     break;
   }
   case 'show': {
@@ -59,8 +75,34 @@ switch (cmd) {
 
 function usage() {
   console.log('사용법: auth.mjs <list|add|show|check|remove> [channel]');
-  console.log('  add  은 stdin 으로 JSON 을 받습니다. 예:');
-  console.log('    echo \'{"accessToken":"...","userId":"..."}\' | node bin/auth.mjs add threads');
+  console.log('  add  은 TTY 에서 대화형으로 필드를 입력, 파이프 사용 시 JSON stdin. 예:');
+  console.log('    node bin/auth.mjs add threads                              # 대화형');
+  console.log('    echo \'{"accessToken":"...","userId":"..."}\' | node bin/auth.mjs add threads  # 파이프');
+}
+
+async function interactiveAdd(channel) {
+  const schema = AUTH_SCHEMAS[channel];
+  if (!schema) {
+    ui.warn(`${channel} 의 대화형 스키마 없음 — JSON stdin 모드로 전환`);
+    ui.warn(`echo '{"key":"value"}' | node bin/auth.mjs add ${channel}`);
+    process.exit(2);
+  }
+  console.log();
+  ui.info(`[${channel}] 자격증명 대화형 입력`);
+  if (schema.note) ui.warn(schema.note);
+  console.log();
+
+  const payload = {};
+  for (const field of schema.fields) {
+    const value = await promptLine(field.label, {
+      secret: field.secret ?? false,
+      optional: field.optional ?? false,
+      hint: field.hint,
+    });
+    if (value !== '') setPath(payload, field.key, value);
+  }
+  console.log();
+  return payload;
 }
 
 function masked(obj) {

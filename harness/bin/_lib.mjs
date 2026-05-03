@@ -156,6 +156,30 @@ export function latestDraftYaml(channelDir) {
 }
 
 
+// 대화형 한 줄 입력. secret=true 면 [비공개] 레이블 표시 (echo 는 그대로 — Claude Code 터미널 특성).
+// optional=true 면 빈 입력 허용. 필수 항목은 빈 값 입력 시 재질문.
+export async function promptLine(label, { secret = false, optional = false, hint } = {}) {
+  const { createInterface } = await import('node:readline');
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  if (hint) process.stdout.write(`  💡 ${hint}\n`);
+  const displayLabel = `  ${label}${optional ? ' (선택 — Enter 건너뜀)' : ''}${secret ? ' [비공개]' : ''}: `;
+  return new Promise((resolve) => {
+    const ask = () => {
+      rl.question(displayLabel, (answer) => {
+        const v = answer.trim();
+        if (!v && !optional) {
+          process.stdout.write('  ⚠️  필수 항목입니다.\n');
+          ask();
+        } else {
+          rl.close();
+          resolve(v);
+        }
+      });
+    };
+    ask();
+  });
+}
+
 export const ui = {
   ok: (msg) => console.log(pc.green('✅ ') + msg),
   warn: (msg) => console.log(pc.yellow('⚠️  ') + msg),
