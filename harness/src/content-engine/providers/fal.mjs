@@ -22,12 +22,14 @@ function inferenceSteps(model) {
   return 25;
 }
 
+// fal accepts either a string preset or a {width, height} object.
+// Use exact SNS dimensions for best results.
 function imageSize(aspect) {
   switch (aspect) {
-    case 'portrait':  return 'portrait_9_16';  // 1080x1920 — full SNS vertical
+    case 'portrait':  return { width: 1080, height: 1350 }; // 4:5 — Threads/Instagram feed
     case 'landscape': return 'landscape_16_9';
-    case 'story':     return 'portrait_9_16';
-    default:          return 'square_hd';
+    case 'story':     return { width: 1080, height: 1920 }; // 9:16 — stories/reels
+    default:          return 'square_hd';                   // 1080x1080
   }
 }
 

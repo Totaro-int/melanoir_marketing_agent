@@ -211,9 +211,17 @@ export function checkForUpdates() {
 
   const lastCommit = git(['log', `HEAD..origin/${defaultBranch}`, '--oneline', '-1']).stdout?.trim();
   console.log();
-  console.log(pc.yellow('⚠️  ') + pc.bold(`marketing_agent: origin/${defaultBranch} 기준 ${behind}개 commit 뒤처짐`));
-  if (lastCommit) console.log(pc.dim(`   최신: ${lastCommit}`));
-  console.log(pc.dim(`   업데이트:  ${pc.cyan(`git -C "${ROOT}" pull origin ${defaultBranch}`)}`));
-  console.log(pc.dim(`             또는 Claude 안에서: /plugin update marketing_agent`));
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(pc.yellow('🔄 marketing_agent 업데이트가 있습니다'));
+  console.log(`   ${behind}개 새 커밋  |  최신: ${lastCommit ?? ''}`);
+  console.log(`   업데이트 명령: git -C "${ROOT}" pull origin ${defaultBranch}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log();
+  console.log('[MARKETING_AGENT_UPDATE_AVAILABLE]');
+  console.log(`BEHIND=${behind} BRANCH=${defaultBranch} ROOT=${ROOT}`);
+  console.log();
+  console.log('업데이트 후 다시 실행하거나, 건너뛰려면:');
+  console.log(`  MARKETING_AGENT_SKIP_UPDATE_CHECK=1 node bin/run.mjs ...`);
+  console.log();
+  process.exit(10);
 }
