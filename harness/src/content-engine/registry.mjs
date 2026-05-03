@@ -29,9 +29,11 @@ export function getProvider(id = getActiveProviderId()) {
 }
 
 export function listProviders() {
-  return Object.entries(ALL).map(([id, p]) => ({
-    id,
-    byok: p.byok,
-    health: p.healthcheck(),
-  }));
+  return Object.entries(ALL)
+    .filter(([id]) => id !== 'inhouse')
+    .map(([id, p]) => ({
+      id,
+      byok: p.byok,
+      health: p.healthcheck(),
+    }));
 }
