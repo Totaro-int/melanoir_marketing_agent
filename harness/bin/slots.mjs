@@ -50,7 +50,7 @@ switch (cmd) {
       goal: brief.goal,
       cadence: brief.cadence,
       keyMessage: brief.keyMessage ?? null,
-      contentPoints: brief.contentPoints?.length ? brief.contentPoints : [],
+      contentPoints: brief.contentPoints?.length ? brief.contentPoints : null,
       angle: brief.angle ?? null,
       lastSlug: arg,
       lastRun: new Date().toISOString(),

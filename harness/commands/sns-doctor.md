@@ -10,6 +10,7 @@ description: 환경 진단 + 자격증명(auth) 관리 + 회사 프로필 업데
 
 ```
 /sns-doctor                            # 전체 환경 진단
+/sns-doctor --quick                    # 빠른 진단 (runtime/profile/env/content-engine 만)
 /sns-doctor fix                        # 자동 수정 시도
 
 /sns-doctor auth list                  # 저장된 자격증명 목록

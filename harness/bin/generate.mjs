@@ -33,6 +33,10 @@ if (cardN !== null && isNaN(cardN)) {
   ui.err('--card 값이 유효하지 않습니다. 예: --card=2');
   process.exit(2);
 }
+if (cardN !== null && flags.all) {
+  ui.err('--card 와 --all 은 함께 사용할 수 없습니다.');
+  process.exit(2);
+}
 if (cardN !== null && !flags.channel) {
   ui.err('--card 사용 시 --channel= 을 반드시 지정해야 합니다.');
   process.exit(2);
@@ -117,9 +121,10 @@ for (const channel of channels) {
     if (newImg.paths[0]) updatedPaths[cardIdx] = newImg.paths[0];
     if (newImg.urls?.[0]) updatedUrls[cardIdx]  = newImg.urls[0];
 
-    // 대표 텍스트(첫 카드) 갱신
+    // 대표 텍스트(첫 카드) 갱신 — 재생성 카드가 0번이면 provider의 hashtags 우선 사용
     const primaryText = updatedCards[0]?.text ?? existing.text;
-    const mergedPrimary = mergeHashtags(primaryText, extractHashtags(primaryText), profile);
+    const primaryHashtags = cardIdx === 0 ? (newCopy.hashtags ?? extractHashtags(primaryText)) : extractHashtags(primaryText);
+    const mergedPrimary = mergeHashtags(primaryText, primaryHashtags, profile);
 
     const report = inspect({ channel, text: mergedPrimary.text, hashtags: mergedPrimary.hashtags, profile });
 
