@@ -26,6 +26,9 @@ posts/campaigns/**/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
 # symlink 자동 생성물 (sync-posts.mjs)
 posts/by-channel/
 
+# 반복 실행 슬롯 (개인 데이터)
+posts/slots.yaml
+
 # 노드/툴링
 node_modules/
 .pnpm-store/
