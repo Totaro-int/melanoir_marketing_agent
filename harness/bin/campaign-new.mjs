@@ -84,6 +84,12 @@ const brief = {
   goal,
   channels,
   cadence,
+  keyMessage: flags.keyMessage ?? null,
+  contentPoints: flags.contentPoints
+    ? String(flags.contentPoints).split('|').map(s => s.trim()).filter(Boolean)
+    : [],
+  angle: flags.angle ?? null,
+  notes: flags.notes ?? null,
   constraints: { maxLengthOverride: null, mustInclude: [], mustExclude: [] },
   status: Object.fromEntries(channels.map((c) => [c, 'drafting'])),
   meta: {

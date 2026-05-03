@@ -43,11 +43,25 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
   - "N" 또는 새 주제 텍스트 → 3단계 진행.
 - **슬롯 없음** → 안내 없이 3단계 진행.
 
-### 3단계 — 캠페인 설정
+### 3단계 — 캠페인 설정 + 소재 수집
+
 인자로 주제가 있으면 바로, 없으면 한 줄 질문.
 채널/goal/cadence 미지정 시 `profile.channels.enabled` 기본값 사용.
 
-`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...]`
+주제가 확정되면 다음 2가지를 추가로 묻는다:
+
+```
+핵심 메시지가 있나요? (없으면 Enter 스킵)
+> 
+
+이 포스트에 쓸 구체적인 소재가 있나요?
+숫자, 데이터, 고객 반응, 특징 등을 줄바꿈으로 입력 (없으면 Enter 스킵)
+> 
+```
+
+입력된 내용은 `--keyMessage=` `--contentPoints="포인트1|포인트2"` 플래그로 전달.
+
+`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...]`
 
 ### 4단계 — 카피 + 이미지 생성
 `node harness/bin/generate.mjs <slug>`

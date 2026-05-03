@@ -56,14 +56,30 @@ for (const channel of channels) {
   ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] generating...`);
 
   const channelDocs = loadChannelDocs(channel);
-  const copy = await provider.generateCopy({ brief, profile, channel, channelDocs });
-  const merged = mergeHashtags(copy.text, copy.hashtags, profile);
-
   const aspect = channel === 'linkedin' ? 'square' : 'portrait';
   const cardCount = imagesFor(brief.cadence, flags.images);
 
-  // Generate one image per card so each carries its own role (hook → body → cta).
-  // We collect into a single ImageResult-shape object so downstream code stays unchanged.
+  // 시리즈(cardCount > 1)는 카드별로 카피 생성, 단일은 1회 호출
+  const cards = [];
+  if (cardCount > 1) {
+    for (let i = 0; i < cardCount; i++) {
+      const role = roleFor(i, cardCount);
+      const cardCopy = await provider.generateCopy({
+        brief, profile, channel, channelDocs,
+        cardRole: role, cardIndex: i + 1, cardTotal: cardCount,
+      });
+      cards.push({ role, text: cardCopy.text, hashtags: cardCopy.hashtags, meta: cardCopy.meta });
+    }
+  } else {
+    const singleCopy = await provider.generateCopy({ brief, profile, channel, channelDocs });
+    cards.push({ role: 'single', text: singleCopy.text, hashtags: singleCopy.hashtags, meta: singleCopy.meta });
+  }
+
+  // 대표 텍스트 = 첫 카드 (preview, guardian, 하위 호환용)
+  const primaryCard = cards[0];
+  const merged = mergeHashtags(primaryCard.text, primaryCard.hashtags, profile);
+
+  // 이미지 생성 (카드별 1장)
   const image = { paths: [], urls: [], meta: null };
   for (let i = 0; i < cardCount; i++) {
     const role = roleFor(i, cardCount);
@@ -75,7 +91,7 @@ for (const channel of channels) {
     });
     image.paths.push(...(r.paths ?? []));
     image.urls.push(...(r.urls ?? []));
-    image.meta = r.meta; // last call's meta is fine for the draft summary
+    image.meta = r.meta;
   }
 
   // Brand guardian.
@@ -90,10 +106,11 @@ for (const channel of channels) {
     slug,
     channel,
     generatedAt: nowKstIso(),
-    provider: copy.meta,
+    provider: cards[0].meta,
     image: image.meta,
     text: merged.text,
     hashtags: merged.hashtags,
+    cards: cards.length > 1 ? cards.map((c) => ({ role: c.role, text: c.text })) : undefined,
     assets: image.paths,
     assetUrls: image.urls ?? [],
     guardian: report,
