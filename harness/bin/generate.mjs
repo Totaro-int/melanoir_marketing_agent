@@ -133,25 +133,38 @@ function roleFor(index, total) {
 }
 
 function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total = 1) {
-  const brand = profile?.brand?.name ?? '브랜드';
-  const palette = profile?.visual?.colors
-    ? `palette ${Object.values(profile.visual.colors).filter(Boolean).join(', ')}`
-    : '';
-  const roleHint = {
-    single: 'single hero card with the headline as the focal point',
-    hook:   `card ${n}/${total} — the HOOK: oversized headline, attention grab, minimal supporting copy area`,
-    body:   `card ${n}/${total} — a BODY card: data/insight layout with room for one statistic or one short paragraph`,
-    cta:    `card ${n}/${total} — the CTA card: closing message, clear visual call-to-action area, brand colors stronger`,
-  }[role] ?? 'single hero card';
-  return [
-    `Card visual for SNS post on ${channel}.`,
-    `Brand: ${brand}.`,
-    `Topic: ${brief.topic}.`,
-    `Role: ${roleHint}.`,
-    `Style: minimal, modern editorial, large serif headline, plenty of negative space.`,
-    palette,
-    `No real logos, no gibberish text, no faces. Korean-friendly typography.`,
-  ].filter(Boolean).join(' ');
+  const colors = profile?.visual?.colors ?? {};
+  const primary    = colors.primary    ?? '#0F172A';
+  const accent     = colors.accent     ?? '#3B82F6';
+  const background = colors.background ?? '#F8FAFC';
+  const font = profile?.visual?.fontFamily ?? 'sans-serif';
+
+  const channelStyle = channel === 'linkedin'
+    ? 'professional B2B editorial, clean corporate aesthetic'
+    : 'modern Korean SNS card, bold editorial layout';
+
+  const roleComposition = {
+    single: `Full-bleed hero composition. One dominant typographic element anchors the center. Large negative space (60%+). Strong focal point.`,
+    hook:   `HOOK card ${n}/${total}. Oversized single word or number dominates 70% of frame. Minimal supporting geometry. Immediate visual impact.`,
+    body:   `BODY card ${n}/${total}. Clean data-visualization layout. Grid-structured. Room for one statistic or short insight. Balanced white space.`,
+    cta:    `CTA card ${n}/${total}. Strong brand color dominance. Clear visual call-to-action zone at bottom third. Energetic closing composition.`,
+  }[role] ?? `Hero card. Strong focal point.`;
+
+  const lines = [
+    `Editorial SNS card visual. ${channelStyle}.`,
+    ``,
+    `COMPOSITION: ${roleComposition}`,
+    ``,
+    `COLOR PALETTE: Primary background ${background}, dominant brand color ${primary}, accent pop ${accent}. Use exact hex values. No gradients unless subtle.`,
+    ``,
+    `TYPOGRAPHY TREATMENT: Large-scale abstract type composition. Geometric letterforms. Swiss International style meets Korean editorial. Font feel: ${font}.`,
+    ``,
+    `QUALITY: Sharp vector-like edges, high contrast, print-ready resolution. Studio lighting on any objects. No lens blur.`,
+    ``,
+    `AVOID: Human faces, real people, real logos, brand names as text, illegible small text, busy cluttered backgrounds, stock-photo feel, watermarks, borders, drop shadows.`,
+  ];
+
+  return lines.join('\n');
 }
 
 function renderDraftMd(d) {

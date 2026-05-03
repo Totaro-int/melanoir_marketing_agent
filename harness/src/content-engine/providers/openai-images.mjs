@@ -11,6 +11,7 @@ const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 const KEY = () => process.env.OPENAI_API_KEY ?? '';
 const COPY_MODEL = process.env.OPENAI_COPY_MODEL ?? 'gpt-4o-mini';
 const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL ?? 'gpt-image-1';
+const IMAGE_QUALITY = process.env.OPENAI_IMAGE_QUALITY ?? 'high';
 
 function buildSystemPrompt(profile, channel, channelDocs) {
   return [
@@ -77,7 +78,10 @@ export const provider = assertProvider({
         model: IMAGE_MODEL,
         prompt: req.prompt,
         size,
+        quality: IMAGE_QUALITY,
+        background: 'opaque',
         n: req.count ?? 1,
+        response_format: 'b64_json',
       }),
     });
     if (!res.ok) throw new Error(`OpenAI image failed: ${res.status} ${await res.text()}`);

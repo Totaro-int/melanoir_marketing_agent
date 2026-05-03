@@ -14,11 +14,10 @@ auth/
 !harness/examples/auth/
 !harness/examples/auth/*.json
 
-# 생성된 콘텐츠 (캠페인 산출물)
+# 생성된 콘텐츠 (캠페인 산출물) — 로컬 전용, 커밋 금지
 out/
-posts/campaigns/*/assets/
-posts/campaigns/*/drafts/
-posts/by-channel/        # symlink 자동 생성물 (sync-posts.mjs)
+posts/campaigns/
+posts/by-channel/
 
 # 노드/툴링
 node_modules/

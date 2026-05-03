@@ -2,7 +2,7 @@
 // Returns BOTH a public CDN URL (used by the publisher to post images) and a local
 // path (downloaded for /sns-preview).
 //
-// Env: FAL_KEY (required), FAL_IMAGE_MODEL (default fal-ai/flux/schnell)
+// Env: FAL_KEY (required), FAL_IMAGE_MODEL (default fal-ai/flux-pro/v1.1)
 // Docs: https://fal.ai/models  ·  https://docs.fal.ai/
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -13,13 +13,20 @@ import { assertProvider } from '../provider.mjs';
 
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 const KEY = () => process.env.FAL_KEY ?? '';
-const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/flux/schnell';
+const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/flux-pro/v1.1';
+
+// flux/schnell=4 steps (fast), flux/dev=28 (balanced), flux-pro=25 (quality)
+function inferenceSteps(model) {
+  if (model.includes('schnell')) return 4;
+  if (model.includes('dev')) return 28;
+  return 25;
+}
 
 function imageSize(aspect) {
   switch (aspect) {
-    case 'portrait':  return 'portrait_4_3';
+    case 'portrait':  return 'portrait_9_16';  // 1080x1920 — full SNS vertical
     case 'landscape': return 'landscape_16_9';
-    case 'story':     return 'portrait_16_9';
+    case 'story':     return 'portrait_9_16';
     default:          return 'square_hd';
   }
 }
@@ -40,10 +47,13 @@ export const provider = assertProvider({
     const t0 = Date.now();
     const model = IMAGE_MODEL();
 
+    const steps = inferenceSteps(model);
     const body = {
       prompt: req.prompt,
       image_size: imageSize(req.aspect),
       num_images: req.count ?? 1,
+      num_inference_steps: steps,
+      guidance_scale: 3.5,
       enable_safety_checker: true,
     };
 
