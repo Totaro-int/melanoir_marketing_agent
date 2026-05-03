@@ -36,3 +36,5 @@ build/
 # Claude Code 로컬 상태
 .claude/state/
 .claude/cache/
+
+out/.update-check

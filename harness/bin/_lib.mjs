@@ -1,8 +1,9 @@
 // Shared helpers for marketing_ai CLI scripts.
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import pc from 'picocolors';
 
@@ -143,3 +144,45 @@ export const ui = {
   dim: (msg) => console.log(pc.dim(msg)),
   step: (i, n, msg) => console.log(pc.dim(`[${i}/${n}]`) + ' ' + msg),
 };
+
+// 자동 업데이트 알림 — 30분 throttle, 네트워크 실패 시 silent skip.
+// 환경변수 MARKETING_AGENT_SKIP_UPDATE_CHECK=1 로 우회. CI 또는 재귀 spawn 시 도움.
+export function checkForUpdates() {
+  if (process.env.MARKETING_AGENT_SKIP_UPDATE_CHECK === '1') return;
+
+  const cacheDir = resolve(ROOT, 'out');
+  const cacheFile = resolve(cacheDir, '.update-check');
+  const now = Date.now();
+  const minIntervalMs = 30 * 60 * 1000;
+
+  try {
+    const last = parseInt(readFileSync(cacheFile, 'utf8'), 10);
+    if (Number.isFinite(last) && (now - last) < minIntervalMs) return;
+  } catch { /* no cache yet */ }
+
+  const git = (args, opts = {}) =>
+    spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', timeout: 5000, ...opts });
+
+  // git repo 인지 먼저. zip 다운로드 사용자는 .git 없을 수 있음.
+  if (git(['rev-parse', '--git-dir'], { stdio: 'ignore' }).status !== 0) return;
+
+  const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).stdout?.trim() || 'main';
+  const fetchRes = git(['fetch', 'origin', branch, '--quiet'], { stdio: 'ignore' });
+
+  // 캐시는 fetch 시도 후 무조건 갱신 (네트워크 실패 시에도 30분간 retry 안 함).
+  try { mkdirSync(cacheDir, { recursive: true }); writeFileSync(cacheFile, String(now)); } catch {}
+
+  if (fetchRes.status !== 0) return; // offline / private auth 실패 등 silent
+
+  const behindStr = git(['rev-list', '--count', `HEAD..origin/${branch}`]).stdout?.trim();
+  const behind = parseInt(behindStr || '0', 10);
+  if (!Number.isFinite(behind) || behind <= 0) return;
+
+  const lastCommit = git(['log', `HEAD..origin/${branch}`, '--oneline', '-1']).stdout?.trim();
+  console.log();
+  console.log(pc.yellow('⚠️  ') + pc.bold(`marketing_agent: 새 버전 ${behind}개 commit 뒤처짐`));
+  if (lastCommit) console.log(pc.dim(`   최신: ${lastCommit}`));
+  console.log(pc.dim(`   업데이트:  ${pc.cyan(`git -C "${ROOT}" pull origin ${branch}`)}`));
+  console.log(pc.dim(`             또는 Claude 안에서: /plugin update marketing_agent`));
+  console.log();
+}

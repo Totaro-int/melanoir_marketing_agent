@@ -17,7 +17,8 @@ import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import { PATHS, nowKstIso, ui } from './_lib.mjs';
+import { PATHS, nowKstIso, ui, checkForUpdates } from './_lib.mjs';
+checkForUpdates();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -76,7 +77,7 @@ for (const slug of slugs) {
       }
       const ar = spawnSync(process.execPath, [
         resolve(here, 'approve.mjs'), slug, `--channel=${ch}`,
-      ], { encoding: 'utf8' });
+      ], { encoding: 'utf8', env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' } });
       if (ar.status !== 0) {
         const reason = (ar.stderr || ar.stdout || 'approve 실패').trim().split('\n').pop();
         markAttention(brief, ch, `자동 승인 실패: ${reason}`);
@@ -97,7 +98,7 @@ for (const slug of slugs) {
 
     const pr = spawnSync(process.execPath, [
       resolve(here, 'publish.mjs'), slug, `--channel=${ch}`,
-    ], { encoding: 'utf8' });
+    ], { encoding: 'utf8', env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' } });
     if (pr.status !== 0) {
       const reason = (pr.stderr || pr.stdout || 'publish 실패').trim().split('\n').pop();
       // refresh brief (publish may have set failed)

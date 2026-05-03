@@ -7,8 +7,9 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import YAML from 'yaml';
 import {
-  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui,
+  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui, checkForUpdates,
 } from './_lib.mjs';
+checkForUpdates();
 import { knownChannels } from '../src/publisher/registry.mjs';
 
 const argv = process.argv.slice(2);

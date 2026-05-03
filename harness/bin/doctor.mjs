@@ -6,7 +6,8 @@
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels } from './_lib.mjs';
+import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels, checkForUpdates } from './_lib.mjs';
+checkForUpdates();
 import { listProviders, getActiveProviderId } from '../src/content-engine/registry.mjs';
 import { knownChannels, CHANNEL_META, isDryRun } from '../src/publisher/registry.mjs';
 import { visibleWidth } from '../src/util/width.mjs';

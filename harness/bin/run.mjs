@@ -15,7 +15,8 @@ import { spawnSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { PATHS, ui, readYaml, enabledChannels, activeChannels } from './_lib.mjs';
+import { PATHS, ui, readYaml, enabledChannels, activeChannels, checkForUpdates } from './_lib.mjs';
+checkForUpdates();
 
 const here = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
@@ -114,11 +115,13 @@ function parseFlags(args) {
 function run(script, args, { stream = false } = {}) {
   const cmd = process.execPath;
   const allArgs = [resolve(here, script), ...args];
+  // 자식 프로세스에서 update check 다시 안 돌게 (중복 알림 + 시간 낭비 방지).
+  const env = { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' };
   if (stream) {
-    const r = spawnSync(cmd, allArgs, { stdio: 'inherit' });
+    const r = spawnSync(cmd, allArgs, { stdio: 'inherit', env });
     return { status: r.status ?? 0, stdout: '' };
   }
-  const r = spawnSync(cmd, allArgs, { encoding: 'utf8' });
+  const r = spawnSync(cmd, allArgs, { encoding: 'utf8', env });
   process.stdout.write(r.stdout ?? '');
   process.stderr.write(r.stderr ?? '');
   return { status: r.status ?? 0, stdout: r.stdout ?? '' };
