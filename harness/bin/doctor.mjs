@@ -13,6 +13,8 @@ import { visibleWidth } from '../src/util/width.mjs';
 
 checkForUpdates();
 
+const QUICK = process.argv.includes('--quick');
+
 const rows = [];
 // status: 'ok' | 'warn' | 'fail'. `add(g,n,bool,d)` 기존 호출 backward-compat: true=ok, false=fail.
 const add = (group, name, status, detail = '') => {
@@ -44,6 +46,7 @@ for (const p of listProviders()) {
   add('content-engine', `provider: ${p.id}`, status, p.health.ok ? '' : (p.health.reason ?? ''));
 }
 
+if (!QUICK) {
 // 4) Publisher credentials
 const authDir = resolve(ROOT, 'auth');
 const authFiles = existsSync(authDir) ? readdirSync(authDir).filter((f) => f.endsWith('.json')) : [];
@@ -103,13 +106,14 @@ if (existsSync(PATHS.campaignsDir)) {
 }
 add('queue', 'scheduled items', attention > 0 ? 'warn' : 'ok',
   `${scheduled} 대기 · ${attention} needs_attention`);
+} // end !QUICK
 
 // Render — 라벨 컬럼 폭은 가시폭 기준으로 통일.
 const ICON = { ok: pc.green('✓'), warn: pc.yellow('⚠'), fail: pc.red('✗') };
 const labelW = Math.max(28, ...rows.map((r) => visibleWidth(r.name)));
 
 console.log();
-console.log(pc.bold(pc.cyan('🩺 marketing_agent doctor')));
+console.log(pc.bold(pc.cyan(`🩺 marketing_agent doctor${QUICK ? ' (quick)' : ''}`)));
 console.log();
 let lastGroup = '';
 for (const r of rows) {

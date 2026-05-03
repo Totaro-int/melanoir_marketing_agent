@@ -2,11 +2,12 @@
 // Generate copy + card image for one or more channels of a campaign.
 //   node bin/generate.mjs <slug> [--channel=threads] [--provider=mock]
 //   node bin/generate.mjs <slug> --all   # all channels in brief
+//   node bin/generate.mjs <slug> --channel=threads --card=2   # 시리즈 2번 카드만 재생성
 
 import { resolve } from 'node:path';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import {
-  PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui,
+  PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect } from '../src/content-engine/brand-guardian.mjs';
@@ -23,6 +24,17 @@ const flags = Object.fromEntries(
 
 if (!slug) {
   ui.err('사용법: generate.mjs <slug> [--channel=...] [--provider=...] [--all]');
+  process.exit(2);
+}
+
+// --card=<n> : 시리즈에서 n번째 카드(1-based)만 재생성. --channel= 단일 채널 강제.
+const cardN = flags.card ? parseInt(flags.card, 10) : null;
+if (cardN !== null && isNaN(cardN)) {
+  ui.err('--card 값이 유효하지 않습니다. 예: --card=2');
+  process.exit(2);
+}
+if (cardN !== null && !flags.channel) {
+  ui.err('--card 사용 시 --channel= 을 반드시 지정해야 합니다.');
   process.exit(2);
 }
 
@@ -56,6 +68,90 @@ for (const channel of channels) {
   ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] generating...`);
 
   const channelDocs = loadChannelDocs(channel);
+
+  // --card=<n> 부분 재생성: 기존 draft 로드 → 해당 카드만 교체
+  if (cardN !== null) {
+    const latestPath = latestDraftYaml(resolve(dir, channel));
+    if (!latestPath) {
+      ui.err(`[${channel}] 기존 draft 없음 — 먼저 전체 생성을 실행하세요.`);
+      process.exit(2);
+    }
+    const existing = readYaml(latestPath);
+    if (!existing.cards?.length) {
+      ui.err(`[${channel}] 시리즈 draft가 아닙니다. --card 는 series-3/5 캠페인에서만 사용 가능합니다.`);
+      process.exit(2);
+    }
+    const totalCards = existing.cards.length;
+    if (cardN < 1 || cardN > totalCards) {
+      ui.err(`--card=${cardN} 범위 초과. 이 시리즈는 ${totalCards}장입니다. (1~${totalCards})`);
+      process.exit(2);
+    }
+    const cardIdx = cardN - 1;
+    const role = roleFor(cardIdx, totalCards);
+    ui.step(1, 1, `[${channel}] 카드 ${cardN}/${totalCards} (${role}) 재생성...`);
+
+    const aspect = channel === 'linkedin' ? 'square' : 'portrait';
+
+    // 카피 재생성
+    const newCopy = await provider.generateCopy({
+      brief, profile, channel, channelDocs,
+      cardRole: role, cardIndex: cardN, cardTotal: totalCards,
+    });
+
+    // 이미지 재생성
+    const newImg = await provider.generateImage({
+      prompt: imagePromptFor(channel, brief, profile, role, cardN, totalCards),
+      visual: profile.visual ?? {},
+      aspect,
+      count: 1,
+    });
+
+    // 기존 cards 배열 복사 후 해당 카드만 교체
+    const updatedCards = existing.cards.map((c, i) =>
+      i === cardIdx ? { role, text: newCopy.text } : c
+    );
+
+    // 기존 assets 배열 복사 후 해당 슬롯만 교체
+    const updatedPaths = [...(existing.assets ?? [])];
+    const updatedUrls  = [...(existing.assetUrls ?? [])];
+    if (newImg.paths[0]) updatedPaths[cardIdx] = newImg.paths[0];
+    if (newImg.urls?.[0]) updatedUrls[cardIdx]  = newImg.urls[0];
+
+    // 대표 텍스트(첫 카드) 갱신
+    const primaryText = updatedCards[0]?.text ?? existing.text;
+    const mergedPrimary = mergeHashtags(primaryText, extractHashtags(primaryText), profile);
+
+    const report = inspect({ channel, text: mergedPrimary.text, hashtags: mergedPrimary.hashtags, profile });
+
+    const channelDir = resolve(dir, channel);
+    const ts = nowKstFilename();
+    const draft = {
+      ...existing,
+      generatedAt: nowKstIso(),
+      provider: newCopy.meta,
+      image: newImg.meta,
+      text: mergedPrimary.text,
+      hashtags: mergedPrimary.hashtags,
+      cards: updatedCards,
+      assets: updatedPaths,
+      assetUrls: updatedUrls,
+      guardian: report,
+    };
+    writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
+    writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
+
+    brief.status[channel] = report.ok ? 'preview' : 'drafting';
+    brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+
+    if (report.ok) ui.ok(`[${channel}] 카드 ${cardN} 재생성 완료`);
+    else ui.err(`[${channel}] 가디언 차단 — draft.md 확인 후 재시도`);
+
+    writeYaml(briefPath, brief);
+    console.log();
+    ui.dim(`다음: node bin/preview.mjs ${slug} --channel=${channel}`);
+    process.exit(0);
+  }
+
   const aspect = channel === 'linkedin' ? 'square' : 'portrait';
   const cardCount = imagesFor(brief.cadence, flags.images);
 
@@ -131,6 +227,10 @@ console.log();
 ui.dim(`다음: /sns-preview ${slug}   또는   node bin/preview.mjs ${slug}`);
 
 // ---- helpers ----
+
+function extractHashtags(text) {
+  return Array.from(new Set((text.match(/#[^\s#]+/g) ?? [])));
+}
 
 function mergeHashtags(text, fromProvider, profile) {
   const fromText = (text.match(/#[^\s#]+/g) ?? []);

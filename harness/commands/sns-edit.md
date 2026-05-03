@@ -100,7 +100,7 @@ node harness/bin/reject.mjs <slug> --channel=<ch> --reason="<피드백>"
 node harness/bin/generate.mjs <slug> --channel=<ch>
 ```
 
-특정 카드만 수정인 경우:
+특정 카드만 수정인 경우 (`--card` 는 series-3/series-5 cadence 에서만 유효):
 ```
 node harness/bin/generate.mjs <slug> --channel=<ch> --card=<n>
 ```

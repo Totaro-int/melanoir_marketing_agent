@@ -33,19 +33,24 @@ description: 환경 진단 + 자격증명(auth) 관리 + 회사 프로필 업데
 | 그룹 | 점검 항목 |
 |------|---------|
 | runtime | Node 버전, package.json, node_modules |
-| profile | company-profile.yaml 존재 + 스키마 유효성 |
+| profile | company-profile.yaml 존재 여부 |
 | env | .env.local, CONTENT_ENGINE_PROVIDER |
-| content-engine | mock/openai/fal 각 provider healthcheck |
+| content-engine | anthropic/openai/fal 각 provider healthcheck (활성 provider만 fail, 나머지는 warn) |
 | publisher | auth/ 디렉터리 + 각 자격증명 파일 모드(0600), PUBLISHER_DRY_RUN 상태 |
+| channels | profile에서 활성화된 채널별 auth 파일 존재 여부 |
 | plugin | plugin.json |
-| campaigns | campaigns/ 항목 수 (슬롯 포함) |
+| campaigns | campaigns/ 항목 수 |
+| queue | queue-tick.mjs 존재 여부, scheduled/needs_attention 항목 수 |
 
 빨간 항목마다 detail 컬럼에 다음 액션 제시. exit 0/1 (CI 게이트 사용 가능).
 
 ### `/sns-doctor fix`
 진단 결과의 자동 수정 가능 항목을 순서대로 처리:
 - `node_modules` 없음 → `npm install`
-- `.env.local` 없음 → `.env.example` 복사 + API 키 입력 안내
+- `.env.local` 없음 → `.env.example` 복사 후 API 키 입력 안내:
+  - `ANTHROPIC_API_KEY`: https://console.anthropic.com/settings/keys
+  - `FAL_KEY`: https://fal.ai/dashboard/keys
+  - `OPENAI_API_KEY`: https://platform.openai.com/api-keys
 - `auth/` 디렉터리 없음 → 생성 + `chmod 0700`
 - 자격증명 파일 모드 != 0600 → `chmod 0600`
 
