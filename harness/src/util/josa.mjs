@@ -31,8 +31,11 @@ const PAIRS = {
  * @returns {boolean}
  */
 export function hasFinalConsonant(word) {
-  if (!word) return false;
-  const lastChar = String(word).trim().slice(-1);
+  if (!word || typeof word !== 'string') return false;
+  // 끝 구두점/괄호/공백/dash 류는 발음에 영향 없으므로 무시 후 마지막 의미 음절 검사.
+  // 예: "5억)" → "5억", "Stripe." → "Stripe"
+  const trimmed = String(word).trim().replace(/[\s)\]}'"”’.,!?…—–\-]+$/u, '');
+  const lastChar = trimmed.slice(-1);
   if (!lastChar) return false;
   const cp = lastChar.codePointAt(0);
 
@@ -59,8 +62,10 @@ export function hasFinalConsonant(word) {
  * @param {string} word
  */
 export function endsWithRieul(word) {
-  if (!word) return false;
-  const lastChar = String(word).trim().slice(-1);
+  if (!word || typeof word !== 'string') return false;
+  const trimmed = String(word).trim().replace(/[\s)\]}'"”’.,!?…—–\-]+$/u, '');
+  const lastChar = trimmed.slice(-1);
+  if (!lastChar) return false;
   const cp = lastChar.codePointAt(0);
   if (cp < HANGUL_BASE || cp > HANGUL_END) return false;
   return ((cp - HANGUL_BASE) % 28) === 8;  // ㄹ 종성 인덱스
