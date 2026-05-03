@@ -6,6 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { assertProvider } from '../provider.mjs';
+import { josa } from '../../util/josa.mjs';
 
 // harness/src/content-engine/providers/mock.mjs → PROJECT_ROOT 는 ../../../..
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
@@ -39,7 +40,7 @@ function copyForThreads(brief, profile) {
     `"${brief.topic}" 발표를 앞두고 다시 정리합니다.`,
     '',
     `${pain}.`,
-    `${brand}이 보는 답은 단순합니다 — ${tagline}`,
+    `${brand}${josa(brand, '이/가')} 보는 답은 단순합니다 — ${tagline}`,
     '',
     `이번 주, 그 단순함이 어떻게 작동하는지 보여드리겠습니다.`,
   ].join('\n');
@@ -55,11 +56,11 @@ function copyForLinkedIn(brief, profile) {
     `${persona}의 책상 위에 올려질 이야기입니다.`,
     `숫자는 일주일 뒤에 공유합니다.`,
     '',
-    `우리는 ${pain}를 마주한 ${persona}와 일해 왔습니다.`,
+    `우리는 ${pain}${josa(pain, '을/를')} 마주한 ${persona}${josa(persona, '과/와')} 일해 왔습니다.`,
     `같은 통증을 가진 50개 팀의 데이터를 정리해 보면 패턴이 분명합니다.`,
     `대부분의 팀은 도구가 아니라 운영 시간을 사고 있습니다.`,
     '',
-    `${brand}은 그 시간을 줄이는 한 가지 방식 — ${tagline}`,
+    `${brand}${josa(brand, '은/는')} 그 시간을 줄이는 한 가지 방식 — ${tagline}`,
     `이번 발표는 그 첫 번째 결과입니다.`,
     '',
     `여러분의 팀에서는 같은 문제를 어떻게 다루고 계신가요?`,

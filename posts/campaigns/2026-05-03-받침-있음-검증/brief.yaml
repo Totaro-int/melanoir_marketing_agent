@@ -1,0 +1,19 @@
+version: 1
+slug: 2026-05-03-받침-있음-검증
+topic: 받침 있음 검증
+goal: awareness
+channels:
+  - threads
+  - linkedin
+cadence: single
+constraints:
+  maxLengthOverride: null
+  mustInclude: []
+  mustExclude: []
+status:
+  threads: approved
+  linkedin: approved
+meta:
+  createdAt: 2026-05-03T14:06:17.627+09:00
+  updatedAt: 2026-05-03T14:06:18.185+09:00
+  profileBrand: 업플로우
