@@ -74,14 +74,18 @@ cat <specPath>
    - 업종 키워드 포함 (브랜드명 자체 언급 금지)
    - 예: `minimal abstract fintech — deep navy #0F172A background, blue #3B82F6 streaks, no text, no letters`
 
-3. **`gen-image.mjs` 호출** — Bash로 각 카드마다 실행:
+3. **`gen-image.mjs` 호출** — 각 카드마다 아래 패턴으로 Bash를 실행하고 stdout 마지막 줄을 PNG 경로로 사용한다.
+   예시 (카드 1, htmlPath가 `/tmp/.../slug-threads-card1-ts.html`인 경우):
    ```bash
    node harness/bin/gen-image.mjs \
-     --prompt="<결정한 프롬프트>" \
-     --aspect=<spec.aspect> \
-     --out=<spec.cards[i].htmlPath에서 .html을 -bg.png로 교체한 경로>
+     --prompt="minimal abstract fintech — deep navy #0F172A background, blue #3B82F6 gradient, no text, no letters" \
+     --aspect=portrait \
+     --out=/tmp/.../slug-threads-card1-ts-bg.png
    ```
-   출력의 마지막 줄 = 저장된 PNG 절대 경로. `bgImages` 배열에 `{ index: i+1, pngPath }` 형태로 수집한다.
+   - exit 0 → stdout 마지막 줄 = 저장된 PNG 절대 경로. 이 경로를 카드 인덱스와 함께 기억해둔다.
+   - exit 1 → 해당 카드는 PNG 없이 진행 (배경 단색 유지)
+   - `bgImages` 형태로 메모: `[{ index: 1, pngPath: "/tmp/...card1-ts-bg.png" }, ...]`
+   - **이 정보를 단계 3 HTML 생성 전까지 반드시 기억한다.**
 
 4. **오류 처리**:
    - `gen-image.mjs`가 exit 1 → 해당 카드는 이미지 없이 진행 (배경 단색 유지)
@@ -106,6 +110,8 @@ cat <specPath>
   - `cta`: 행동 유도 + 브랜드 언급.
   - `single`: 주제를 한눈에 전달.
 - 해시태그는 카피 끝에 줄바꿈 후 (채널 한도 준수)
+
+> **단계 1-B 결과 활용**: `generateImages === true`이었다면, 단계 1-B에서 카드별로 기록한 PNG 경로(`bgImages`)를 아래 HTML 생성에 사용한다.
 
 #### 3. 카드별 HTML 생성
 
@@ -139,10 +145,16 @@ cat <specPath>
   ```
   opacity: 0.15~0.25. 텍스트 가독성이 최우선.
 
-  PNG를 base64로 읽는 방법:
-  ```bash
-  node -e "process.stdout.write(require('fs').readFileSync('<경로>').toString('base64'))"
-  ```
+  PNG를 base64로 읽어 HTML에 삽입하는 방법:
+  1. Bash로 base64 문자열 획득:
+     ```bash
+     node -e "process.stdout.write(require('fs').readFileSync('/abs/path/to/card1-bg.png').toString('base64'))"
+     ```
+  2. 위 명령의 stdout 출력(긴 base64 문자열)을 HTML에 직접 넣는다:
+     ```html
+     background-image: url('data:image/png;base64,<여기에 base64 문자열 붙여넣기>');
+     ```
+  경로는 `bgImages[i].pngPath` 또는 `imageContext.sourceMaterials.images[i]` 절대 경로를 사용한다.
 - 우하단에 브랜드명 텍스트 (24px, opacity 0.6)
 - 애니메이션 없음. 인쇄 품질.
 - **HTML 코드만** 파일에 쓴다. 설명·마크다운 펜스 없음.
