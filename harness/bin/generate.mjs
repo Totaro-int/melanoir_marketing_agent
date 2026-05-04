@@ -560,9 +560,11 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
     : (aestheticMap[imgStyle.aesthetic] ?? 'modern editorial — purposeful composition, strong visual hierarchy');
 
   // ── 이미지 성격 (abstract / concrete) ─────────────────────────────────
+  // IMPORTANT: Never ask image models to render text/typography — Korean characters will be garbled.
+  // All text overlay is handled at the post-processing / inhouse-slides layer.
   const abstractDesc = imgStyle.preferAbstract === false
-    ? `Concrete imagery: real objects, spaces, or scenes that represent "${brief.topic}". Situational, relatable.`
-    : `Abstract composition centered on typography and geometric shapes that evoke "${brief.topic}". No literal depiction.`;
+    ? `Concrete imagery: real objects, spaces, textures, or scenes that evoke the feeling of "${brief.topic}". No text, no letters, no characters of any kind.`
+    : `Abstract visual composition using color, shape, light, and depth to evoke the mood of "${brief.topic}". Pure visual — absolutely no text, letters, numbers, or typographic elements anywhere in the image.`;
 
   // ── 레퍼런스 브랜드 ────────────────────────────────────────────────────
   const refsDesc = imgStyle.referencesBrands?.length
@@ -577,7 +579,7 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
   // ── 회피 요소 ──────────────────────────────────────────────────────────
   const userAvoid = imgStyle.avoidElements?.join(', ') ?? '';
   const avoidDesc = [
-    'Human faces, real people, real logos, brand names as readable text, illegible text, watermarks.',
+    'ANY text, letters, numbers, characters, glyphs, words, or typography of any language. Human faces, real people, real logos, watermarks.',
     userAvoid ? `Also avoid: ${userAvoid}.` : '',
   ].filter(Boolean).join(' ');
 
