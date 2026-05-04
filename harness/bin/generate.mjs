@@ -6,6 +6,8 @@
 
 import { resolve } from 'node:path';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import {
   PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
 } from './_lib.mjs';
@@ -65,6 +67,17 @@ if (flags.channel) {
 }
 
 const provider = getProvider(flags.provider);
+
+// ── inhouse-slides: API 직접 호출 없이 spec → agent → finalize 흐름 ──
+if (provider.id === 'inhouse-slides') {
+  if (flags.finalize) {
+    await finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels });
+  } else {
+    await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+  }
+  process.exit(0);
+}
+
 ui.info(`provider: ${provider.id}  ·  channels: ${channels.join(', ')}`);
 console.log();
 
@@ -256,6 +269,172 @@ console.log();
 ui.dim(`다음: /sns-preview ${slug}   또는   node bin/preview.mjs ${slug}`);
 
 // ---- helpers ----
+
+// ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
+
+async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
+  const tmpSlideDir = resolve(tmpdir(), 'marketing-agent-slides');
+  mkdirSync(tmpSlideDir, { recursive: true });
+
+  for (const channel of channels) {
+    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
+
+    const channelDocs = loadChannelDocs(channel);
+    const cardCount   = imagesFor(brief.cadence, flags.images) || 1;
+    const aspect      = channel === 'linkedin' ? 'square' : 'portrait';
+    const dimMap      = { portrait: { width: 1080, height: 1350 }, square: { width: 1080, height: 1080 } };
+    const dim         = dimMap[aspect] ?? dimMap.portrait;
+    const ts          = nowKstFilename();
+
+    const cards = Array.from({ length: cardCount }, (_, i) => ({
+      index:    i + 1,
+      total:    cardCount,
+      role:     roleFor(i, cardCount),
+      htmlPath: resolve(tmpSlideDir, `${slug}-${channel}-card${i + 1}-${ts}.html`),
+    }));
+
+    // sourceTexts: 파일이면 읽고, 인라인이면 그대로
+    const resolvedTexts = (brief.sourceMaterials?.texts ?? []).map((t) => {
+      try { if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 1000); } catch { /* 무시 */ }
+      return t;
+    });
+
+    const spec = {
+      slug,
+      channel,
+      ts,
+      aspect,
+      dimensions: dim,
+      cards,
+      copyContext: {
+        topic:          brief.topic,
+        goal:           brief.goal,
+        cadence:        brief.cadence,
+        keyMessage:     brief.keyMessage  ?? null,
+        contentPoints:  [...(brief.contentPoints ?? []), ...resolvedTexts],
+        angle:          brief.angle ?? null,
+        profile: {
+          brand:          profile.brand          ?? {},
+          tone:           profile.tone           ?? {},
+          writing:        profile.writing        ?? {},
+          targetAudience: profile.targetAudience ?? [],
+          banned:         profile.banned         ?? {},
+          hashtags:       profile.hashtags       ?? {},
+        },
+        channelStrategy:  channelDocs?.strategy  ?? '',
+        channelTemplates: channelDocs?.templates ?? '',
+      },
+      imageContext: {
+        topic:     brief.topic,
+        brandName: profile.brand?.name ?? '',
+        visual:    profile.visual     ?? {},
+        imageStyle: profile.imageStyle ?? {},
+        sourceMaterials: {
+          images: (brief.sourceMaterials?.images ?? []).filter(existsSync),
+        },
+      },
+      outputDir: resolve(dir, channel),
+    };
+
+    const channelDir = resolve(dir, channel);
+    mkdirSync(channelDir, { recursive: true });
+    writeFileSync(resolve(channelDir, 'slide-spec.json'), JSON.stringify(spec, null, 2), 'utf8');
+
+    brief.status[channel] = 'drafting';
+    ui.ok(`[${channel}] slide-spec.json 저장 완료 → ${resolve(channelDir, 'slide-spec.json')}`);
+  }
+
+  brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+  writeYaml(briefPath, brief);
+
+  console.log();
+  ui.info('⚡ inhouse-slides: image-director 에이전트가 각 채널의 slide-spec.json 을 처리해야 합니다.');
+  ui.dim(`처리 완료 후 실행: node harness/bin/generate.mjs ${slug} --finalize`);
+}
+
+async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels }) {
+  const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
+
+  for (const channel of channels) {
+    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] 슬라이드 완성...`);
+
+    const channelDir  = resolve(dir, channel);
+    const specPath    = resolve(channelDir, 'slide-spec.json');
+    const outputPath  = resolve(channelDir, 'agent-output.json');
+
+    if (!existsSync(specPath)) {
+      ui.err(`[${channel}] slide-spec.json 없음 — 먼저 generate.mjs (--finalize 없이) 실행하세요.`);
+      continue;
+    }
+    if (!existsSync(outputPath)) {
+      ui.err(`[${channel}] agent-output.json 없음 — image-director 에이전트가 아직 처리하지 않았습니다.`);
+      continue;
+    }
+
+    const spec        = JSON.parse(readFileSync(specPath, 'utf8'));
+    const agentOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
+    const outputCards = agentOutput.cards ?? [];
+
+    // 카드별 Playwright 캡쳐
+    const pngPaths = [];
+    for (const card of spec.cards) {
+      if (!existsSync(card.htmlPath)) {
+        ui.err(`[${channel}] HTML 파일 없음: ${card.htmlPath}`);
+        continue;
+      }
+      const pngPath = card.htmlPath.replace(/\.html$/, '.png');
+      execFileSync('node', [
+        screenshotBin,
+        `--html=${card.htmlPath}`,
+        `--out=${pngPath}`,
+        `--width=${spec.dimensions.width}`,
+        `--height=${spec.dimensions.height}`,
+      ], { stdio: 'inherit' });
+      pngPaths.push(pngPath);
+    }
+
+    // draft 조립
+    const ts           = spec.ts;
+    const primaryCard  = outputCards[0] ?? { text: '', hashtags: [] };
+    const allHashtags  = [...new Set([
+      ...(primaryCard.text.match(/#[^\s#]+/g) ?? []),
+      ...(primaryCard.hashtags ?? []),
+      ...(profile?.hashtags?.always ?? []),
+    ])];
+    const strippedText = primaryCard.text.replace(/(\n+#[^\s#]+(\s+#[^\s#]+)*\s*)$/u, '').trimEnd();
+    const finalText    = allHashtags.length ? `${strippedText}\n\n${allHashtags.join(' ')}` : strippedText;
+
+    const report = inspect({ channel, text: finalText, hashtags: allHashtags, profile });
+
+    const draft = {
+      version:     1,
+      slug,
+      channel,
+      generatedAt: nowKstIso(),
+      provider:    { provider: 'inhouse-slides', model: 'claude-agent' },
+      image:       { provider: 'inhouse-slides', model: 'playwright-screenshot' },
+      text:        finalText,
+      hashtags:    allHashtags,
+      cards:       outputCards.length > 1 ? outputCards.map((c) => ({ role: c.role, text: c.text })) : undefined,
+      assets:      pngPaths,
+      assetUrls:   [],
+      guardian:    report,
+    };
+
+    writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
+    writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
+
+    brief.status[channel] = report.ok ? 'preview' : 'drafting';
+    brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+
+    if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary.warns})`);
+    else           ui.err(`[${channel}] 가디언 차단 (${report.summary.blocks}건). draft.md 검토 후 재생성.`);
+  }
+
+  writeYaml(briefPath, brief);
+  console.log();
+  ui.dim(`다음: node bin/preview.mjs ${slug}`);
+}
 
 function extractHashtags(text) {
   return Array.from(new Set((text.match(/#[^\s#]+/g) ?? [])));
