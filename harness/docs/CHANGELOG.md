@@ -96,6 +96,21 @@ All notable changes to this project. Format: Phase / version → highlights.
 - statusline 1줄 요약
 - `.gitignore` 자격증명·생성물 보호
 
+## 0.10.0 — 콘텐츠 엔진 리팩터링 (inhouse-slides + unified copy flow)
+
+- feat: inhouse-slides가 기본 provider로 변경 (API 키 불필요, Playwright 스크린샷 기반 HTML 슬라이드 생성)
+- feat: 모든 provider (fal/openai/inhouse-slides)에서 직접 카피 생성 제거 → copywriter 에이전트 단일 경로로 통일
+- feat: `generate.mjs` 오케스트레이션 흐름 재구성: writeCopySpecs() → copywriter agent → finalizeRegularChannels()
+- feat: copywriter 에이전트 재작성 — copy-spec.json 읽고 copy-output.json 저장 (공통 인터페이스)
+- feat: image-director 에이전트에 inhouse-slides 전용 spec/finalize 처리 절차 추가
+- feat: image-director를 인라인 실행으로 전환 (상황에 따라 fal/openai/inhouse-slides 간 선택)
+- feat: fal nano-banana-2 모델 지원 추가; copy-output flat 포맷 fallback 수정
+- fix: Playwright 스크린샷 후 PNG를 캠페인 디렉토리로 복사; HTML 한국어 폰트 스택 수정
+- fix: 이미지 프롬프트에서 텍스트/타이포그래피 제거 (한국어 글리프 깨짐 방지)
+- fix: copywriter 종결어미 다양화 강화 — 동일 어미 3회 연속 금지, 채용 카피 예시 추가
+- fix: copywriter 두괄식·자연체 재작성
+- docs: sns-start.md step 4 — 전 provider 통합 3단계 흐름으로 업데이트
+
 ## [Unreleased]
 - fix: 업데이트 감지 시 exit 10으로 강제 중단 (Claude가 반드시 사용자에게 보고)
 - fix: fal.ai portrait 치수 portrait_9_16 → {width:1080, height:1350} 객체 형식

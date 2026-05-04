@@ -180,23 +180,51 @@ Claude 안에서 딱 한 줄:
 
 ---
 
+## 콘텐츠 생성 흐름 (오케스트레이션)
+
+`/sns-start` 실행 시 내부 흐름:
+
+1. **채널별 스펙 생성** (`generate.mjs`)
+   - 회사 프로필 + 캠페인 주제 → 채널별 `copy-spec.json` + `slide-spec.json` 생성
+
+2. **카피 작성** (copywriter 에이전트)
+   - 채널별 `copy-spec.json` 읽기 → 카피라이팅 → `copy-output.json` 저장
+   - 톤·금기어 자동 적용
+
+3. **이미지 생성** (image-director 에이전트)
+   - **기본값: inhouse-slides** — Claude Vision으로 HTML 슬라이드 생성 → Playwright 스크린샷 → PNG
+   - **선택형: fal/openai** — 외부 API 호출로 AI 이미지 생성
+
+4. **최종 통합** (`generate.mjs --finalize`)
+   - `copy-output.json` + 이미지 파일 → `agent-output.json`
+
+5. **검수 + 승인**
+   - brand-guardian 에이전트 검사 (금기어·톤) → 사용자 확인 → approve/reject
+
+6. **발행** (publisher)
+   - 채널별 공식 API 호출 → SNS에 업로드
+
+---
+
 ## 이미지 생성 옵션
 
 `.env.local`에서 `CONTENT_ENGINE_PROVIDER`로 선택합니다.
 
-| Provider | 방식 | 필요 키 |
-|----------|------|--------|
-| `inhouse-slides` | Claude HTML 슬라이드 → Playwright 스크린샷 | `ANTHROPIC_API_KEY` |
-| `fal` | fal.ai 이미지 생성 | `FAL_KEY` |
-| `openai` | OpenAI DALL-E | `OPENAI_API_KEY` |
+| Provider | 방식 | 필요 키 | API 키 필수 |
+|----------|------|--------|-----------|
+| `inhouse-slides` | Claude HTML 슬라이드 → Playwright 스크린샷 | `ANTHROPIC_API_KEY` | ✓ 필수 (이미 있음) |
+| `fal` | fal.ai 이미지 생성 | `FAL_KEY` | ✓ 필요 |
+| `openai` | OpenAI DALL-E | `OPENAI_API_KEY` | ✓ 필요 |
 
-### inhouse-slides (권장)
+### inhouse-slides (기본값·권장)
+
+**API 키 없이도 동작합니다.** `ANTHROPIC_API_KEY`만 있으면 됩니다.
 
 외부 이미지 API 없이 브랜드 컬러·카피가 정확하게 반영된 슬라이드를 생성합니다.
 소재 이미지(제품 사진 등)를 Claude가 실제로 보고 슬라이드에 배치합니다.
 
 ```bash
-# 최초 1회 설치
+# 최초 1회 설치 (Playwright 필요)
 npm install playwright
 npx playwright install chromium
 
