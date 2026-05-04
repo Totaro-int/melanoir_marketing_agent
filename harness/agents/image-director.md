@@ -81,7 +81,7 @@ cat <specPath>
 **HTML 요구사항:**
 - `<html>~</html>` 완전한 단일 파일. 외부 URL 참조 금지.
 - `body { margin:0; width:<dim.width>px; height:<dim.height>px; overflow:hidden; }`
-- `font-family: system-ui, <imageContext.visual.fontFamily>` 순서. Google Fonts URL 금지.
+- `font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif` — 한국어 시스템 폰트 우선. Google Fonts URL 금지.
 - `imageContext.visual.colors.background` → body 배경색
 - `imageContext.visual.colors.primary` → 주요 텍스트 색
 - `imageContext.visual.colors.accent` → 강조 색

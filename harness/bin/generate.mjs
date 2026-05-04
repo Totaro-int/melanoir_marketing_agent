@@ -414,6 +414,7 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     const spec        = JSON.parse(readFileSync(specPath, 'utf8'));
     const agentOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
     const outputCards = agentOutput.cards ?? [];
+    const ts          = spec.ts;
 
     // 카드별 Playwright 캡쳐
     const pngPaths = [];
@@ -422,19 +423,21 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
         ui.err(`[${channel}] HTML 파일 없음: ${card.htmlPath}`);
         continue;
       }
-      const pngPath = card.htmlPath.replace(/\.html$/, '.png');
+      const tmpPngPath     = card.htmlPath.replace(/\.html$/, '.png');
+      const persistPngPath = resolve(channelDir, `card${card.index}-${ts}.png`);
       execFileSync('node', [
         screenshotBin,
         `--html=${card.htmlPath}`,
-        `--out=${pngPath}`,
+        `--out=${tmpPngPath}`,
         `--width=${spec.dimensions.width}`,
         `--height=${spec.dimensions.height}`,
       ], { stdio: 'inherit' });
-      pngPaths.push(pngPath);
+      // 캠페인 디렉터리에 복사해서 영구 보존
+      writeFileSync(persistPngPath, readFileSync(tmpPngPath));
+      pngPaths.push(persistPngPath);
     }
 
     // draft 조립
-    const ts           = spec.ts;
     const primaryCard  = outputCards[0] ?? { text: '', hashtags: [] };
     const allHashtags  = [...new Set([
       ...(primaryCard.text.match(/#[^\s#]+/g) ?? []),
