@@ -73,22 +73,14 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 게시 방식 → `--cadence` 매핑: 단일 포스트=`single`, 카드 3장=`series-3`, 카드 5장=`series-5`  
 입력된 내용은 `--keyMessage=` `--contentPoints="포인트1|포인트2"` 플래그로 전달.
 
-### 소재 수집 (선택 — inhouse-slides 전용)
+### 소재 수집 (선택)
 
-현재 provider를 확인한다:
-
-```bash
-node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
-```
-
-출력이 `inhouse-slides`인 경우에만 아래 질문을 한다. 다른 provider면 이 섹션 전체 건너뜀.
+카드뉴스에 넣을 이미지 소재가 있으면 품질이 높아진다. 없어도 진행 가능.
 
 ```
 이미지 소재가 있나요? (제품 사진, 스크린샷 등)
 파일 절대경로를 줄바꿈으로 입력하거나 Enter로 스킵:
-> /Users/me/photos/product.png
-> /Users/me/photos/feature.png
->
+> 
 ```
 
 입력된 경로는 `|`로 연결해 `--sourceImages="경로1|경로2"` 형태로 campaign-new에 전달.
@@ -97,8 +89,7 @@ node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
 ```
 참고할 텍스트 파일이 있나요? (보도자료, 제품 설명 등)
 파일 절대경로 또는 직접 텍스트를 줄바꿈으로 입력하거나 Enter로 스킵:
-> /Users/me/docs/press-release.txt
->
+> 
 ```
 
 입력된 값은 `--sourceTexts="값1|값2"` 형태로 전달.

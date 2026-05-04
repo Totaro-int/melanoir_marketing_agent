@@ -1,5 +1,7 @@
 // Provider registry — picks the active provider from env.
-// Env: CONTENT_ENGINE_PROVIDER = fal | openai | anthropic | inhouse-slides  (required, no default)
+// Env: CONTENT_ENGINE_PROVIDER = inhouse-slides (default) | fal | openai | anthropic
+// inhouse-slides: Claude가 HTML 카드뉴스 생성 → Playwright 캡쳐. API 키 불필요.
+// fal / openai: AI 이미지 생성 (선택). 각각 FAL_KEY / OPENAI_API_KEY 필요.
 
 import { provider as openai }        from './providers/openai-images.mjs';
 import { provider as fal }           from './providers/fal.mjs';
@@ -9,15 +11,7 @@ import { provider as inhouseSlides } from './providers/inhouse-slides.mjs';
 const ALL = { openai, fal, anthropic, 'inhouse-slides': inhouseSlides };
 
 export function getActiveProviderId() {
-  const id = process.env.CONTENT_ENGINE_PROVIDER;
-  if (!id) {
-    throw new Error(
-      'CONTENT_ENGINE_PROVIDER 가 설정되지 않았습니다.\n' +
-      '.env.local 에 CONTENT_ENGINE_PROVIDER=fal 을 추가하세요.\n' +
-      '지원 값: fal | openai | anthropic | inhouse-slides'
-    );
-  }
-  return id;
+  return process.env.CONTENT_ENGINE_PROVIDER || 'inhouse-slides';
 }
 
 export function getProvider(id = getActiveProviderId()) {
