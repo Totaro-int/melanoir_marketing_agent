@@ -68,7 +68,7 @@ if (flags.channel) {
 
 const provider = getProvider(flags.provider);
 const withImages =
-  flags['with-images'] === true ||
+  flags['with-images'] === true || flags['with-images'] === 'true' ||
   (process.env.SLIDE_IMAGES ?? '').toLowerCase() === 'true';
 
 // ── 라우팅 ──────────────────────────────────────────────────────────────────
