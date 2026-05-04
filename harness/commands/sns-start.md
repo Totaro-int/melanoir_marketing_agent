@@ -61,7 +61,37 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 
 입력된 내용은 `--keyMessage=` `--contentPoints="포인트1|포인트2"` 플래그로 전달.
 
-`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...]`
+### 소재 수집 (선택 — inhouse-slides 전용)
+
+현재 provider를 확인한다:
+
+```bash
+node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
+```
+
+출력이 `inhouse-slides`인 경우에만 아래 질문을 한다. 다른 provider면 이 섹션 전체 건너뜀.
+
+```
+이미지 소재가 있나요? (제품 사진, 스크린샷 등)
+파일 절대경로를 줄바꿈으로 입력하거나 Enter로 스킵:
+> /Users/me/photos/product.png
+> /Users/me/photos/feature.png
+>
+```
+
+입력된 경로는 `|`로 연결해 `--sourceImages="경로1|경로2"` 형태로 campaign-new에 전달.
+존재하지 않는 경로는 경고 후 제외한다.
+
+```
+참고할 텍스트 파일이 있나요? (보도자료, 제품 설명 등)
+파일 절대경로 또는 직접 텍스트를 줄바꿈으로 입력하거나 Enter로 스킵:
+> /Users/me/docs/press-release.txt
+>
+```
+
+입력된 값은 `--sourceTexts="값1|값2"` 형태로 전달.
+
+`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...] [--sourceImages=...] [--sourceTexts=...]`
 
 ### 4단계 — 카피 + 이미지 생성
 `node harness/bin/generate.mjs <slug>`
