@@ -109,34 +109,31 @@ node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
 
 ### 4단계 — 카피 + 이미지 생성
 
-현재 provider 확인:
-```bash
-node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? 'not set')"
-```
-
-**inhouse-slides 가 아닌 경우 (fal / openai / anthropic / mock):**
-```
-node harness/bin/generate.mjs <slug>
-```
-
-**inhouse-slides 인 경우 — 3단계 흐름:**
+모든 provider 가 동일한 3단계 흐름을 따른다:
 
 1. spec 작성:
 ```
 node harness/bin/generate.mjs <slug>
 ```
-→ 채널별 `slide-spec.json` 생성.
+→ 채널별 `copy-spec.json` 생성 (inhouse-slides 는 `slide-spec.json`). `brief.status = drafting`.
 
-2. image-director 서브에이전트 실행 (채널마다):
-   `posts/campaigns/<slug>/<ch>/slide-spec.json` 경로를 입력으로 하여
-   `image-director` 서브에이전트를 호출한다.
-   에이전트가 카피·HTML 작성 후 `agent-output.json` 저장.
+2. 서브에이전트 실행 (채널마다):
+   - **inhouse-slides**: `image-director` 서브에이전트가 `slide-spec.json` 처리 → `agent-output.json` + HTML 저장.
+   - **그 외 (fal / openai / anthropic / mock)**: `copywriter` 서브에이전트가 `copy-spec.json` 처리 → `copy-output.json` 저장.
 
-3. 캡쳐 + draft 조립:
+3. finalize:
 ```
 node harness/bin/generate.mjs <slug> --finalize
 ```
-→ Playwright 캡쳐 → draft YAML → guardian 검사.
+→ inhouse-slides: Playwright 캡쳐 + draft 조립.
+→ 그 외: `provider.generateImage` 로 이미지 생성 + draft 조립 + guardian 검사.
+
+부분 재생성 (`--card=N`) 도 같은 흐름:
+```
+node harness/bin/generate.mjs <slug> --channel=<ch> --card=2
+# copywriter 서브에이전트 실행
+node harness/bin/generate.mjs <slug> --channel=<ch> --card=2 --finalize
+```
 
 생성 완료 후 → **칸반 자동 표시 (1차)**: `node harness/bin/board.mjs <slug>`
 
