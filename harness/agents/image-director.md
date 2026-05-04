@@ -54,6 +54,39 @@ cat <specPath>
 ```
 `spec.copyContext`, `spec.imageContext`, `spec.cards`, `spec.dimensions`, `spec.outputDir` 확인.
 
+#### 1-B. AI 배경 이미지 생성 (`generateImages === true` 일 때만)
+
+`spec.imageContext.generateImages`가 `true`이면 이 단계를 실행한다. `false`이면 건너뛴다.
+
+**목적**: 카드별 추상 배경 이미지를 fal로 생성해 HTML에 삽입, 시각적 품질을 높인다.
+
+**절차**:
+
+1. **비주얼 컨셉 결정** — 각 카드의 `role`과 `copyContext.topic`을 바탕으로 어울리는 분위기를 한 줄로 결정한다:
+   - `hook`: 강렬하고 임팩트 있는 추상, accent 색 중심
+   - `body`: 차분하고 구조적인 패턴, 가독성 우선
+   - `cta`: brand primary 색 중심, 행동 유도 분위기
+   - `single`: 주제 분위기를 담은 미니멀 추상
+
+2. **이미지 프롬프트 작성**:
+   - 반드시 **추상적 비주얼**만 — 실제 사람·텍스트·로고·한글/영문 문자 절대 금지
+   - `spec.imageContext.visual.colors` 색상(`primary`, `accent`, `background` hex 값) 명시
+   - 업종 키워드 포함 (브랜드명 자체 언급 금지)
+   - 예: `minimal abstract fintech — deep navy #0F172A background, blue #3B82F6 streaks, no text, no letters`
+
+3. **`gen-image.mjs` 호출** — Bash로 각 카드마다 실행:
+   ```bash
+   node harness/bin/gen-image.mjs \
+     --prompt="<결정한 프롬프트>" \
+     --aspect=<spec.aspect> \
+     --out=<spec.cards[i].htmlPath에서 .html을 -bg.png로 교체한 경로>
+   ```
+   출력의 마지막 줄 = 저장된 PNG 절대 경로. `bgImages` 배열에 `{ index: i+1, pngPath }` 형태로 수집한다.
+
+4. **오류 처리**:
+   - `gen-image.mjs`가 exit 1 → 해당 카드는 이미지 없이 진행 (배경 단색 유지)
+   - `FAL_KEY not set` 오류 → 전체 중단 후 출력: "FAL_KEY가 없습니다. .env.local에 FAL_KEY를 추가하거나 --with-images를 제거하세요."
+
 #### 2. 카드별 카피 생성
 
 각 `spec.cards[i]` 에 대해, `spec.copyContext` 를 바탕으로 카피를 작성한다.
@@ -86,9 +119,30 @@ cat <specPath>
 - `imageContext.visual.colors.primary` → 주요 텍스트 색
 - `imageContext.visual.colors.accent` → 강조 색
 - 카피 텍스트 반드시 포함 (읽기 쉬운 크기, 한글 기준 최소 28px)
-- `imageContext.sourceMaterials.images` 가 있으면 (`images` 는 절대 경로 문자열 배열):
-  - 각 경로의 파일을 base64로 읽어 `<img src="data:image/...;base64,...">` 로 삽입
-  - 슬라이드의 주요 비주얼 영역에 배치
+- **배경 이미지 삽입 우선순위**:
+  1. `generateImages === true` + 1-B에서 수집한 `bgImages[i].pngPath` 가 있으면: **full-bleed 배경**으로 삽입
+  2. `imageContext.sourceMaterials.images[i]` 가 있으면: 해당 경로 파일을 base64로 읽어 **full-bleed 배경**으로 삽입
+  3. 둘 다 없으면: 배경색 단색만 사용
+
+  **full-bleed 배경 HTML 패턴**:
+  ```html
+  <div style="
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: url('data:image/png;base64,<BASE64>');
+    background-size: cover; background-position: center;
+    opacity: 0.20; z-index: 0;
+  "></div>
+  <div style="position: relative; z-index: 1; ...">
+    <!-- 텍스트 -->
+  </div>
+  ```
+  opacity: 0.15~0.25. 텍스트 가독성이 최우선.
+
+  PNG를 base64로 읽는 방법:
+  ```bash
+  node -e "process.stdout.write(require('fs').readFileSync('<경로>').toString('base64'))"
+  ```
 - 우하단에 브랜드명 텍스트 (24px, opacity 0.6)
 - 애니메이션 없음. 인쇄 품질.
 - **HTML 코드만** 파일에 쓴다. 설명·마크다운 펜스 없음.
