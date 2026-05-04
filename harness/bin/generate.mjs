@@ -5,7 +5,7 @@
 //   node bin/generate.mjs <slug> --channel=threads --card=2   # 시리즈 2번 카드만 재생성
 
 import { resolve } from 'node:path';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import {
   PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
 } from './_lib.mjs';
@@ -166,19 +166,30 @@ for (const channel of channels) {
   const aspect = channel === 'linkedin' ? 'square' : 'portrait';
   const cardCount = imagesFor(brief.cadence, flags.images);
 
+  // sourceTexts(파일이면 읽기, 인라인이면 그대로)를 contentPoints에 병합
+  const extraPoints = (brief.sourceMaterials?.texts ?? []).map((t) => {
+    try {
+      if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 500);
+    } catch { /* 읽기 실패 시 인라인 그대로 */ }
+    return t;
+  });
+  const enrichedBrief = extraPoints.length
+    ? { ...brief, contentPoints: [...(brief.contentPoints ?? []), ...extraPoints] }
+    : brief;
+
   // 시리즈(cardCount > 1)는 카드별로 카피 생성, 단일은 1회 호출
   const cards = [];
   if (cardCount > 1) {
     for (let i = 0; i < cardCount; i++) {
       const role = roleFor(i, cardCount);
       const cardCopy = await provider.generateCopy({
-        brief, profile, channel, channelDocs,
+        brief: enrichedBrief, profile, channel, channelDocs,
         cardRole: role, cardIndex: i + 1, cardTotal: cardCount,
       });
       cards.push({ role, text: cardCopy.text, hashtags: cardCopy.hashtags, meta: cardCopy.meta });
     }
   } else {
-    const singleCopy = await provider.generateCopy({ brief, profile, channel, channelDocs });
+    const singleCopy = await provider.generateCopy({ brief: enrichedBrief, profile, channel, channelDocs });
     cards.push({ role: 'single', text: singleCopy.text, hashtags: singleCopy.hashtags, meta: singleCopy.meta });
   }
 

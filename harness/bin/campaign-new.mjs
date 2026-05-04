@@ -90,6 +90,7 @@ const brief = {
     : [],
   angle: flags.angle ?? null,
   notes: flags.notes ?? null,
+  sourceMaterials: parseSourceMaterials(flags),
   constraints: { maxLengthOverride: null, mustInclude: [], mustExclude: [] },
   status: Object.fromEntries(channels.map((c) => [c, 'drafting'])),
   meta: {
@@ -119,6 +120,17 @@ for (const ch of channels) {
 
 // 채널별 view 동기화 (posts/by-channel/<ch>/<slug> symlink). 실패해도 전체 흐름은 통과.
 import('./sync-posts.mjs').catch((e) => ui.warn(`sync-posts 실패 (무시): ${e.message}`));
+
+function parseSourceMaterials(flags) {
+  const images = flags.sourceImages
+    ? String(flags.sourceImages).split('|').map((p) => p.trim()).filter(Boolean)
+    : [];
+  const texts = flags.sourceTexts
+    ? String(flags.sourceTexts).split('|').map((p) => p.trim()).filter(Boolean)
+    : [];
+  if (!images.length && !texts.length) return null;
+  return { images, texts };
+}
 
 // 4) Report.
 ui.ok(`캠페인 생성: ${slug}`);
