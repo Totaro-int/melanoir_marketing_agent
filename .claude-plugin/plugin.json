@@ -21,7 +21,5 @@
     "./harness/agents/brand-guardian.md",
     "./harness/agents/publisher.md"
   ],
-  "skills": [
-    "./harness/skills/sns-onboard-company"
-  ]
+  "skills": []
 }
