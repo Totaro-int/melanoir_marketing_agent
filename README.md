@@ -180,15 +180,42 @@ Claude 안에서 딱 한 줄:
 
 ---
 
-## 이미지 생성을 쓰려면
+## 이미지 생성 옵션
 
-`.env.local` 파일을 열어서 한 줄만 채우면 됩니다:
+`.env.local`에서 `CONTENT_ENGINE_PROVIDER`로 선택합니다.
 
+| Provider | 방식 | 필요 키 |
+|----------|------|--------|
+| `inhouse-slides` | Claude HTML 슬라이드 → Playwright 스크린샷 | `ANTHROPIC_API_KEY` |
+| `fal` | fal.ai 이미지 생성 | `FAL_KEY` |
+| `openai` | OpenAI DALL-E | `OPENAI_API_KEY` |
+
+### inhouse-slides (권장)
+
+외부 이미지 API 없이 브랜드 컬러·카피가 정확하게 반영된 슬라이드를 생성합니다.
+소재 이미지(제품 사진 등)를 Claude가 실제로 보고 슬라이드에 배치합니다.
+
+```bash
+# 최초 1회 설치
+npm install playwright
+npx playwright install chromium
+
+# .env.local
+CONTENT_ENGINE_PROVIDER=inhouse-slides
+ANTHROPIC_API_KEY=sk-ant-...
 ```
-FAL_KEY=fal_xxxxxxx     # https://fal.ai/dashboard/keys 에서 발급
-```
 
-키 없이 시작해도 mock 모드로 전체 흐름은 돌아갑니다 (가짜 이미지 생성).
+`/sns-start` 실행 시 제품 사진 경로를 입력하면 슬라이드에 자동 삽입됩니다.
+
+### fal / openai
+
+AI 이미지 생성이 필요한 경우:
+
+```bash
+FAL_KEY=fal_xxxxxxx      # https://fal.ai/dashboard/keys
+# 또는
+OPENAI_API_KEY=sk-...
+```
 
 ---
 
