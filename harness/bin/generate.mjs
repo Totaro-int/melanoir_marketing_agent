@@ -67,6 +67,9 @@ if (flags.channel) {
 }
 
 const provider = getProvider(flags.provider);
+const withImages =
+  flags['with-images'] === true ||
+  (process.env.SLIDE_IMAGES ?? '').toLowerCase() === 'true';
 
 // ── 라우팅 ──────────────────────────────────────────────────────────────────
 if (flags.finalize) {
@@ -79,7 +82,7 @@ if (flags.finalize) {
 }
 
 if (provider.id === 'inhouse-slides') {
-  await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+  await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages });
   process.exit(0);
 }
 
@@ -90,7 +93,7 @@ process.exit(0);
 
 // ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
 
-async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
+async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages = false }) {
   const tmpSlideDir = resolve(tmpdir(), 'marketing-agent-slides');
   mkdirSync(tmpSlideDir, { recursive: true });
 
@@ -147,6 +150,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
         brandName: profile.brand?.name ?? '',
         visual:    profile.visual     ?? {},
         imageStyle: profile.imageStyle ?? {},
+        generateImages: withImages,
         sourceMaterials: {
           images: (brief.sourceMaterials?.images ?? []).filter(existsSync),
         },
@@ -167,6 +171,9 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
   console.log();
   ui.info('⚡ inhouse-slides: image-director 에이전트가 각 채널의 slide-spec.json 을 처리해야 합니다.');
+  if (withImages) {
+    ui.info('🖼  SLIDE_IMAGES=true: image-director가 카드별 AI 배경 이미지를 생성합니다 (FAL_KEY 필요).');
+  }
   ui.dim(`처리 완료 후 실행: node harness/bin/generate.mjs ${slug} --finalize`);
 }
 
