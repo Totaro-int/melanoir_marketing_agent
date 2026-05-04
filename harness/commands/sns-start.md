@@ -86,6 +86,12 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 입력된 경로는 `|`로 연결해 `--sourceImages="경로1|경로2"` 형태로 campaign-new에 전달.
 존재하지 않는 경로는 경고 후 제외한다.
 
+카드뉴스에 AI 배경 이미지를 자동 생성·삽입하려면 generate 단계에서 `--with-images` 플래그를 추가하거나 `.env.local`에 `SLIDE_IMAGES=true`를 설정한다 (FAL_KEY 필요):
+
+```bash
+node harness/bin/generate.mjs <slug> --with-images
+```
+
 ```
 참고할 텍스트 파일이 있나요? (보도자료, 제품 설명 등)
 파일 절대경로 또는 직접 텍스트를 줄바꿈으로 입력하거나 Enter로 스킵:
