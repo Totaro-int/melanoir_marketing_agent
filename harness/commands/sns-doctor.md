@@ -36,7 +36,8 @@ description: 환경 진단 + 자격증명(auth) 관리 + 회사 프로필 업데
 | runtime | Node 버전, package.json, node_modules |
 | profile | company-profile.yaml 존재 여부 |
 | env | .env.local, CONTENT_ENGINE_PROVIDER |
-| content-engine | anthropic/openai/fal 각 provider healthcheck (활성 provider만 fail, 나머지는 warn) |
+| content-engine | anthropic/openai/fal/inhouse-slides 각 provider healthcheck (활성 provider만 fail, 나머지는 warn) |
+| content-engine | `playwright` (`inhouse-slides` 전용) — npm 패키지 + chromium 설치 여부 |
 | publisher | auth/ 디렉터리 + 각 자격증명 파일 모드(0600), PUBLISHER_DRY_RUN 상태 |
 | channels | profile에서 활성화된 채널별 auth 파일 존재 여부 |
 | plugin | plugin.json |

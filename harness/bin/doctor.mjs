@@ -4,6 +4,7 @@
 // can paste into a support thread.
 
 import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
 import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels, checkForUpdates } from './_lib.mjs';
@@ -44,6 +45,14 @@ for (const p of listProviders()) {
   // 활성 provider 만 fail, 나머지는 warn (선택 안 한 provider 가 미설정인 건 사고가 아님).
   const status = p.health.ok ? 'ok' : (p.id === activeProvider ? 'fail' : 'warn');
   add('content-engine', `provider: ${p.id}`, status, p.health.ok ? '' : (p.health.reason ?? ''));
+}
+if (activeProvider === 'inhouse-slides') {
+  try {
+    execFileSync('node', ['--input-type=module', '-e', "import 'playwright'"], { timeout: 10000, stdio: 'pipe' });
+    add('content-engine', 'playwright', 'ok', '');
+  } catch {
+    add('content-engine', 'playwright', 'fail', 'npm install playwright && npx playwright install chromium');
+  }
 }
 
 if (!QUICK) {
