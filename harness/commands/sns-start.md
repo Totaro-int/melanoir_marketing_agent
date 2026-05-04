@@ -108,8 +108,8 @@ node harness/bin/generate.mjs <slug>
 ```
 → 채널별 `copy-spec.json` 생성 (inhouse-slides 는 `slide-spec.json`). `brief.status = drafting`.
 
-2. 서브에이전트 실행 (채널마다):
-   - **inhouse-slides**: `image-director` 서브에이전트가 `slide-spec.json` 처리 → `agent-output.json` + HTML 저장.
+2. 에이전트 실행 (채널마다):
+   - **inhouse-slides**: `harness/agents/image-director.md` 를 읽고 그 지침대로 **인라인으로** 처리한다. (Write 권한 필요 — 서브에이전트 미사용) `slide-spec.json` → HTML + `agent-output.json` 저장.
    - **그 외 (fal / openai / anthropic / mock)**: `copywriter` 서브에이전트가 `copy-spec.json` 처리 → `copy-output.json` 저장.
 
 3. finalize:

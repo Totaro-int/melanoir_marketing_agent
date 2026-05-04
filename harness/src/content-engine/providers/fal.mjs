@@ -1,9 +1,15 @@
-// BYO fal.ai provider — image generation only (text/copy still goes through openai/mock).
-// Returns BOTH a public CDN URL (used by the publisher to post images) and a local
-// path (downloaded for /sns-preview).
+// BYO fal.ai provider — image generation only.
+// Copy/text goes through copywriter agent via copy-spec.json, not here.
 //
-// Env: FAL_KEY (required), FAL_IMAGE_MODEL (default fal-ai/flux-pro/v1.1)
-// Docs: https://fal.ai/models  ·  https://docs.fal.ai/
+// Env: FAL_KEY (required), FAL_IMAGE_MODEL (default fal-ai/nano-banana-2)
+//
+// Supported models:
+//   fal-ai/nano-banana-2  — Gemini 3.1 Flash Image. No inference steps, aspect_ratio enum.
+//   fal-ai/flux/dev       — Flux Dev. 28 steps, image_size object.
+//   fal-ai/flux-pro/v1.1  — Flux Pro. 25 steps, image_size object.
+//   fal-ai/flux/schnell   — Flux Schnell (fast/low quality). 4 steps. NOT recommended.
+//
+// Docs: https://fal.ai/models/fal-ai/nano-banana-2
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,24 +18,61 @@ import { assertProvider } from '../provider.mjs';
 
 const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
 const KEY = () => process.env.FAL_KEY ?? '';
-const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/flux-pro/v1.1';
+const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/nano-banana-2';
 
-// flux/schnell=4 steps (fast), flux/dev=28 (balanced), flux-pro=25 (quality)
-function inferenceSteps(model) {
+// nano-banana-2 uses aspect_ratio enum; flux models use image_size object.
+function isNanoBanana(model) {
+  return model.includes('nano-banana');
+}
+
+// nano-banana-2 aspect_ratio enum values
+function aspectRatioEnum(aspect) {
+  switch (aspect) {
+    case 'portrait':  return '4:5';
+    case 'landscape': return '16:9';
+    case 'story':     return '9:16';
+    default:          return '1:1';
+  }
+}
+
+// flux image_size: string preset or {width, height}
+function fluxImageSize(aspect) {
+  switch (aspect) {
+    case 'portrait':  return { width: 1080, height: 1350 };
+    case 'landscape': return 'landscape_16_9';
+    case 'story':     return { width: 1080, height: 1920 };
+    default:          return 'square_hd';
+  }
+}
+
+function fluxInferenceSteps(model) {
   if (model.includes('schnell')) return 4;
-  if (model.includes('dev')) return 28;
+  if (model.includes('dev'))     return 28;
   return 25;
 }
 
-// fal accepts either a string preset or a {width, height} object.
-// Use exact SNS dimensions for best results.
-function imageSize(aspect) {
-  switch (aspect) {
-    case 'portrait':  return { width: 1080, height: 1350 }; // 4:5 — Threads/Instagram feed
-    case 'landscape': return 'landscape_16_9';
-    case 'story':     return { width: 1080, height: 1920 }; // 9:16 — stories/reels
-    default:          return 'square_hd';                   // 1080x1080
+function buildBody(model, prompt, aspect, count) {
+  if (isNanoBanana(model)) {
+    return {
+      prompt,
+      num_images:        count ?? 1,
+      aspect_ratio:      aspectRatioEnum(aspect),
+      output_format:     'png',
+      safety_tolerance:  '4',
+      resolution:        '1K',
+      limit_generations: true,
+    };
   }
+  // flux family
+  return {
+    prompt,
+    negative_prompt: 'text, letters, words, numbers, typography, glyphs, characters, writing, inscription, label, caption, watermark, logo, brand name, readable text',
+    image_size:           fluxImageSize(aspect),
+    num_images:           count ?? 1,
+    num_inference_steps:  fluxInferenceSteps(model),
+    guidance_scale:       3.5,
+    enable_safety_checker: true,
+  };
 }
 
 export const provider = assertProvider({
@@ -45,22 +88,11 @@ export const provider = assertProvider({
 
   async generateImage(req) {
     if (!KEY()) throw new Error('FAL_KEY not set');
-    const t0 = Date.now();
+    const t0    = Date.now();
     const model = IMAGE_MODEL();
+    const body  = buildBody(model, req.prompt, req.aspect, req.count);
 
-    const steps = inferenceSteps(model);
-    const body = {
-      prompt: req.prompt,
-      image_size: imageSize(req.aspect),
-      num_images: req.count ?? 1,
-      num_inference_steps: steps,
-      guidance_scale: 3.5,
-      enable_safety_checker: true,
-    };
-
-    const json = await falPost(`https://fal.run/${model}`, body);
-
-    // Response shape: { images: [{ url, width, height, content_type, file_name }], ... }
+    const json   = await falPost(`https://fal.run/${model}`, body);
     const images = json.images ?? [];
     if (!images.length) throw new Error('fal returned no images: ' + JSON.stringify(json).slice(0, 300));
 
@@ -70,19 +102,17 @@ export const provider = assertProvider({
     const paths = [];
     const urls  = [];
     for (const [i, img] of images.entries()) {
-      const url = img.url;
-      urls.push(url);
-      // Download a local copy so /sns-preview can show something even when offline later.
+      urls.push(img.url);
       try {
-        const r = await fetch(url);
+        const r = await fetch(img.url);
         if (r.ok) {
-          const ext = (img.content_type ?? 'image/png').split('/')[1] ?? 'png';
+          const ext  = (img.content_type ?? 'image/png').split('/')[1] ?? 'png';
           const file = resolve(dir, `${Date.now()}-${i}.${ext}`);
           writeFileSync(file, Buffer.from(await r.arrayBuffer()));
           paths.push(file.replace(ROOT + '/', ''));
         }
       } catch {
-        // If the download fails the URL is still authoritative; preview just won't have a local path.
+        // URL is authoritative; local copy is best-effort for preview only.
       }
     }
 
@@ -101,13 +131,12 @@ export const provider = assertProvider({
 
 async function falPost(url, body, attempt = 1) {
   const r = await fetch(url, {
-    method: 'POST',
+    method:  'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${KEY()}` },
-    body: JSON.stringify(body),
+    body:    JSON.stringify(body),
   });
   if (r.ok) return r.json();
 
-  // Retry once on 429 / 5xx with linear backoff. fal occasionally cold-starts.
   if (attempt === 1 && (r.status === 429 || r.status >= 500)) {
     await new Promise((res) => setTimeout(res, 1500));
     return falPost(url, body, 2);

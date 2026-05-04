@@ -46,9 +46,10 @@ node bin/generate.mjs <slug> [--channel=<ch>]
 → 채널별 `posts/campaigns/<slug>/<ch>/slide-spec.json` 작성 후 종료.
 → `brief.status[<ch>]` = `drafting` 으로 설정.
 
-**2단계 — image-director 에이전트:**
-Claude가 `slide-spec.json` 을 읽고 카피·HTML 파일 생성 → `agent-output.json` 저장.
-(generate.mjs 가 아닌 Claude 에이전트가 직접 파일을 작성한다.)
+**2단계 — image-director 인라인 실행:**
+`harness/agents/image-director.md` 를 읽고 그 지침대로 **인라인으로** 처리한다.
+(Write 권한 필요 — 서브에이전트 미사용)
+`slide-spec.json` → HTML 파일 + `agent-output.json` 직접 작성.
 
 **3단계 — finalize:**
 ```

@@ -280,7 +280,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
       const existing  = readYaml(latestPath);
       const { cardIndex: cIdx, cardTotal, role } = spec.partial;
       const cardIdx   = cIdx - 1;
-      const newCard   = output.cards[0];
+      const newCard   = (output.cards ?? [{ text: output.text ?? '', hashtags: output.hashtags ?? [] }])[0];
 
       const newImg = await provider.generateImage({
         prompt:          imagePromptFor(channel, brief, profile, role, cIdx, cardTotal),
@@ -335,9 +335,12 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
     const image = { paths: [], urls: [], meta: null };
     const cards = [];
 
+    // output.cards 없으면 flat 포맷(output.text/hashtags) → cards 배열로 정규화
+    const outputCards = output.cards ?? [{ index: 1, text: output.text ?? '', hashtags: output.hashtags ?? [] }];
+
     for (let i = 0; i < cardCount; i++) {
       const role    = spec.cards[i].role;
-      const outCard = output.cards.find((c) => c.index === i + 1) ?? output.cards[i];
+      const outCard = outputCards.find((c) => c.index === i + 1) ?? outputCards[i];
       cards.push({ role, text: outCard.text, hashtags: outCard.hashtags ?? [] });
 
       const r = await provider.generateImage({
@@ -553,7 +556,7 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
     warm_lifestyle:    'warm lifestyle aesthetic — soft light, organic textures, approachable feel',
     dark_luxury:       'dark luxury — deep blacks, refined gold or silver accents, premium atmosphere',
     playful_bright:    'playful and bright — vivid colors, rounded forms, energetic and friendly',
-    swiss_type:        'Swiss International Typographic Style — grid-based, clean serif/sans, typography as hero',
+    swiss_type:        'Swiss International style — clean grid-based composition, geometric precision, high contrast shapes',
   };
   const aestheticDesc = imgStyle.aesthetic === 'custom'
     ? (imgStyle.customAesthetic ?? 'modern editorial')
@@ -590,21 +593,19 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
 
   const roleComposition = {
     single: 'Full-bleed hero. One dominant focal element, 60%+ negative space.',
-    hook:   `HOOK card ${n}/${total}. Single bold keyword or number dominates 70% of frame. Maximum immediate impact.`,
+    hook:   `HOOK card ${n}/${total}. Single dominant visual element filling 70% of frame. Maximum immediate visual impact. Pure imagery, no text.`,
     body:   `BODY card ${n}/${total}. Structured layout with visual space for one key insight or statistic.`,
     cta:    `CTA card ${n}/${total}. Stronger brand color presence than other cards. Clear action zone at bottom third.`,
   }[role] ?? 'Hero card. Strong single focal point.';
 
-  // ── 폰트 힌트 ─────────────────────────────────────────────────────────
-  const fontNote = font ? `Typography feel: ${font}.` : 'Typography: clean, modern, Korean-friendly.';
-
   return [
+    'PURELY VISUAL IMAGE. ABSOLUTELY NO TEXT, LETTERS, WORDS, OR CHARACTERS OF ANY LANGUAGE ANYWHERE IN THE IMAGE.',
     `SNS card visual. ${channelNote}`,
     `TOPIC: ${brief.topic}`,
     audienceHint,
     '',
     `STYLE: ${aestheticDesc}`,
-    `${fontNote} Large-scale composition.`,
+    'Large-scale composition.',
     '',
     `COMPOSITION: ${roleComposition}`,
     '',
