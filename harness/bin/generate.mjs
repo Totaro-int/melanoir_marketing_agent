@@ -68,205 +68,23 @@ if (flags.channel) {
 
 const provider = getProvider(flags.provider);
 
-// ── inhouse-slides: API 직접 호출 없이 spec → agent → finalize 흐름 ──
-if (provider.id === 'inhouse-slides') {
-  if (flags.finalize) {
+// ── 라우팅 ──────────────────────────────────────────────────────────────────
+if (flags.finalize) {
+  if (provider.id === 'inhouse-slides') {
     await finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels });
   } else {
-    await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+    await finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels, provider, flags });
   }
   process.exit(0);
 }
 
-ui.info(`provider: ${provider.id}  ·  channels: ${channels.join(', ')}`);
-console.log();
-
-for (const channel of channels) {
-  ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] generating...`);
-
-  const channelDocs = loadChannelDocs(channel);
-
-  // --card=<n> 부분 재생성: 기존 draft 로드 → 해당 카드만 교체
-  if (cardN !== null) {
-    const latestPath = latestDraftYaml(resolve(dir, channel));
-    if (!latestPath) {
-      ui.err(`[${channel}] 기존 draft 없음 — 먼저 전체 생성을 실행하세요.`);
-      process.exit(2);
-    }
-    const existing = readYaml(latestPath);
-    if (!existing.cards?.length) {
-      ui.err(`[${channel}] 시리즈 draft가 아닙니다. --card 는 series-3/5 캠페인에서만 사용 가능합니다.`);
-      process.exit(2);
-    }
-    const totalCards = existing.cards.length;
-    if (cardN < 1 || cardN > totalCards) {
-      ui.err(`--card=${cardN} 범위 초과. 이 시리즈는 ${totalCards}장입니다. (1~${totalCards})`);
-      process.exit(2);
-    }
-    const cardIdx = cardN - 1;
-    const role = roleFor(cardIdx, totalCards);
-    ui.step(1, 1, `[${channel}] 카드 ${cardN}/${totalCards} (${role}) 재생성...`);
-
-    const aspect = channel === 'linkedin' ? 'square' : 'portrait';
-
-    // 카피 재생성
-    const newCopy = await provider.generateCopy({
-      brief, profile, channel, channelDocs,
-      cardRole: role, cardIndex: cardN, cardTotal: totalCards,
-    });
-
-    // 이미지 재생성
-    const newImg = await provider.generateImage({
-      prompt:          imagePromptFor(channel, brief, profile, role, cardN, totalCards),
-      visual:          profile.visual ?? {},
-      aspect,
-      count:           1,
-      cardText:        existing.cards?.[cardIdx]?.text ?? existing.text,
-      role,
-      cardIndex:       cardN,
-      cardTotal:       totalCards,
-      topic:           brief.topic,
-      sourceMaterials: brief.sourceMaterials ?? null,
-    });
-
-    // 기존 cards 배열 복사 후 해당 카드만 교체
-    const updatedCards = existing.cards.map((c, i) =>
-      i === cardIdx ? { role, text: newCopy.text } : c
-    );
-
-    // 기존 assets 배열 복사 후 해당 슬롯만 교체
-    const updatedPaths = [...(existing.assets ?? [])];
-    const updatedUrls  = [...(existing.assetUrls ?? [])];
-    if (newImg.paths[0]) updatedPaths[cardIdx] = newImg.paths[0];
-    if (newImg.urls?.[0]) updatedUrls[cardIdx]  = newImg.urls[0];
-
-    // 대표 텍스트(첫 카드) 갱신 — 재생성 카드가 0번이면 provider의 hashtags 우선 사용
-    const primaryText = updatedCards[0]?.text ?? existing.text;
-    const primaryHashtags = cardIdx === 0 ? (newCopy.hashtags ?? extractHashtags(primaryText)) : extractHashtags(primaryText);
-    const mergedPrimary = mergeHashtags(primaryText, primaryHashtags, profile);
-
-    const report = inspect({ channel, text: mergedPrimary.text, hashtags: mergedPrimary.hashtags, profile });
-
-    const channelDir = resolve(dir, channel);
-    const ts = nowKstFilename();
-    const draft = {
-      ...existing,
-      generatedAt: nowKstIso(),
-      provider: newCopy.meta,
-      image: newImg.meta,
-      text: mergedPrimary.text,
-      hashtags: mergedPrimary.hashtags,
-      cards: updatedCards,
-      assets: updatedPaths,
-      assetUrls: updatedUrls,
-      guardian: report,
-    };
-    writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
-    writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
-
-    brief.status[channel] = report.ok ? 'preview' : 'drafting';
-    brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
-
-    if (report.ok) ui.ok(`[${channel}] 카드 ${cardN} 재생성 완료`);
-    else ui.err(`[${channel}] 가디언 차단 — draft.md 확인 후 재시도`);
-
-    writeYaml(briefPath, brief);
-    console.log();
-    ui.dim(`다음: node bin/preview.mjs ${slug} --channel=${channel}`);
-    process.exit(0);
-  }
-
-  const aspect = channel === 'linkedin' ? 'square' : 'portrait';
-  const cardCount = imagesFor(brief.cadence, flags.images);
-
-  // sourceTexts(파일이면 읽기, 인라인이면 그대로)를 contentPoints에 병합
-  const extraPoints = (brief.sourceMaterials?.texts ?? []).map((t) => {
-    try {
-      if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 500);
-    } catch { /* 읽기 실패 시 인라인 그대로 */ }
-    return t;
-  });
-  const enrichedBrief = extraPoints.length
-    ? { ...brief, contentPoints: [...(brief.contentPoints ?? []), ...extraPoints] }
-    : brief;
-
-  // 시리즈(cardCount > 1)는 카드별로 카피 생성, 단일은 1회 호출
-  const cards = [];
-  if (cardCount > 1) {
-    for (let i = 0; i < cardCount; i++) {
-      const role = roleFor(i, cardCount);
-      const cardCopy = await provider.generateCopy({
-        brief: enrichedBrief, profile, channel, channelDocs,
-        cardRole: role, cardIndex: i + 1, cardTotal: cardCount,
-      });
-      cards.push({ role, text: cardCopy.text, hashtags: cardCopy.hashtags, meta: cardCopy.meta });
-    }
-  } else {
-    const singleCopy = await provider.generateCopy({ brief: enrichedBrief, profile, channel, channelDocs });
-    cards.push({ role: 'single', text: singleCopy.text, hashtags: singleCopy.hashtags, meta: singleCopy.meta });
-  }
-
-  // 대표 텍스트 = 첫 카드 (preview, guardian, 하위 호환용)
-  const primaryCard = cards[0];
-  const merged = mergeHashtags(primaryCard.text, primaryCard.hashtags, profile);
-
-  // 이미지 생성 (카드별 1장)
-  const image = { paths: [], urls: [], meta: null };
-  for (let i = 0; i < cardCount; i++) {
-    const role = roleFor(i, cardCount);
-    const cardCopyText = cardCount > 1 ? cards[i]?.text : cards[0]?.text;
-    const r = await provider.generateImage({
-      prompt:          imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
-      visual:          profile.visual ?? {},
-      aspect,
-      count:           1,
-      cardText:        cardCopyText,
-      role,
-      cardIndex:       i + 1,
-      cardTotal:       cardCount,
-      topic:           brief.topic,
-      sourceMaterials: brief.sourceMaterials ?? null,
-    });
-    image.paths.push(...(r.paths ?? []));
-    image.urls.push(...(r.urls ?? []));
-    image.meta = r.meta;
-  }
-
-  // Brand guardian.
-  const report = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
-
-  // Persist draft.
-  const channelDir = resolve(dir, channel);
-  mkdirSync(channelDir, { recursive: true });
-  const ts = nowKstFilename();
-  const draft = {
-    version: 1,
-    slug,
-    channel,
-    generatedAt: nowKstIso(),
-    provider: cards[0].meta,
-    image: image.meta,
-    text: merged.text,
-    hashtags: merged.hashtags,
-    cards: cards.length > 1 ? cards.map((c) => ({ role: c.role, text: c.text })) : undefined,
-    assets: image.paths,
-    assetUrls: image.urls ?? [],
-    guardian: report,
-  };
-  writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
-  writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
-
-  // Update status: blocked drafts go back to drafting; otherwise -> preview.
-  brief.status[channel] = report.ok ? 'preview' : 'drafting';
-  brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
-
-  if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary.warns})`);
-  else ui.err(`[${channel}] 가디언 차단 (${report.summary.blocks}건). draft.md 검토 후 재생성 필요.`);
+if (provider.id === 'inhouse-slides') {
+  await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+  process.exit(0);
 }
 
-writeYaml(briefPath, brief);
-console.log();
-ui.dim(`다음: /sns-preview ${slug}   또는   node bin/preview.mjs ${slug}`);
+await writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+process.exit(0);
 
 // ---- helpers ----
 
