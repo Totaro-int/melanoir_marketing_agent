@@ -45,20 +45,32 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 
 ### 3단계 — 캠페인 설정 + 소재 수집
 
-인자로 주제가 있으면 바로, 없으면 한 줄 질문.
-채널/goal/cadence 미지정 시 `profile.channels.enabled` 기본값 사용.
-
-주제가 확정되면 다음 2가지를 추가로 묻는다:
+인자로 주제가 있으면 바로, 없으면 아래 질문을 순서대로 한다.
+채널/목표/cadence 미지정 시 `profile.channels.enabled` 기본값 사용.
 
 ```
-핵심 메시지가 있나요? (없으면 Enter 스킵)
+주제 (한 줄):
+> 
+
+채널 (기본값 사용 시 Enter, 또는 콤마 구분 입력 — threads, linkedin, instagram, x):
+> 
+
+목표 (런칭/인지도/참여/전환/교육 중 하나, 기본: 인지도):
+> 
+
+게시 방식 (단일 포스트 / 카드 3장 / 카드 5장, 기본: 단일 포스트):
+> 
+
+핵심 메시지가 있나요? (없으면 Enter):
 > 
 
 이 포스트에 쓸 구체적인 소재가 있나요?
-숫자, 데이터, 고객 반응, 특징 등을 줄바꿈으로 입력 (없으면 Enter 스킵)
+숫자, 데이터, 고객 반응, 특징 등을 줄바꿈으로 입력 (없으면 Enter):
 > 
 ```
 
+목표 → `--goal` 매핑: 런칭=`launch`, 인지도=`awareness`, 참여=`engagement`, 전환=`conversion`, 교육=`education`  
+게시 방식 → `--cadence` 매핑: 단일 포스트=`single`, 카드 3장=`series-3`, 카드 5장=`series-5`  
 입력된 내용은 `--keyMessage=` `--contentPoints="포인트1|포인트2"` 플래그로 전달.
 
 ### 소재 수집 (선택 — inhouse-slides 전용)
