@@ -60,7 +60,7 @@ cat <specPath>
 
 **카피 작성 규칙:**
 - `copyContext.profile.tone.voiceNotes` 가 있으면 그 어조로
-- `copyContext.profile.writing.emojiUsage` 에 따라 이모지 사용:
+- `copyContext.profile.writing.emojiUsage` 에 따라 이모지 사용 (필드 없으면 `minimal` 처리):
   - `none` → 이모지 없음
   - `minimal` → 강조 1~2개만
   - `moderate` → 자연스럽게
@@ -86,8 +86,8 @@ cat <specPath>
 - `imageContext.visual.colors.primary` → 주요 텍스트 색
 - `imageContext.visual.colors.accent` → 강조 색
 - 카피 텍스트 반드시 포함 (읽기 쉬운 크기, 한글 기준 최소 28px)
-- `imageContext.sourceMaterials.images` 가 있으면:
-  - 파일을 base64로 읽어 `<img src="data:image/...;base64,...">` 로 삽입
+- `imageContext.sourceMaterials.images` 가 있으면 (`images` 는 절대 경로 문자열 배열):
+  - 각 경로의 파일을 base64로 읽어 `<img src="data:image/...;base64,...">` 로 삽입
   - 슬라이드의 주요 비주얼 영역에 배치
 - 우하단에 브랜드명 텍스트 (24px, opacity 0.6)
 - 애니메이션 없음. 인쇄 품질.
@@ -132,7 +132,7 @@ Write(path=<spec.outputDir>/agent-output.json, content=<JSON>)
 HTML 경로: <spec.cards[0].htmlPath> 외 N개
 
 다음 단계:
-  node harness/bin/generate.mjs <slug> --finalize
+  node harness/bin/generate.mjs <slug> [--channel=<ch>] --finalize
 ```
 
 ---

@@ -91,6 +91,8 @@ node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
 
 입력된 값은 `--sourceTexts="값1|값2"` 형태로 전달.
 
+위 질문에 대한 답변을 모두 수집한 뒤 아래 명령을 실행한다:
+
 `node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...] [--sourceImages=...] [--sourceTexts=...]`
 
 ### 4단계 — 카피 + 이미지 생성
@@ -113,11 +115,10 @@ node harness/bin/generate.mjs <slug>
 ```
 → 채널별 `slide-spec.json` 생성.
 
-2. image-director 에이전트 호출 (채널마다):
-```
-image-director 에이전트: posts/campaigns/<slug>/<ch>/slide-spec.json 처리
-```
-→ 카피·HTML 작성, `agent-output.json` 저장.
+2. image-director 서브에이전트 실행 (채널마다):
+   `posts/campaigns/<slug>/<ch>/slide-spec.json` 경로를 입력으로 하여
+   `image-director` 서브에이전트를 호출한다.
+   에이전트가 카피·HTML 작성 후 `agent-output.json` 저장.
 
 3. 캡쳐 + draft 조립:
 ```

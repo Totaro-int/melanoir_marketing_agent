@@ -35,9 +35,9 @@ provider 우선순위: `--provider` 플래그 > `CONTENT_ENGINE_PROVIDER` env > 
 4. brand-guardian 검사 → ok면 `status: preview`, block이면 `status: drafting`
 5. `campaigns/<slug>/<ch>/{draft.yaml, draft.md}` 저장 (assets + assetUrls 둘 다)
 
-## inhouse-slides 두 단계 흐름
+## inhouse-slides 세 단계 흐름
 
-`CONTENT_ENGINE_PROVIDER=inhouse-slides` 인 경우 generate 는 두 단계로 나뉜다.
+`CONTENT_ENGINE_PROVIDER=inhouse-slides` 인 경우 generate 는 세 단계로 나뉜다.
 
 **1단계 — spec 작성:**
 ```
