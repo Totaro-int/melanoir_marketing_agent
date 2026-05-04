@@ -34,3 +34,25 @@ provider 우선순위: `--provider` 플래그 > `CONTENT_ENGINE_PROVIDER` env > 
 3. provider.generateImage × cardCount → 각 카드별 role hint(hook/body/cta) 주입
 4. brand-guardian 검사 → ok면 `status: preview`, block이면 `status: drafting`
 5. `campaigns/<slug>/<ch>/{draft.yaml, draft.md}` 저장 (assets + assetUrls 둘 다)
+
+## inhouse-slides 두 단계 흐름
+
+`CONTENT_ENGINE_PROVIDER=inhouse-slides` 인 경우 generate 는 두 단계로 나뉜다.
+
+**1단계 — spec 작성:**
+```
+node bin/generate.mjs <slug> [--channel=<ch>]
+```
+→ 채널별 `posts/campaigns/<slug>/<ch>/slide-spec.json` 작성 후 종료.
+→ `brief.status[<ch>]` = `drafting` 으로 설정.
+
+**2단계 — image-director 에이전트:**
+Claude가 `slide-spec.json` 을 읽고 카피·HTML 파일 생성 → `agent-output.json` 저장.
+(generate.mjs 가 아닌 Claude 에이전트가 직접 파일을 작성한다.)
+
+**3단계 — finalize:**
+```
+node bin/generate.mjs <slug> [--channel=<ch>] --finalize
+```
+→ HTML 파일을 Playwright 로 캡쳐 → draft YAML 조립 → brand-guardian 검사.
+→ guardian ok 시 `brief.status[<ch>]` = `preview`.

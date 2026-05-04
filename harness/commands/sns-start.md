@@ -94,7 +94,36 @@ node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? '')"
 `node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...] [--sourceImages=...] [--sourceTexts=...]`
 
 ### 4단계 — 카피 + 이미지 생성
-`node harness/bin/generate.mjs <slug>`
+
+현재 provider 확인:
+```bash
+node -e "console.log(process.env.CONTENT_ENGINE_PROVIDER ?? 'not set')"
+```
+
+**inhouse-slides 가 아닌 경우 (fal / openai / anthropic / mock):**
+```
+node harness/bin/generate.mjs <slug>
+```
+
+**inhouse-slides 인 경우 — 3단계 흐름:**
+
+1. spec 작성:
+```
+node harness/bin/generate.mjs <slug>
+```
+→ 채널별 `slide-spec.json` 생성.
+
+2. image-director 에이전트 호출 (채널마다):
+```
+image-director 에이전트: posts/campaigns/<slug>/<ch>/slide-spec.json 처리
+```
+→ 카피·HTML 작성, `agent-output.json` 저장.
+
+3. 캡쳐 + draft 조립:
+```
+node harness/bin/generate.mjs <slug> --finalize
+```
+→ Playwright 캡쳐 → draft YAML → guardian 검사.
 
 생성 완료 후 → **칸반 자동 표시 (1차)**: `node harness/bin/board.mjs <slug>`
 
