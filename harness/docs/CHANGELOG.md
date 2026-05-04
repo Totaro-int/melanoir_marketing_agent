@@ -115,3 +115,5 @@ All notable changes to this project. Format: Phase / version → highlights.
 - fix: 업데이트 감지 시 exit 10으로 강제 중단 (Claude가 반드시 사용자에게 보고)
 - fix: fal.ai portrait 치수 portrait_9_16 → {width:1080, height:1350} 객체 형식
 - feat: 이미지 생성 품질 개선 (flux-pro/v1.1, OpenAI quality=high, rich prompt)
+- feat: inhouse-slides AI 배경 이미지 — SLIDE_IMAGES=true / --with-images 활성화 시 카드별 비주얼 컨셉 계획 후 fal(nano-banana-2)로 배경 이미지 생성·삽입
+- feat: harness/bin/gen-image.mjs — fal 단독 이미지 생성 CLI (--prompt, --aspect, --out)
