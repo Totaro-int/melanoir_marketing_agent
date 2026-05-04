@@ -46,6 +46,6 @@ try {
   console.log(outPath);
   process.exit(0);
 } catch (err) {
-  process.stderr.write('gen-image: fal error — ' + err.message + '\n');
+  console.error('gen-image: fal error —', err.message);
   process.exit(1);
 }
