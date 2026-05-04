@@ -428,6 +428,149 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
   ui.dim(`처리 완료 후 실행: node harness/bin/generate.mjs ${slug}${finFlag}${cardFlag} --finalize`);
 }
 
+async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels, provider, flags }) {
+  const cardN = flags.card ? parseInt(flags.card, 10) : null;
+
+  for (const channel of channels) {
+    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] finalize...`);
+
+    const channelDir = resolve(dir, channel);
+    const specPath   = resolve(channelDir, 'copy-spec.json');
+    const outputPath = resolve(channelDir, 'copy-output.json');
+
+    if (!existsSync(specPath)) {
+      ui.err(`[${channel}] copy-spec.json 없음 — 먼저 generate.mjs 를 (--finalize 없이) 실행하세요.`);
+      continue;
+    }
+    if (!existsSync(outputPath)) {
+      ui.err(`[${channel}] copy-output.json 없음 — copywriter 에이전트가 아직 처리하지 않았습니다.`);
+      continue;
+    }
+
+    const spec   = JSON.parse(readFileSync(specPath, 'utf8'));
+    const output = JSON.parse(readFileSync(outputPath, 'utf8'));
+    const ts     = spec.ts;
+    const aspect = spec.aspect;
+
+    // ── PARTIAL: 기존 draft의 한 카드만 교체 ─────────────────────────────
+    if (spec.partial) {
+      const latestPath = latestDraftYaml(channelDir);
+      if (!latestPath) {
+        ui.err(`[${channel}] partial finalize 인데 기존 draft 없음.`);
+        continue;
+      }
+      const existing  = readYaml(latestPath);
+      const { cardIndex: cIdx, cardTotal, role } = spec.partial;
+      const cardIdx   = cIdx - 1;
+      const newCard   = output.cards[0];
+
+      const newImg = await provider.generateImage({
+        prompt:          imagePromptFor(channel, brief, profile, role, cIdx, cardTotal),
+        visual:          profile.visual ?? {},
+        aspect,
+        count:           1,
+        cardText:        newCard.text,
+        role,
+        cardIndex:       cIdx,
+        cardTotal,
+        topic:           brief.topic,
+        sourceMaterials: brief.sourceMaterials ?? null,
+      });
+
+      const updatedCards = (existing.cards ?? []).map((c, i) =>
+        i === cardIdx ? { role, text: newCard.text } : c
+      );
+      const updatedPaths = [...(existing.assets ?? [])];
+      const updatedUrls  = [...(existing.assetUrls ?? [])];
+      if (newImg.paths[0]) updatedPaths[cardIdx] = newImg.paths[0];
+      if (newImg.urls?.[0]) updatedUrls[cardIdx]  = newImg.urls[0];
+
+      const primaryText     = updatedCards[0]?.text ?? existing.text;
+      const primaryHashtags = cardIdx === 0 ? (newCard.hashtags ?? []) : extractHashtags(primaryText);
+      const merged          = mergeHashtags(primaryText, primaryHashtags, profile);
+      const report          = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
+
+      const newTs = nowKstFilename();
+      const draft = {
+        ...existing,
+        generatedAt: nowKstIso(),
+        provider:    { provider: output.meta?.provider ?? 'claude-subagent', model: output.meta?.agent ?? 'copywriter' },
+        image:       newImg.meta,
+        text:        merged.text,
+        hashtags:    merged.hashtags,
+        cards:       updatedCards,
+        assets:      updatedPaths,
+        assetUrls:   updatedUrls,
+        guardian:    report,
+      };
+      writeYaml(resolve(channelDir, `${newTs}.yaml`), draft);
+      writeFileSync(resolve(channelDir, `${newTs}.md`), renderDraftMd(draft), 'utf8');
+      brief.status[channel] = report.ok ? 'preview' : 'drafting';
+
+      if (report.ok) ui.ok(`[${channel}] 카드 ${cIdx} 재생성 완료`);
+      else           ui.err(`[${channel}] 가디언 차단`);
+      continue;
+    }
+
+    // ── FULL: 처음부터 draft 조립 ─────────────────────────────────────────
+    const cardCount = spec.cards.length;
+    const image = { paths: [], urls: [], meta: null };
+    const cards = [];
+
+    for (let i = 0; i < cardCount; i++) {
+      const role    = spec.cards[i].role;
+      const outCard = output.cards.find((c) => c.index === i + 1) ?? output.cards[i];
+      cards.push({ role, text: outCard.text, hashtags: outCard.hashtags ?? [] });
+
+      const r = await provider.generateImage({
+        prompt:          imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
+        visual:          profile.visual ?? {},
+        aspect,
+        count:           1,
+        cardText:        outCard.text,
+        role,
+        cardIndex:       i + 1,
+        cardTotal:       cardCount,
+        topic:           brief.topic,
+        sourceMaterials: brief.sourceMaterials ?? null,
+      });
+      image.paths.push(...(r.paths ?? []));
+      image.urls.push(...(r.urls ?? []));
+      image.meta = r.meta;
+    }
+
+    const primary = cards[0];
+    const merged  = mergeHashtags(primary.text, primary.hashtags ?? [], profile);
+    const report  = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
+
+    const draft = {
+      version:     1,
+      slug,
+      channel,
+      generatedAt: nowKstIso(),
+      provider:    { provider: output.meta?.provider ?? 'claude-subagent', model: output.meta?.agent ?? 'copywriter' },
+      image:       image.meta,
+      text:        merged.text,
+      hashtags:    merged.hashtags,
+      cards:       cards.length > 1 ? cards.map((c) => ({ role: c.role, text: c.text })) : undefined,
+      assets:      image.paths,
+      assetUrls:   image.urls ?? [],
+      guardian:    report,
+    };
+    writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
+    writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
+    brief.status[channel] = report.ok ? 'preview' : 'drafting';
+
+    if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary?.warns ?? 0})`);
+    else           ui.err(`[${channel}] 가디언 차단 (${report.summary?.blocks ?? '?'}건)`);
+  }
+
+  brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+  writeYaml(briefPath, brief);
+  console.log();
+  ui.dim(`다음: node bin/preview.mjs ${slug}`);
+}
+
 async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels }) {
   const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
 
