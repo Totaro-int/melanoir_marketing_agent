@@ -1,11 +1,12 @@
 // Provider registry — picks the active provider from env.
-// Env: CONTENT_ENGINE_PROVIDER = fal | openai | anthropic  (required, no default)
+// Env: CONTENT_ENGINE_PROVIDER = fal | openai | anthropic | inhouse-slides  (required, no default)
 
-import { provider as openai } from './providers/openai-images.mjs';
-import { provider as fal } from './providers/fal.mjs';
-import { provider as anthropic } from './providers/anthropic.mjs';
+import { provider as openai }        from './providers/openai-images.mjs';
+import { provider as fal }           from './providers/fal.mjs';
+import { provider as anthropic }     from './providers/anthropic.mjs';
+import { provider as inhouseSlides } from './providers/inhouse-slides.mjs';
 
-const ALL = { openai, fal, anthropic };
+const ALL = { openai, fal, anthropic, 'inhouse-slides': inhouseSlides };
 
 export function getActiveProviderId() {
   const id = process.env.CONTENT_ENGINE_PROVIDER;
@@ -13,7 +14,7 @@ export function getActiveProviderId() {
     throw new Error(
       'CONTENT_ENGINE_PROVIDER 가 설정되지 않았습니다.\n' +
       '.env.local 에 CONTENT_ENGINE_PROVIDER=fal 을 추가하세요.\n' +
-      '지원 값: fal | openai | anthropic'
+      '지원 값: fal | openai | anthropic | inhouse-slides'
     );
   }
   return id;

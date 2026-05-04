@@ -104,10 +104,16 @@ for (const channel of channels) {
 
     // 이미지 재생성
     const newImg = await provider.generateImage({
-      prompt: imagePromptFor(channel, brief, profile, role, cardN, totalCards),
-      visual: profile.visual ?? {},
+      prompt:          imagePromptFor(channel, brief, profile, role, cardN, totalCards),
+      visual:          profile.visual ?? {},
       aspect,
-      count: 1,
+      count:           1,
+      cardText:        existing.cards?.[cardIdx]?.text ?? existing.text,
+      role,
+      cardIndex:       cardN,
+      cardTotal:       totalCards,
+      topic:           brief.topic,
+      sourceMaterials: brief.sourceMaterials ?? null,
     });
 
     // 기존 cards 배열 복사 후 해당 카드만 교체
@@ -184,11 +190,18 @@ for (const channel of channels) {
   const image = { paths: [], urls: [], meta: null };
   for (let i = 0; i < cardCount; i++) {
     const role = roleFor(i, cardCount);
+    const cardCopyText = cardCount > 1 ? cards[i]?.text : cards[0]?.text;
     const r = await provider.generateImage({
-      prompt: imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
-      visual: profile.visual ?? {},
+      prompt:          imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
+      visual:          profile.visual ?? {},
       aspect,
-      count: 1,
+      count:           1,
+      cardText:        cardCopyText,
+      role,
+      cardIndex:       i + 1,
+      cardTotal:       cardCount,
+      topic:           brief.topic,
+      sourceMaterials: brief.sourceMaterials ?? null,
     });
     image.paths.push(...(r.paths ?? []));
     image.urls.push(...(r.urls ?? []));
