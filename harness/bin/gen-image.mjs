@@ -3,7 +3,7 @@
 //   node harness/bin/gen-image.mjs --prompt="abstract fintech" --aspect=portrait --out=/tmp/card1.png
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, isAbsolute } from 'node:path';
 import { Buffer } from 'node:buffer';
 import { ROOT } from './_lib.mjs';
 import { provider } from '../src/content-engine/providers/fal.mjs';
@@ -32,9 +32,10 @@ try {
 
   let imageBytes;
   if (result.paths.length > 0) {
-    imageBytes = readFileSync(resolve(ROOT, result.paths[0]));
+    const src = isAbsolute(result.paths[0]) ? result.paths[0] : resolve(ROOT, result.paths[0]);
+    imageBytes = readFileSync(src);
   } else if (result.urls.length > 0) {
-    const r = await fetch(result.urls[0]);
+    const r = await fetch(result.urls[0], { signal: AbortSignal.timeout(30_000) });
     if (!r.ok) throw new Error(`Failed to download image: HTTP ${r.status}`);
     imageBytes = Buffer.from(await r.arrayBuffer());
   } else {
