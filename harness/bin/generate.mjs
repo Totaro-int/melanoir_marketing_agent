@@ -352,6 +352,82 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
   ui.dim(`처리 완료 후 실행: node harness/bin/generate.mjs ${slug} --finalize`);
 }
 
+async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
+  const cardN = flags.card ? parseInt(flags.card, 10) : null;
+
+  for (const channel of channels) {
+    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
+
+    const channelDocs = loadChannelDocs(channel);
+    const cardCount   = imagesFor(brief.cadence, flags.images) || 1;
+    const aspect      = channel === 'linkedin' ? 'square' : 'portrait';
+    const ts          = nowKstFilename();
+
+    const allCards = Array.from({ length: cardCount }, (_, i) => ({
+      index: i + 1,
+      total: cardCount,
+      role:  roleFor(i, cardCount),
+    }));
+
+    const cards = cardN !== null ? [allCards[cardN - 1]] : allCards;
+
+    const resolvedTexts = (brief.sourceMaterials?.texts ?? []).map((t) => {
+      try { if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 1000); } catch { /* ignore */ }
+      return t;
+    });
+
+    const channelDir = resolve(dir, channel);
+    mkdirSync(channelDir, { recursive: true });
+    const outputPath = resolve(channelDir, 'copy-output.json');
+
+    const spec = {
+      version: 1,
+      slug,
+      channel,
+      ts,
+      aspect,
+      cards,
+      copyContext: {
+        topic:          brief.topic,
+        goal:           brief.goal,
+        cadence:        brief.cadence,
+        keyMessage:     brief.keyMessage  ?? null,
+        contentPoints:  [...(brief.contentPoints ?? []), ...resolvedTexts],
+        angle:          brief.angle ?? null,
+        notes:          brief.notes ?? null,
+        profile: {
+          brand:          profile.brand          ?? {},
+          tone:           profile.tone           ?? {},
+          writing:        profile.writing        ?? {},
+          targetAudience: profile.targetAudience ?? [],
+          banned:         profile.banned         ?? {},
+          hashtags:       profile.hashtags       ?? {},
+        },
+        channelStrategy:  channelDocs?.strategy  ?? '',
+        channelTemplates: channelDocs?.templates ?? '',
+      },
+      outputDir:  channelDir,
+      outputPath,
+      partial: cardN !== null
+        ? { cardIndex: cardN, cardTotal: cardCount, role: roleFor(cardN - 1, cardCount) }
+        : null,
+    };
+
+    writeFileSync(resolve(channelDir, 'copy-spec.json'), JSON.stringify(spec, null, 2), 'utf8');
+    brief.status[channel] = 'drafting';
+    ui.ok(`[${channel}] copy-spec.json → ${resolve(channelDir, 'copy-spec.json')}`);
+  }
+
+  brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+  writeYaml(briefPath, brief);
+
+  console.log();
+  ui.info('⚡ copywriter 에이전트가 각 채널의 copy-spec.json 을 처리해야 합니다.');
+  const finFlag  = channels.length === 1 ? ` --channel=${channels[0]}` : '';
+  const cardFlag = cardN ? ` --card=${cardN}` : '';
+  ui.dim(`처리 완료 후 실행: node harness/bin/generate.mjs ${slug}${finFlag}${cardFlag} --finalize`);
+}
+
 async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels }) {
   const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
 
