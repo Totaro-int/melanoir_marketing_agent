@@ -54,6 +54,46 @@ cat <specPath>
 ```
 `spec.copyContext`, `spec.imageContext`, `spec.cards`, `spec.dimensions`, `spec.outputDir` 확인.
 
+#### 1-A-0. Hook 변형 생성 (`spec.cards[0].hookVariants > 1` 일 때만)
+
+`spec.cards[0].hookVariants` 값이 2 이상이면 이 단계를 실행한다. 없거나 1이면 건너뛴다.
+
+**목적**: hook 카드(role: hook, index: 1)를 N개의 다른 컴포지션으로 각각 HTML을 생성해 사용자가 선택하게 한다. 색상 변형이 아닌 **레이아웃 DNA 자체가 달라야** 한다.
+
+**3가지 레이아웃 아키타입** (N ≤ 3일 때 아래 순서로 사용):
+
+| V | 이름 | 레이아웃 특징 | 핵심 규칙 |
+|---|------|--------------|-----------|
+| 1 | **Stat Card** | 핵심 수치를 흰색 카드(border + shadow) 안에 담고 배경은 glow. 수치 카드가 캔버스 좌측 상단 또는 중앙에 float | 카드 크기가 캔버스 면적의 35% 이상. `data-hero` 카드에 부착 |
+| 2 | **Full-Bleed Type** | 카드·border 없음. 수치가 캔버스 전체 타이포그래피로 가득 채움. 수치 자체가 배경 그래픽 | 수치 font-size 160px 이상. 줄바꿈 허용. 배경에 대형 ghost opacity 레이어 없음 — 수치 자체가 이미 크니까 |
+| 3 | **Split Layout** | 세로 divider로 좌우 분할. 좌측 절반=수치·핵심 키워드 크게, 우측 절반=supporting context 2~3줄 + eyebrow + brand watermark | 분할선은 1~2px accent 색. 좌우 각각 padding 64px 이상 |
+
+**절차**:
+
+1. `hookVariants = spec.cards[0].hookVariants` 개수만큼, 위 아키타입을 순서대로 적용해 HTML 생성.
+2. 각 HTML 파일 경로: `spec.cards[0].htmlPath` 에서 `.html` 앞에 `-v1`, `-v2`, `-v3` 삽입.
+   - 예: `...-card1-20260505.html` → `...-card1-v1-20260505.html`, `...-card1-v2-20260505.html`, ...
+3. 1-A 디자인 레퍼런스(다음 단계)를 먼저 로드하고, 각 변형에 동일하게 적용.
+4. 모든 변형 HTML 저장 후 `spec.outputDir/hook-variants.json` 을 Write로 저장:
+   ```json
+   {
+     "slug": "<spec.slug>",
+     "channel": "<spec.channel>",
+     "ts": "<spec.ts>",
+     "selectedVariant": null,
+     "variants": [
+       { "index": 1, "label": "Stat Card",       "htmlPath": "...card1-v1-ts.html", "pngPath": null },
+       { "index": 2, "label": "Full-Bleed Type",  "htmlPath": "...card1-v2-ts.html", "pngPath": null },
+       { "index": 3, "label": "Split Layout",     "htmlPath": "...card1-v3-ts.html", "pngPath": null }
+     ]
+   }
+   ```
+5. `spec.cards[0].htmlPath` (canonical)는 V1 HTML과 동일한 내용으로 저장 (기본값).  
+   사용자가 `/sns-start` 에서 픽하면 `generate.mjs --select-variant=N` 이 canonical을 교체한다.
+6. 나머지 카드(body, cta)는 평소처럼 단일 생성.
+
+> 변형 간에 색상·폰트는 동일하게 유지하고, **컴포지션(레이아웃 구조)만** 다르게 한다. 동일 색으로 다른 레이아웃.
+
 #### 1-A. 디자인 레퍼런스 로드 (`imageContext.designRef` 가 있을 때만)
 
 `spec.imageContext.designRef`가 `null`이 아니면 이 단계를 실행한다. 없으면 건너뛴다.

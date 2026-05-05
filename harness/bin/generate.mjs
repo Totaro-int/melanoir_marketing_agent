@@ -72,6 +72,22 @@ const withImages =
   (process.env.SLIDE_IMAGES ?? '').toLowerCase() === 'true';
 
 // ── 라우팅 ──────────────────────────────────────────────────────────────────
+
+// C: --select-variant=N — 선택된 hook 변형을 canonical card1 슬롯에 적용
+if (flags['select-variant']) {
+  const variantIdx = parseInt(flags['select-variant'], 10);
+  if (isNaN(variantIdx) || variantIdx < 1) {
+    ui.err('--select-variant 값이 유효하지 않습니다. 예: --select-variant=2');
+    process.exit(2);
+  }
+  if (!flags.channel) {
+    ui.err('--select-variant 사용 시 --channel= 을 반드시 지정해야 합니다.');
+    process.exit(2);
+  }
+  await selectVariant({ slug, dir, briefPath, brief, profile, channel: flags.channel, variantIdx });
+  process.exit(0);
+}
+
 if (flags.finalize) {
   if (provider.id === 'inhouse-slides') {
     await finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels });
@@ -169,11 +185,15 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
     const dim         = dimMap[aspect] ?? dimMap.portrait;
     const ts          = nowKstFilename();
 
+    const hookVariants = flags.variants ? Math.min(parseInt(flags.variants, 10) || 1, 5) : 1;
+
     const cards = Array.from({ length: cardCount }, (_, i) => ({
-      index:    i + 1,
-      total:    cardCount,
-      role:     roleFor(i, cardCount),
-      htmlPath: resolve(tmpSlideDir, `${slug}-${channel}-card${i + 1}-${ts}.html`),
+      index:        i + 1,
+      total:        cardCount,
+      role:         roleFor(i, cardCount),
+      htmlPath:     resolve(tmpSlideDir, `${slug}-${channel}-card${i + 1}-${ts}.html`),
+      // hook 카드(index 1)에만 variants 정보 포함
+      ...(i === 0 && hookVariants > 1 ? { hookVariants } : {}),
     }));
 
     // sourceTexts: 파일이면 읽고, 인라인이면 그대로
@@ -495,6 +515,35 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     const outputCards = agentOutput.cards ?? [];
     const ts          = spec.ts;
 
+    // C: hook-variants.json 이 있으면 변형 PNG 먼저 캡처
+    const variantsPath = resolve(channelDir, 'hook-variants.json');
+    if (existsSync(variantsPath)) {
+      const hv = JSON.parse(readFileSync(variantsPath, 'utf8'));
+      let changed = false;
+      for (const v of hv.variants ?? []) {
+        if (!v.pngPath && existsSync(v.htmlPath)) {
+          const pngOut = v.htmlPath.replace(/\.html$/, '.png');
+          try {
+            execFileSync('node', [
+              screenshotBin,
+              `--html=${v.htmlPath}`,
+              `--out=${pngOut}`,
+              `--width=${spec.dimensions.width}`,
+              `--height=${spec.dimensions.height}`,
+            ], { stdio: 'pipe' });
+            const persistPng = resolve(channelDir, `card1-v${v.index}-${spec.ts}.png`);
+            writeFileSync(persistPng, readFileSync(pngOut));
+            v.pngPath = persistPng;
+            changed = true;
+            ui.dim(`  variant ${v.index} 캡처 → ${persistPng}`);
+          } catch (e) {
+            ui.warn(`  variant ${v.index} 캡처 실패: ${e.message}`);
+          }
+        }
+      }
+      if (changed) writeFileSync(variantsPath, JSON.stringify(hv, null, 2), 'utf8');
+    }
+
     // 카드별 Playwright 캡쳐
     const pngPaths = [];
     const visualFindings = []; // B: 비주얼 가드 findings
@@ -639,6 +688,60 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
 
 function extractHashtags(text) {
   return Array.from(new Set((text.match(/#[^\s#]+/g) ?? [])));
+}
+
+// C: --select-variant=N 처리 — 선택된 변형을 canonical card1 슬롯에 복사 후 재캡처
+async function selectVariant({ slug, dir, briefPath, brief, profile, channel, variantIdx }) {
+  const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
+  const channelDir    = resolve(dir, channel);
+  const variantsPath  = resolve(channelDir, 'hook-variants.json');
+  const specPath      = resolve(channelDir, 'slide-spec.json');
+
+  if (!existsSync(variantsPath)) {
+    ui.err(`hook-variants.json 없음 — ${channel} 채널에 variants 가 생성되지 않았습니다.`);
+    process.exit(2);
+  }
+  if (!existsSync(specPath)) {
+    ui.err('slide-spec.json 없음 — generate.mjs 를 먼저 실행하세요.');
+    process.exit(2);
+  }
+
+  const hv   = JSON.parse(readFileSync(variantsPath, 'utf8'));
+  const spec = JSON.parse(readFileSync(specPath, 'utf8'));
+  const chosen = (hv.variants ?? []).find((v) => v.index === variantIdx);
+
+  if (!chosen) {
+    ui.err(`variant ${variantIdx} 를 찾을 수 없습니다. 유효한 인덱스: ${(hv.variants ?? []).map((v) => v.index).join(', ')}`);
+    process.exit(2);
+  }
+  if (!existsSync(chosen.htmlPath)) {
+    ui.err(`선택된 variant HTML 파일 없음: ${chosen.htmlPath}`);
+    process.exit(2);
+  }
+
+  // canonical card1 htmlPath 에 선택된 HTML 복사
+  const canonicalHtmlPath = spec.cards[0].htmlPath;
+  writeFileSync(canonicalHtmlPath, readFileSync(chosen.htmlPath));
+  ui.ok(`variant ${variantIdx} (${chosen.label}) → ${canonicalHtmlPath} 에 적용`);
+
+  // 재캡처
+  const ts          = spec.ts;
+  const persistPng  = resolve(channelDir, `card1-${ts}.png`);
+  execFileSync('node', [
+    screenshotBin,
+    `--html=${canonicalHtmlPath}`,
+    `--out=${persistPng}`,
+    `--width=${spec.dimensions.width}`,
+    `--height=${spec.dimensions.height}`,
+    '--measure-selector=[data-hero]',
+  ], { stdio: 'inherit' });
+
+  writeFileSync(persistPng, readFileSync(persistPng));
+  hv.selectedVariant = variantIdx;
+  writeFileSync(variantsPath, JSON.stringify(hv, null, 2), 'utf8');
+
+  ui.ok(`card1 PNG 업데이트 완료 → ${persistPng}`);
+  ui.dim('다음: node harness/bin/generate.mjs <slug> --finalize (이미 finalize 됐으면 preview 만 재실행)');
 }
 
 function mergeHashtags(text, fromProvider, profile) {

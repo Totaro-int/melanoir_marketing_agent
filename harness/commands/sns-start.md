@@ -274,6 +274,38 @@ node harness/bin/generate.mjs <slug> --channel=<ch> --card=2 --finalize
 
 생성 완료 후 → **칸반 자동 표시 (1차)**: `node harness/bin/board.mjs <slug>`
 
+### 4.5단계 — Hook 변형 픽커 (hook-variants.json 이 있을 때만)
+
+`posts/campaigns/<slug>/<channel>/hook-variants.json` 존재 여부를 확인한다.
+- **없음** → 이 단계 건너뜀.
+- **있음** → 아래 흐름 실행.
+
+`hook-variants.json` 이 있으면 image-director가 hook 카드를 여러 컴포지션으로 생성한 것이다.
+finalize 단계에서 각 변형의 PNG가 이미 캡처돼 있으므로, **Read 도구로 각 PNG를 읽어 인라인 표시**한다.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🖼 Hook 카드 컴포지션 선택 (<channel>)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [1] Stat Card        card1-v1-<ts>.png
+  [2] Full-Bleed Type  card1-v2-<ts>.png
+  [3] Split Layout     card1-v3-<ts>.png
+```
+
+각 PNG를 순서대로 Read 도구로 읽어 사용자에게 시각적으로 보여준 뒤 프롬프트:
+
+```
+어느 컴포지션으로 진행할까요?
+  [1 / 2 / 3]   해당 번호로 확정
+  [Enter]        현재 기본값(1번) 유지
+```
+
+- 번호 선택 시 → `node harness/bin/generate.mjs <slug> --channel=<ch> --select-variant=<N>` 실행
+- Enter(기본값) → 그대로 5단계 진행
+
+`selectedVariant` 가 확정되면 `hook-variants.json` 에 저장되고, `card1-<ts>.png` 가 선택된 안으로 업데이트된다.
+
 ### 5단계 — 미리보기
 `node harness/bin/preview.mjs <slug>`
 
