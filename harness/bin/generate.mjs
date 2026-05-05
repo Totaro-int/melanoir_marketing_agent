@@ -91,11 +91,50 @@ process.exit(0);
 
 // ---- helpers ----
 
+function sanitizeKeywordItem(v) {
+  if (typeof v !== 'string') return null;
+  const trimmed = v.replace(/[\r\n\t]/g, ' ').trim();
+  return trimmed.length > 0 && trimmed.length <= 80 ? trimmed : null;
+}
+
+function sanitizeChannelKeywords(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const sanitize = (arr) =>
+    Array.isArray(arr) ? arr.map(sanitizeKeywordItem).filter(Boolean) : [];
+  return {
+    keywords: sanitize(raw.keywords),
+    hashtags: sanitize(raw.hashtags),
+    angle:    typeof raw.angle === 'string' ? raw.angle.replace(/[\r\n]/g, ' ').trim().slice(0, 120) : null,
+    watchOut: sanitize(raw.watchOut),
+  };
+}
+
+function loadKeywordsMap(dir, slug) {
+  const p = resolve(dir, 'keywords.json');
+  if (!existsSync(p)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(p, 'utf8'));
+    if (parsed.slug && parsed.slug !== slug) {
+      ui.warn(`keywords.json slug 불일치 (${parsed.slug} ≠ ${slug}) — 키워드 무시`);
+      return null;
+    }
+    const channels = parsed.channels ?? {};
+    return Object.fromEntries(
+      Object.entries(channels).map(([ch, v]) => [ch, sanitizeChannelKeywords(v)])
+    );
+  } catch {
+    ui.warn('keywords.json 파싱 실패 — 키워드 없이 진행');
+    return null;
+  }
+}
+
 // ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
 
 async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages = false }) {
   const tmpSlideDir = resolve(tmpdir(), 'marketing-agent-slides');
   mkdirSync(tmpSlideDir, { recursive: true });
+
+  const keywordsMap = loadKeywordsMap(dir, slug);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
@@ -116,9 +155,11 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
     // sourceTexts: 파일이면 읽고, 인라인이면 그대로
     const resolvedTexts = (brief.sourceMaterials?.texts ?? []).map((t) => {
-      try { if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 1000); } catch { /* 무시 */ }
+      try { if (existsSync(t)) return readFileSync(t, 'utf8').slice(0, 1000); } catch { /* ignore */ }
       return t;
     });
+
+    const channelKeywords = keywordsMap?.[channel] ?? null;
 
     const spec = {
       slug,
@@ -134,6 +175,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
         keyMessage:     brief.keyMessage  ?? null,
         contentPoints:  [...(brief.contentPoints ?? []), ...resolvedTexts],
         angle:          brief.angle ?? null,
+        suggestedKeywords: channelKeywords,
         profile: {
           brand:          profile.brand          ?? {},
           tone:           profile.tone           ?? {},
@@ -179,6 +221,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
 async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
+  const keywordsMap = loadKeywordsMap(dir, slug);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
@@ -205,6 +248,8 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
     mkdirSync(channelDir, { recursive: true });
     const outputPath = resolve(channelDir, 'copy-output.json');
 
+    const channelKeywords = keywordsMap?.[channel] ?? null;
+
     const spec = {
       version: 1,
       slug,
@@ -220,6 +265,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
         contentPoints:  [...(brief.contentPoints ?? []), ...resolvedTexts],
         angle:          brief.angle ?? null,
         notes:          brief.notes ?? null,
+        suggestedKeywords: channelKeywords,
         profile: {
           brand:          profile.brand          ?? {},
           tone:           profile.tone           ?? {},

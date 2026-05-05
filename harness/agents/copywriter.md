@@ -78,6 +78,11 @@ PG마다 정산일이 달라서 현금흐름을 예측하기 어렵다는 얘기
 2. **독자 상황**: `targetAudience[0].painPoints`에서 공감 포인트 1개 선택
 3. **어조**: `tone.voiceNotes` 읽고 종결어미·문체 결정. `sampleSentences` 있으면 그 호흡 모방
 4. **채널 길이**: `channelStrategy`에서 글자 수 제한 확인
+5. **추천 키워드 반영** (있는 경우): `copyContext.suggestedKeywords`가 `null`이 아니면 다음을 우선 적용:
+   - `keywords` 배열의 단어를 카피 본문에 자연스럽게 녹인다
+   - `angle`이 있으면 그 관점을 카피의 포커스로 삼는다
+   - `hashtags` 배열을 해시태그 선택의 우선 후보로 쓴다 (6단계에서 활용)
+   - `watchOut` 단어는 카피에 절대 쓰지 않는다
 
 ### 3. 카드별 카피 생성
 
@@ -120,6 +125,7 @@ PG마다 정산일이 달라서 현금흐름을 예측하기 어렵다는 얘기
 
 카피 본문 끝에 빈 줄 하나 후 추가.
 - `hashtags.always` 는 무조건 포함
+- `suggestedKeywords.hashtags`가 있으면 그 목록을 우선 사용 (pool보다 앞에 고려)
 - `hashtags.pool` 에서 내용과 가장 관련 있는 것 선택
 - 채널 한도: Threads 1~3개, LinkedIn 3~5개, Instagram 5~10개, X 1~3개
 
