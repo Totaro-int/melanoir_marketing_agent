@@ -189,6 +189,42 @@ export const ui = {
   step: (i, n, msg) => console.log(pc.dim(`[${i}/${n}]`) + ' ' + msg),
 };
 
+export const SPINNER_FRAMES = ['⠋','⠙','⠹','⠸','⠼','⠴','⠦','⠧','⠇','⠏'];
+
+export class Spinner {
+  constructor() {
+    this._label = '';
+    this._frame = 0;
+    this._timer = null;
+  }
+
+  start(label = '') {
+    this._label = label;
+    this._frame = 0;
+    process.stdout.write('\x1b[?25l');
+    this._timer = setInterval(() => this._tick(), 80);
+    this._tick();
+    return this;
+  }
+
+  update(label) {
+    this._label = label;
+  }
+
+  stop(finalMsg = '') {
+    if (this._timer) { clearInterval(this._timer); this._timer = null; }
+    process.stdout.write('\r\x1b[K\x1b[?25h');
+    if (finalMsg) process.stdout.write(finalMsg + '\n');
+    return this;
+  }
+
+  _tick() {
+    const f = SPINNER_FRAMES[this._frame % SPINNER_FRAMES.length];
+    process.stdout.write(`\r${pc.cyan(f)} ${this._label}`);
+    this._frame++;
+  }
+}
+
 // 자동 업데이트 알림 — 30분 throttle, 네트워크 실패 시 silent skip.
 // 우회: MARKETING_AGENT_SKIP_UPDATE_CHECK ∈ {1,true,yes,on} (isDryRun 패턴과 일관).
 // feature 브랜치에 있어도 default branch (main/master) 기준으로 비교.

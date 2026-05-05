@@ -11,7 +11,7 @@
 import { readdirSync, statSync, watch } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, readYaml, ui, checkForUpdates } from './_lib.mjs';
+import { PATHS, readYaml, ui, checkForUpdates, SPINNER_FRAMES as TICK_FRAMES } from './_lib.mjs';
 import { visibleWidth as wcwidth, stripAnsi } from '../src/util/width.mjs';
 
 checkForUpdates();
@@ -29,12 +29,21 @@ const argv = process.argv.slice(2);
 const watchMode = argv.includes('--watch');
 const slug = argv.find((a) => !a.startsWith('--'));
 
+// ---------- animation state ----------
+
+let prevRawLines  = [];
+let prevStatuses  = {};   // "slug::ch" → status string
+let changedKeys   = new Set();
+let tickFrame     = 0;
+let tickTimerId   = null;
+let footerLineIdx = -1;   // row index of the watch footer line (0-based)
+
 if (watchMode) startWatch();
 else { render(); process.exit(0); }
 
 function startWatch() {
   hideCursor();
-  process.on('SIGINT', () => { showCursor(); process.exit(0); });
+  process.on('SIGINT', () => { if (tickTimerId) { clearInterval(tickTimerId); tickTimerId = null; } showCursor(); process.exit(0); });
   process.on('exit', showCursor);
 
   let pending = false;
@@ -45,10 +54,20 @@ function startWatch() {
   };
 
   render();
+
+  // Heartbeat tick — animates the footer spinner independently of data changes
+  tickTimerId = setInterval(() => {
+    tickFrame = (tickFrame + 1) % TICK_FRAMES.length;
+    if (footerLineIdx >= 0) {
+      const tick = pc.dim(TICK_FRAMES[tickFrame]);
+      const watchLabel = pc.dim(`watching  ·  Ctrl-C to exit  `) + tick;
+      process.stdout.write(`\x1b[${footerLineIdx + 1};1H\x1b[2K${watchLabel}`);
+    }
+  }, 100);
+
   try {
     watch(PATHS.campaignsDir, { recursive: true }, schedule);
   } catch {
-    // recursive may be unsupported on some platforms — fall back to polling.
     setInterval(schedule, 1000);
   }
 }
@@ -56,50 +75,112 @@ function startWatch() {
 // ---------- render ----------
 
 function render() {
-  clearScreen();
+  footerLineIdx = -1;
   const campaigns = listCampaigns();
-  if (slug) {
-    const one = campaigns.find((c) => c.slug === slug);
-    if (!one) { console.error(`캠페인 없음: ${slug}`); return; }
-    drawCampaign(one);
-    return;
+
+  // Detect status changes since last render
+  const nextStatuses = {};
+  changedKeys = new Set();
+  for (const c of campaigns) {
+    for (const ch of c.brief.channels ?? []) {
+      const key = `${c.slug}::${ch}`;
+      const status = c.brief.status?.[ch] ?? 'unknown';
+      nextStatuses[key] = status;
+      if (prevStatuses[key] !== undefined && prevStatuses[key] !== status) {
+        changedKeys.add(key);
+      }
+    }
   }
-  if (!campaigns.length) {
-    console.log(pc.dim('(아직 캠페인이 없습니다 — /sns-campaign-new "<주제>")'));
-    return;
+  prevStatuses = nextStatuses;
+
+  const rawLines = buildLines(campaigns);
+
+  if (watchMode && prevRawLines.length > 0) {
+    diffRender(prevRawLines, rawLines);
+  } else {
+    if (watchMode) process.stdout.write('\x1b[2J\x1b[H');
+    for (const line of rawLines) process.stdout.write(line + '\n');
   }
-  console.log(pc.bold(pc.cyan('📣 marketing_agent — campaign board')) + pc.dim(`  (${campaigns.length})`));
-  const recentSlugs = campaigns.slice(0, 5).map((c) => c.slug);
-  console.log(pc.dim('recent: ') + recentSlugs.join(pc.dim(' · ')));
-  console.log();
-  for (const c of campaigns.slice(0, 5)) drawCampaign(c);
-  if (watchMode) console.log(pc.dim(`watching ${PATHS.campaignsDir}  ·  Ctrl-C to exit`));
+  prevRawLines = rawLines;
 }
 
-function drawCampaign(c) {
+function buildLines(campaigns) {
+  const lines = [];
+  const emit = (s = '') => lines.push(s);
+
+  if (slug) {
+    const one = campaigns.find((c) => c.slug === slug);
+    if (!one) { emit(pc.red(`캠페인 없음: ${slug}`)); return lines; }
+    drawCampaign(one, emit);
+    return lines;
+  }
+  if (!campaigns.length) {
+    emit(pc.dim('(아직 캠페인이 없습니다 — /sns-campaign-new "<주제>")'));
+    return lines;
+  }
+  emit(pc.bold(pc.cyan('📣 marketing_agent — campaign board')) + pc.dim(`  (${campaigns.length})`));
+  const recentSlugs = campaigns.slice(0, 5).map((c) => c.slug);
+  emit(pc.dim('recent: ') + recentSlugs.join(pc.dim(' · ')));
+  emit();
+  for (const c of campaigns.slice(0, 5)) drawCampaign(c, emit);
+
+  if (watchMode) {
+    footerLineIdx = lines.length;
+    const tick = pc.dim(TICK_FRAMES[tickFrame]);
+    emit(pc.dim(`watching  ·  Ctrl-C to exit  `) + tick);
+  }
+  return lines;
+}
+
+function drawCampaign(c, emit) {
   const totals = countByStatus(c.brief.status);
   const header = ` 📣 ${c.slug} ` + pc.dim(`· ${c.brief.topic}`);
   const sub = pc.dim(`    goal: ${c.brief.goal}  ·  cadence: ${c.brief.cadence}  ·  ${summary(totals)}`);
-  console.log(border('top', headerWidth(c)));
-  console.log(`│${pad(header, headerWidth(c) - 2)}│`);
-  console.log(`│${pad(sub, headerWidth(c) - 2)}│`);
-  console.log(border('mid', headerWidth(c)));
+  emit(border('top', W));
+  emit(`│${pad(header, W - 2)}│`);
+  emit(`│${pad(sub,    W - 2)}│`);
+  emit(border('mid', W));
   for (const ch of c.brief.channels) {
-    const status = c.brief.status?.[ch] ?? 'unknown';
-    const result = c.results?.[ch];
-    const sched = c.brief.schedule?.[ch];
-    const reason = c.brief.attentionReason?.[ch];
+    const status  = c.brief.status?.[ch] ?? 'unknown';
+    const result  = c.results?.[ch];
+    const sched   = c.brief.schedule?.[ch];
+    const reason  = c.brief.attentionReason?.[ch];
+    const key     = `${c.slug}::${ch}`;
+    const changed = changedKeys.has(key);
     const tail =
         result?.url   ? pc.dim(' ' + truncate(result.url, 40))
       : reason        ? pc.red(' ' + truncate(reason, 40))
       : result?.error ? pc.red(' ' + truncate(result.error, 40))
       : sched         ? pc.magenta(' @ ' + sched.slice(5, 16).replace('T', ' '))
       : '';
-    const line = `  ${icon(status)}  ${pc.bold(ch.padEnd(10))}${color(status)(status.padEnd(16))}${tail}`;
-    console.log(`│${pad(line, headerWidth(c) - 2)}│`);
+    const statusLabel = changed
+      ? pc.bold(pc.white('⚡ ' + status.padEnd(14)))
+      : color(status)(status.padEnd(16));
+    const line = `  ${icon(status)}  ${pc.bold(ch.padEnd(10))}${statusLabel}${tail}`;
+    emit(`│${pad(line, W - 2)}│`);
   }
-  console.log(border('bot', headerWidth(c)));
-  console.log();
+  emit(border('bot', W));
+  emit();
+}
+
+// ---------- diff renderer ----------
+
+function diffRender(prev, next) {
+  // Move cursor to top-left without clearing; update only changed lines
+  process.stdout.write('\x1b[H');
+  const len = Math.max(prev.length, next.length);
+  for (let i = 0; i < len; i++) {
+    const p = stripAnsi(prev[i] ?? '');
+    const n = stripAnsi(next[i] ?? '');
+    if (p !== n) {
+      // Position cursor at row i+1, column 1, clear line, write new content
+      process.stdout.write(`\x1b[${i + 1};1H\x1b[2K${next[i] ?? ''}`);
+    }
+  }
+  // Clear leftover lines if new content is shorter
+  for (let i = next.length; i < prev.length; i++) {
+    process.stdout.write(`\x1b[${i + 1};1H\x1b[2K`);
+  }
 }
 
 // ---------- helpers ----------
@@ -158,8 +239,6 @@ function color(s) {
        : (x) => x;
 }
 
-function headerWidth() { return W; }
-
 function border(kind, w) {
   const ch = { top: ['┌', '┐'], mid: ['├', '┤'], bot: ['└', '┘'] }[kind];
   return pc.dim(ch[0] + '─'.repeat(w - 2) + ch[1]);
@@ -184,6 +263,5 @@ function truncateWide(s, w) {
   return out;
 }
 
-function clearScreen() { if (watchMode) process.stdout.write('\x1b[2J\x1b[H'); }
 function hideCursor() { process.stdout.write('\x1b[?25l'); }
 function showCursor() { process.stdout.write('\x1b[?25h'); }

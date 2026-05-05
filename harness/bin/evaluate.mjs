@@ -6,7 +6,7 @@
 
 import { resolve } from 'node:path';
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
-import { readYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui, PATHS } from './_lib.mjs';
+import { readYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -19,9 +19,15 @@ const flags = Object.fromEntries(
 
 if (!slug) { ui.err('사용법: evaluate.mjs <slug> [--channel=...]'); process.exit(2); }
 
-const dir      = findCampaignDir(slug);
-const brief    = readYaml(resolve(dir, 'brief.yaml'));
-const profile  = readYaml(PATHS.profile);
+let dir, brief;
+try {
+  dir   = findCampaignDir(slug);
+  brief = readYaml(resolve(dir, 'brief.yaml'));
+} catch (e) {
+  ui.err(e.message); process.exit(2);
+}
+if (!brief.channels?.length) { ui.err('[brief.yaml] channels 필드 없음'); process.exit(2); }
+
 const channels = flags.channel ? [flags.channel] : brief.channels;
 
 let allGood = true;
@@ -34,16 +40,22 @@ for (const ch of channels) {
   if (!draftPath) { ui.warn(`[${ch}] draft 없음 — generate.mjs 를 먼저 실행하세요.`); allGood = false; continue; }
   if (!existsSync(specPath)) { ui.warn(`[${ch}] slide-spec.json 없음.`); allGood = false; continue; }
 
-  const draft = readYaml(draftPath);
-  const spec  = JSON.parse(readFileSync(specPath, 'utf8'));
+  let draft, spec;
+  try {
+    draft = readYaml(draftPath);
+    spec  = JSON.parse(readFileSync(specPath, 'utf8'));
+  } catch (e) {
+    ui.warn(`[${ch}] 파일 파싱 실패 — ${e.message}`); allGood = false; continue;
+  }
 
   // draft.assets = PNG 경로 배열 (card1, card2, card3 순)
   const assets    = draft.assets ?? [];
   const draftCards = draft.cards ?? [{ role: 'single', text: draft.text }];
 
-  const evalCards = spec.cards.map((c) => {
-    const idx     = c.index - 1; // 0-based position by card index, not array position
-    const pngPath = assets[idx] ?? null;
+  const evalCards = (spec.cards ?? []).map((c) => {
+    const idx     = c.index - 1; // 0-based array index derived from card.index (1-based)
+    const raw     = assets[idx] ? resolve(assets[idx]) : null;
+    const pngPath = raw?.startsWith(dir + '/') ? raw : null;
     const text    = draftCards[idx]?.text ?? draft.text ?? '';
     if (!text) ui.warn(`[${ch}] card${c.index} postCopy 없음 — copyVisual 채점이 부정확할 수 있습니다.`);
     return { index: c.index, role: c.role, pngPath, postCopy: text };

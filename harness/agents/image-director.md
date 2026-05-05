@@ -404,11 +404,33 @@ background:
 - 애니메이션 없음. 인쇄 품질.
 - **HTML 코드만** 파일에 쓴다. 설명·마크다운 펜스 없음.
 
-`role`별 레이아웃:
-- `hook`: 임팩트 수치가 화면 중앙 크게. 여백 충분히. 부제 작게 아래.
-- `body`: 소제목 상단 + bullet 리스트 중앙 정렬. 구조적.
-- `cta`: 브랜드 컬러 배경 또는 강조색 배경. 행동 문구 중앙 크게.
-- `single`: 핵심 수치/키워드 크게 + 부제 2줄 + 넓은 여백. 깔끔하게.
+`role`별 레이아웃 아키타입:
+
+**hook** — 1-A-0에서 3종 변형 중 하나 사용 (Stat Card / Full-Bleed Type / Split Layout).
+
+---
+
+**body** — 아래 3가지 아키타입 중 `spec.ts` 마지막 문자(초 1의 자리)를 `parseInt`한 값으로 선택한다. 예: `"20260505-193459"` → 마지막 문자 `'9'` → `parseInt('9') = 9` → B3. (0~3 → B1, 4~6 → B2, 7~9 → B3):
+
+| 아키타입 | 이름 | 구조 |
+|---------|------|------|
+| B1 | **Numbered List** | 좌측 상단 eyebrow + 대제목 + accent bar 구분선 + ①②③ 번호 아이콘(accent 색 원형)과 본문 2줄. 아이콘 36px 원형, 제목 28px 500, 본문 22px 400 |
+| B2 | **Quote + Bullets** | 상단 인용구(accent 좌측 border 3px + 이탤릭 26px) + 아래 bullet 2~3개(dot 8px + 텍스트 24px). 인용구는 핵심 메시지 한 줄 |
+| B3 | **Card Grid** | 2×1 또는 3×1 수평 카드 배열. 각 카드: 흰 배경 + 1px border + 8px radius + 상단 accent 4px 라인. 제목 22px 600 + 부제 18px 400 |
+
+---
+
+**cta** — `spec.ts` 마지막 문자를 `parseInt`한 값 `% 3`으로 선택한다. 예: `'9'` → `9 % 3 = 0` → C1. (0 → C1, 1 → C2, 2 → C3):
+
+| 아키타입 | 이름 | 구조 |
+|---------|------|------|
+| C1 | **Dark Full-Bleed** | 배경 `--brand-primary` 어두운 색. 헤드라인 흰색 48~64px 300. accent 색 한 줄 서브카피. 하단 CTA 박스(1px accent border + 내부 패딩 16px×32px, 텍스트 18px 500 + URL). atmospheric glow 옵션 B |
+| C2 | **Split CTA** | 좌측 60%=헤드라인+서브카피(밝은 배경), 우측 40%=accent 색 세로 띠 + URL 흰색 세로 쓰기 또는 QR 영역 시뮬레이션. 세로 divider 2px accent |
+| C3 | **Minimal White** | 흰 배경. 헤드라인 primary 색 48px 300. 가운데 accent bar 44px×2px. URL accent 색 20px 400. 우하단 브랜드 워터마크. 여백 극대화(padding 80px+) |
+
+---
+
+**single** — 핵심 수치/키워드 크게 + 부제 2줄 + 넓은 여백. B1~B3 중 주제에 맞는 것 선택.
 
 HTML 파일 저장:
 ```

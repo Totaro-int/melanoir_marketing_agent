@@ -9,11 +9,22 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import {
-  PATHS, HARNESS_ROOT, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
+  PATHS, HARNESS_ROOT, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml, Spinner,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect, inspectVisualText } from '../src/content-engine/brand-guardian.mjs';
 import { validateChannels } from '../src/publisher/registry.mjs';
+
+// B2B/SaaS 카테고리별 디자인 레퍼런스 풀 — 함수보다 먼저 선언해야 TDZ 오류 없음
+const DESIGN_REF_POOLS = {
+  saas:       ['stripe', 'linear.app', 'vercel', 'supabase', 'notion', 'airtable', 'cal', 'resend'],
+  ai:         ['claude', 'x.ai', 'mistral.ai', 'cohere', 'cursor', 'warp', 'elevenlabs'],
+  enterprise: ['ibm', 'hashicorp', 'mongodb', 'clickhouse', 'intercom', 'zapier', 'sentry'],
+  fintech:    ['stripe', 'wise', 'revolut', 'coinbase', 'mastercard'],
+  editorial:  ['wired', 'theverge', 'figma', 'framer', 'miro', 'webflow'],
+  premium:    ['apple', 'tesla', 'ferrari', 'spacex', 'nvidia'],
+  default:    ['stripe', 'linear.app', 'vercel', 'notion', 'cursor', 'figma', 'supabase', 'wired', 'ibm', 'wise'],
+};
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -154,17 +165,47 @@ function loadKeywordsMap(dir, slug) {
   }
 }
 
-function loadDesignRef(brief) {
+function autoPickDesignRef(profile) {
+  const industry = (profile?.industry ?? '').toLowerCase();
+  const name     = (profile?.brand?.name ?? '').toLowerCase();
+
+  let pool = DESIGN_REF_POOLS.default;
+  if (/ai|llm|gpt/.test(industry + name))             pool = DESIGN_REF_POOLS.ai;
+  else if (/fin|payment|결제|금융/.test(industry))     pool = DESIGN_REF_POOLS.fintech;
+  else if (/enterprise|기업|erp/.test(industry))       pool = DESIGN_REF_POOLS.enterprise;
+  else if (/premium|luxury|프리미엄/.test(industry))   pool = DESIGN_REF_POOLS.premium;
+  else if (/media|editorial|잡지|미디어/.test(industry)) pool = DESIGN_REF_POOLS.editorial;
+  else if (/saas|b2b|software/.test(industry))         pool = DESIGN_REF_POOLS.saas;
+
+  // 캠페인 실행마다 다른 ref — 존재하지 않는 항목은 건너뛰고 다음 후보 시도
+  const startIdx = Math.floor(Date.now() / 1000) % pool.length;
+  for (let offset = 0; offset < pool.length; offset++) {
+    const brand = pool[(startIdx + offset) % pool.length];
+    const p     = resolve(HARNESS_ROOT, 'design-refs', brand, 'DESIGN.md');
+    if (existsSync(p)) {
+      ui.info(`🎨 auto design-ref: ${brand} (pool: ${pool.length}개 중 선택)`);
+      return { brand, path: p };
+    }
+  }
+  ui.warn('auto design-ref: 풀 내 모든 레퍼런스 없음 — _default 폴백');
+  return null;
+}
+
+function loadDesignRef(brief, profile) {
   const brand = brief.sourceMaterials?.designRef;
   if (brand) {
     const p = resolve(HARNESS_ROOT, 'design-refs', brand, 'DESIGN.md');
     if (!existsSync(p)) {
-      ui.warn(`design-refs/${brand}/DESIGN.md 없음 — _default 폴백 사용`);
+      ui.warn(`design-refs/${brand}/DESIGN.md 없음 — 자동 선택 시도`);
     } else {
       return { brand, path: p };
     }
   }
-  // designRef 미지정 또는 경로 없으면 _default 폴백
+  // designRef 미지정이면 업종/브랜드 기반으로 자동 선택
+  const auto = autoPickDesignRef(profile);
+  if (auto) return auto;
+
+  // 최종 폴백: _default
   const defaultPath = resolve(HARNESS_ROOT, 'design-refs', '_default', 'DESIGN.md');
   if (existsSync(defaultPath)) {
     return { brand: '_default', path: defaultPath };
@@ -179,7 +220,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
   mkdirSync(tmpSlideDir, { recursive: true });
 
   const keywordsMap = loadKeywordsMap(dir, slug);
-  const designRef   = loadDesignRef(brief);
+  const designRef   = loadDesignRef(brief, profile);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
@@ -191,7 +232,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
     const dim         = dimMap[aspect] ?? dimMap.portrait;
     const ts          = nowKstFilename();
 
-    const hookVariants = flags.variants ? Math.min(parseInt(flags.variants, 10) || 1, 5) : 1;
+    const hookVariants = flags.variants ? Math.min(parseInt(flags.variants, 10) || 1, 5) : 3;
 
     const cards = Array.from({ length: cardCount }, (_, i) => ({
       index:        i + 1,
@@ -263,6 +304,9 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
   console.log();
   ui.info('⚡ inhouse-slides: image-director 에이전트가 각 채널의 slide-spec.json 을 처리해야 합니다.');
+  if (hookVariants > 1) {
+    ui.info(`📌 hook 카드 ${hookVariants}종 변형 생성 예정 — finalize 전 --select-variant=N 으로 원하는 안 선택 가능 (미선택 시 V1 기본 적용)`);
+  }
   if (withImages) {
     ui.info('🖼  SLIDE_IMAGES=true: image-director가 카드별 AI 배경 이미지를 생성합니다 (FAL_KEY 필요).');
   }
@@ -272,7 +316,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
   const keywordsMap = loadKeywordsMap(dir, slug);
-  const designRef   = loadDesignRef(brief);
+  const designRef   = loadDesignRef(brief, profile);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
@@ -520,7 +564,15 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     const agentOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
     const outputCards = agentOutput.cards ?? [];
     // regen 실행 후 finalize 시 새 타임스탬프 사용 — 원본 draft 덮어쓰기 방지
-    const ts          = spec.regenerationFeedback ? nowKstFilename() : spec.ts;
+    const isRegen     = !!spec.regenerationFeedback;
+    const ts          = isRegen ? nowKstFilename() : spec.ts;
+
+    // F: regen 경로에서 agent가 피드백을 실제로 반영했는지 확인
+    if (isRegen && !agentOutput.regenAddressed) {
+      ui.warn(`[${channel}] image-director agent-output.json 에 regenAddressed: true 가 없습니다.`);
+      ui.dim('  agent 가 regen 피드백을 반영했는지 확인하세요. 계속 진행하려면 agent-output.json 에 "regenAddressed": true 를 추가하세요.');
+      process.exit(1);
+    }
 
     // C: hook-variants.json 이 있으면 변형 PNG 먼저 캡처
     const variantsPath = resolve(channelDir, 'hook-variants.json');
@@ -557,6 +609,7 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     let   heroMeasurement = null; // D: hero 면적 측정 결과
     let   thumbPath = null;       // E: 썸네일 경로
 
+    const captureSpinner = new Spinner();
     for (const card of spec.cards) {
       if (!existsSync(card.htmlPath)) {
         ui.err(`[${channel}] HTML 파일 없음: ${card.htmlPath}`);
@@ -568,40 +621,44 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
       // D: hook 카드(첫 번째)에서 hero 면적 측정
       const isHookCard = card.index === 1;
       let stdoutBuf = '';
-      if (isHookCard) {
-        try {
-          stdoutBuf = execFileSync('node', [
+      captureSpinner.start(`[${channel}] card${card.index}/${spec.cards.length} 캡처 중...`);
+      try {
+        if (isHookCard) {
+          try {
+            stdoutBuf = execFileSync('node', [
+              screenshotBin,
+              `--html=${card.htmlPath}`,
+              `--out=${tmpPngPath}`,
+              `--width=${spec.dimensions.width}`,
+              `--height=${spec.dimensions.height}`,
+              '--measure-selector=[data-hero]',
+            ]).toString();
+          } catch (e) {
+            stdoutBuf = e.stdout?.toString() ?? '';
+          }
+          // JSON 라인 파싱
+          const jsonLine = stdoutBuf.split('\n').reverse().find((l) => l.trim().startsWith('{'));
+          if (jsonLine) {
+            try { heroMeasurement = JSON.parse(jsonLine.trim()); } catch { /* ignore */ }
+          }
+          if (heroMeasurement?.warn) {
+            visualFindings.push({
+              severity: 'warn',
+              code: 'hero.area_ratio',
+              detail: `[data-hero] 면적 ${(heroMeasurement.heroRatio * 100).toFixed(1)}% — 권장 25~55%`,
+            });
+          }
+        } else {
+          execFileSync('node', [
             screenshotBin,
             `--html=${card.htmlPath}`,
             `--out=${tmpPngPath}`,
             `--width=${spec.dimensions.width}`,
             `--height=${spec.dimensions.height}`,
-            '--measure-selector=[data-hero]',
-          ]).toString();
-        } catch (e) {
-          stdoutBuf = e.stdout?.toString() ?? '';
-          // screenshot 자체는 성공할 수 있으므로 계속 진행
+          ]);
         }
-        // JSON 라인 파싱
-        const jsonLine = stdoutBuf.split('\n').reverse().find((l) => l.trim().startsWith('{'));
-        if (jsonLine) {
-          try { heroMeasurement = JSON.parse(jsonLine.trim()); } catch { /* ignore */ }
-        }
-        if (heroMeasurement?.warn) {
-          visualFindings.push({
-            severity: 'warn',
-            code: 'hero.area_ratio',
-            detail: `[data-hero] 면적 ${(heroMeasurement.heroRatio * 100).toFixed(1)}% — 권장 25~55%`,
-          });
-        }
-      } else {
-        execFileSync('node', [
-          screenshotBin,
-          `--html=${card.htmlPath}`,
-          `--out=${tmpPngPath}`,
-          `--width=${spec.dimensions.width}`,
-          `--height=${spec.dimensions.height}`,
-        ], { stdio: 'inherit' });
+      } finally {
+        captureSpinner.stop(`✅ [${channel}] card${card.index} 캡처 완료`);
       }
 
       // 캠페인 디렉터리에 복사해서 영구 보존
@@ -671,6 +728,13 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
 
     writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
     writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
+
+    // F: regen 완료 후 regenerationFeedback 필드 제거 — 이후 --finalize 가 새 ts 를 계속 쓰는 것 방지
+    if (isRegen) {
+      const cleanSpec = { ...spec };
+      delete cleanSpec.regenerationFeedback;
+      writeFileSync(specPath, JSON.stringify(cleanSpec, null, 2), 'utf8');
+    }
 
     brief.status[channel] = report.ok ? 'preview' : 'drafting';
     brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
@@ -743,7 +807,6 @@ async function selectVariant({ slug, dir, briefPath, brief, profile, channel, va
     '--measure-selector=[data-hero]',
   ], { stdio: 'inherit' });
 
-  writeFileSync(persistPng, readFileSync(persistPng));
   hv.selectedVariant = variantIdx;
   writeFileSync(variantsPath, JSON.stringify(hv, null, 2), 'utf8');
 
@@ -752,7 +815,7 @@ async function selectVariant({ slug, dir, briefPath, brief, profile, channel, va
 }
 
 // F: eval.json 피드백을 slide-spec.json 의 regenerationFeedback 필드에 주입
-async function injectRegenFeedback({ slug, dir, brief, channels }) {
+function injectRegenFeedback({ slug, dir, brief, channels }) {
   let hadError = false;
 
   for (const channel of channels) {
@@ -771,14 +834,20 @@ async function injectRegenFeedback({ slug, dir, brief, channels }) {
       continue;
     }
 
-    const evalData = JSON.parse(readFileSync(evalPath, 'utf8'));
-    const spec     = JSON.parse(readFileSync(specPath, 'utf8'));
+    let evalData, spec;
+    try {
+      evalData = JSON.parse(readFileSync(evalPath, 'utf8'));
+      spec     = JSON.parse(readFileSync(specPath, 'utf8'));
+    } catch (e) {
+      ui.err(`[${channel}] JSON 파싱 실패 — ${e.message}`);
+      hadError = true;
+      continue;
+    }
 
-    // 이미 regen 피드백이 주입된 spec 이면 중단 — 동일 eval 로 두 번 regen 하면 피드백이 덮어쓰여 의미 없음
+    // 이미 regen 피드백이 주입된 spec 이면 경고만 — 다른 채널은 계속 처리
     if (spec.regenerationFeedback) {
       ui.warn(`[${channel}] slide-spec.json 에 이미 regenerationFeedback 이 있습니다. --regen 을 두 번 실행하지 마세요.`);
       ui.dim('  재평가 후 다시 regen 하려면: evaluate.mjs 실행 → card-evaluator → generate.mjs --regen');
-      hadError = true;
       continue;
     }
 
@@ -798,7 +867,7 @@ async function injectRegenFeedback({ slug, dir, brief, channels }) {
         feedback: c.feedback ?? [],
         breakdown: Object.fromEntries(
           Object.entries(c.breakdown ?? {})
-            .filter(([, v]) => v.score === 0)
+            .filter(([, v]) => v.score === 0 && v.note)
             .map(([k, v]) => [k, v.note])
         ),
       })),
