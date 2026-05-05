@@ -519,7 +519,8 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     const spec        = JSON.parse(readFileSync(specPath, 'utf8'));
     const agentOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
     const outputCards = agentOutput.cards ?? [];
-    const ts          = spec.ts;
+    // regen 실행 후 finalize 시 새 타임스탬프 사용 — 원본 draft 덮어쓰기 방지
+    const ts          = spec.regenerationFeedback ? nowKstFilename() : spec.ts;
 
     // C: hook-variants.json 이 있으면 변형 PNG 먼저 캡처
     const variantsPath = resolve(channelDir, 'hook-variants.json');
@@ -752,22 +753,34 @@ async function selectVariant({ slug, dir, briefPath, brief, profile, channel, va
 
 // F: eval.json 피드백을 slide-spec.json 의 regenerationFeedback 필드에 주입
 async function injectRegenFeedback({ slug, dir, brief, channels }) {
+  let hadError = false;
+
   for (const channel of channels) {
     const channelDir = resolve(dir, channel);
     const evalPath   = resolve(channelDir, 'eval.json');
     const specPath   = resolve(channelDir, 'slide-spec.json');
 
     if (!existsSync(evalPath)) {
-      ui.warn(`[${channel}] eval.json 없음 — evaluate.mjs 와 card-evaluator 를 먼저 실행하세요.`);
+      ui.err(`[${channel}] eval.json 없음 — evaluate.mjs 와 card-evaluator 를 먼저 실행하세요.`);
+      hadError = true;
       continue;
     }
     if (!existsSync(specPath)) {
       ui.err(`[${channel}] slide-spec.json 없음 — generate.mjs 를 먼저 실행하세요.`);
+      hadError = true;
       continue;
     }
 
     const evalData = JSON.parse(readFileSync(evalPath, 'utf8'));
     const spec     = JSON.parse(readFileSync(specPath, 'utf8'));
+
+    // 이미 regen 피드백이 주입된 spec 이면 중단 — 동일 eval 로 두 번 regen 하면 피드백이 덮어쓰여 의미 없음
+    if (spec.regenerationFeedback) {
+      ui.warn(`[${channel}] slide-spec.json 에 이미 regenerationFeedback 이 있습니다. --regen 을 두 번 실행하지 마세요.`);
+      ui.dim('  재평가 후 다시 regen 하려면: evaluate.mjs 실행 → card-evaluator → generate.mjs --regen');
+      hadError = true;
+      continue;
+    }
 
     const failedCards = (evalData.cards ?? []).filter((c) => !c.pass);
     if (failedCards.length === 0) {
@@ -799,6 +812,8 @@ async function injectRegenFeedback({ slug, dir, brief, channels }) {
     ui.dim(`  harness/agents/image-director.md 를 읽고 ${specPath} 를 처리`);
     ui.dim(`  이후: node harness/bin/generate.mjs ${slug} --channel=${channel} --finalize`);
   }
+
+  if (hadError) process.exit(1);
 }
 
 function mergeHashtags(text, fromProvider, profile) {

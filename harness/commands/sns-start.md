@@ -352,13 +352,16 @@ card-evaluator 완료 후 결과를 아래 형식으로 출력한다:
 - **R** → 아래 재생성 루프 실행:
   1. `node harness/bin/generate.mjs <slug> [--channel=<ch>] --regen`
      - eval.json 피드백 → slide-spec.json 의 `regenerationFeedback` 에 주입
+     - 실패 시 (exit 1) 중단하고 사용자에게 원인 안내.
   2. **`harness/agents/image-director.md` 를 인라인으로 재실행**
      - `spec.regenerationFeedback` 를 읽고 실패 카드만 다시 생성
      - 피드백 항목 전부 반영
   3. `node harness/bin/generate.mjs <slug> [--channel=<ch>] --finalize`
-     - 재캡처 + draft 업데이트
-  4. card-evaluator 를 인라인으로 재실행 → 결과 재출력
-  5. 결과와 관계없이 5단계로 진행 (재생성은 1회만).
+     - 재캡처 + 새 타임스탬프 draft 저장 (원본 draft 보존됨)
+  4. `node harness/bin/evaluate.mjs <slug> [--channel=<ch>]`
+     - 새 PNG 경로를 반영한 evalSpec.json 재생성 (이 단계 없이 card-evaluator 를 실행하면 이전 PNG 를 채점함)
+  5. **card-evaluator 를 인라인으로 재실행** → 결과 재출력
+  6. 결과와 관계없이 5단계로 진행 (재생성은 1회만).
 
 > 재생성 루프는 최대 1회만 수행한다. 재시도 후에도 기준 미달이면 경고만 표시하고 계속 진행한다.
 

@@ -6,8 +6,7 @@
 
 import { resolve } from 'node:path';
 import { writeFileSync, existsSync, readFileSync } from 'node:fs';
-import { readYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
-import { PATHS } from './_lib.mjs';
+import { readYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui, PATHS } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
@@ -42,12 +41,13 @@ for (const ch of channels) {
   const assets    = draft.assets ?? [];
   const draftCards = draft.cards ?? [{ role: 'single', text: draft.text }];
 
-  const evalCards = spec.cards.map((c, i) => ({
-    index:    c.index,
-    role:     c.role,
-    pngPath:  assets[i] ?? null,
-    postCopy: draftCards[i]?.text ?? draft.text ?? '',
-  })).filter((c) => c.pngPath && existsSync(c.pngPath));
+  const evalCards = spec.cards.map((c) => {
+    const idx     = c.index - 1; // 0-based position by card index, not array position
+    const pngPath = assets[idx] ?? null;
+    const text    = draftCards[idx]?.text ?? draft.text ?? '';
+    if (!text) ui.warn(`[${ch}] card${c.index} postCopy 없음 — copyVisual 채점이 부정확할 수 있습니다.`);
+    return { index: c.index, role: c.role, pngPath, postCopy: text };
+  }).filter((c) => c.pngPath && existsSync(c.pngPath));
 
   if (evalCards.length === 0) {
     ui.warn(`[${ch}] PNG 없음 — generate.mjs --finalize 를 먼저 실행하세요.`);
