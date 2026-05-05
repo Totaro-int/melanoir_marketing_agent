@@ -14,13 +14,14 @@ const flags = Object.fromEntries(
   })
 );
 
-const htmlPath = flags.html;
-const outPath  = flags.out;
-const width    = parseInt(flags.width  ?? '1080', 10);
-const height   = parseInt(flags.height ?? '1080', 10);
+const htmlPath        = flags.html;
+const outPath         = flags.out;
+const width           = parseInt(flags.width  ?? '1080', 10);
+const height          = parseInt(flags.height ?? '1080', 10);
+const measureSelector = flags['measure-selector'] ?? null; // e.g. '[data-hero]'
 
 if (!htmlPath || !outPath) {
-  console.error('사용법: screenshot.mjs --html=<html-file> --out=<png-path> [--width=1080] [--height=1080]');
+  console.error('사용법: screenshot.mjs --html=<html-file> --out=<png-path> [--width=1080] [--height=1080] [--measure-selector=<css>]');
   process.exit(2);
 }
 
@@ -36,6 +37,22 @@ await page.screenshot({
   type: 'png',
   clip: { x: 0, y: 0, width, height },
 });
+
+// D: Hero 면적 측정 — --measure-selector 있을 때 요소 bounding box 계산
+if (measureSelector) {
+  try {
+    const box = await page.locator(measureSelector).first().boundingBox();
+    if (box) {
+      const ratio = (box.width * box.height) / (width * height);
+      const warn  = ratio < 0.25 || ratio > 0.55;
+      // JSON을 마지막 줄로 출력 — generate.mjs 가 파싱
+      process.stdout.write(`\n{"heroRatio":${ratio.toFixed(3)},"warn":${warn},"selector":"${measureSelector}"}\n`);
+    }
+  } catch {
+    // 선택자가 없으면 측정 스킵
+  }
+}
+
 await browser.close();
 
 console.log(`screenshot saved: ${outPath}`);

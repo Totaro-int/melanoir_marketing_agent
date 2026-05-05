@@ -12,7 +12,7 @@ import {
   PATHS, HARNESS_ROOT, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
-import { inspect } from '../src/content-engine/brand-guardian.mjs';
+import { inspect, inspectVisualText } from '../src/content-engine/brand-guardian.mjs';
 import { validateChannels } from '../src/publisher/registry.mjs';
 
 const argv = process.argv.slice(2);
@@ -497,6 +497,10 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
 
     // 카드별 Playwright 캡쳐
     const pngPaths = [];
+    const visualFindings = []; // B: 비주얼 가드 findings
+    let   heroMeasurement = null; // D: hero 면적 측정 결과
+    let   thumbPath = null;       // E: 썸네일 경로
+
     for (const card of spec.cards) {
       if (!existsSync(card.htmlPath)) {
         ui.err(`[${channel}] HTML 파일 없음: ${card.htmlPath}`);
@@ -504,16 +508,70 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
       }
       const tmpPngPath     = card.htmlPath.replace(/\.html$/, '.png');
       const persistPngPath = resolve(channelDir, `card${card.index}-${ts}.png`);
-      execFileSync('node', [
-        screenshotBin,
-        `--html=${card.htmlPath}`,
-        `--out=${tmpPngPath}`,
-        `--width=${spec.dimensions.width}`,
-        `--height=${spec.dimensions.height}`,
-      ], { stdio: 'inherit' });
+
+      // D: hook 카드(첫 번째)에서 hero 면적 측정
+      const isHookCard = card.index === 1;
+      let stdoutBuf = '';
+      if (isHookCard) {
+        try {
+          stdoutBuf = execFileSync('node', [
+            screenshotBin,
+            `--html=${card.htmlPath}`,
+            `--out=${tmpPngPath}`,
+            `--width=${spec.dimensions.width}`,
+            `--height=${spec.dimensions.height}`,
+            '--measure-selector=[data-hero]',
+          ]).toString();
+        } catch (e) {
+          stdoutBuf = e.stdout?.toString() ?? '';
+          // screenshot 자체는 성공할 수 있으므로 계속 진행
+        }
+        // JSON 라인 파싱
+        const jsonLine = stdoutBuf.split('\n').reverse().find((l) => l.trim().startsWith('{'));
+        if (jsonLine) {
+          try { heroMeasurement = JSON.parse(jsonLine.trim()); } catch { /* ignore */ }
+        }
+        if (heroMeasurement?.warn) {
+          visualFindings.push({
+            severity: 'warn',
+            code: 'hero.area_ratio',
+            detail: `[data-hero] 면적 ${(heroMeasurement.heroRatio * 100).toFixed(1)}% — 권장 25~55%`,
+          });
+        }
+      } else {
+        execFileSync('node', [
+          screenshotBin,
+          `--html=${card.htmlPath}`,
+          `--out=${tmpPngPath}`,
+          `--width=${spec.dimensions.width}`,
+          `--height=${spec.dimensions.height}`,
+        ], { stdio: 'inherit' });
+      }
+
       // 캠페인 디렉터리에 복사해서 영구 보존
       writeFileSync(persistPngPath, readFileSync(tmpPngPath));
       pngPaths.push(persistPngPath);
+
+      // B: 카드 HTML 비주얼 텍스트 가드
+      const htmlContent = readFileSync(card.htmlPath, 'utf8');
+      const { findings: vf } = inspectVisualText({ htmlContent, profile });
+      visualFindings.push(...vf.map((f) => ({ ...f, detail: `card${card.index}: ${f.detail}` })));
+
+      // E: 썸네일 — hook 카드 상단 1:1 크롭 (Threads 피드 노출 시뮬레이션)
+      if (isHookCard) {
+        const thumbSide = spec.dimensions.width; // 1080
+        const thumbPersist = resolve(channelDir, `card1-thumb-${ts}.png`);
+        try {
+          execFileSync('node', [
+            screenshotBin,
+            `--html=${card.htmlPath}`,
+            `--out=${thumbPersist}`,
+            `--width=${thumbSide}`,
+            `--height=${thumbSide}`,
+          ], { stdio: 'pipe' });
+          thumbPath = thumbPersist;
+        } catch { /* 썸네일 실패는 non-fatal */ }
+      }
     }
 
     // draft 조립
@@ -526,7 +584,18 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     const strippedText = primaryCard.text.replace(/(\n+#[^\s#]+(\s+#[^\s#]+)*\s*)$/u, '').trimEnd();
     const finalText    = allHashtags.length ? `${strippedText}\n\n${allHashtags.join(' ')}` : strippedText;
 
+    // B: 비주얼 가드 findings 를 postCopy guardian report 에 병합
     const report = inspect({ channel, text: finalText, hashtags: allHashtags, profile });
+    if (visualFindings.length) {
+      report.findings.push(...visualFindings);
+      report.summary.warns += visualFindings.filter((f) => f.severity === 'warn').length;
+      if (report.severity === 'ok' && visualFindings.some((f) => f.severity === 'warn')) {
+        report.severity = 'warn';
+      }
+    }
+
+    // D: hero 측정 결과 report에 포함
+    if (heroMeasurement) report.heroMeasurement = heroMeasurement;
 
     const draft = {
       version:     1,
@@ -539,6 +608,7 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
       hashtags:    allHashtags,
       cards:       outputCards.length > 1 ? outputCards.map((c) => ({ role: c.role, text: c.text })) : undefined,
       assets:      pngPaths,
+      thumbnail:   thumbPath ?? undefined,   // E: 피드 썸네일 시뮬레이션 (card1 1:1 크롭)
       assetUrls:   [],
       guardian:    report,
     };
@@ -551,6 +621,15 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
 
     if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary.warns})`);
     else           ui.err(`[${channel}] 가디언 차단 (${report.summary.blocks}건). draft.md 검토 후 재생성.`);
+
+    // D: hero 면적 경고 출력
+    if (heroMeasurement?.warn) {
+      ui.dim(`  ⚠ hero 면적 ${(heroMeasurement.heroRatio * 100).toFixed(1)}% — 25~55% 권장. [data-hero] 요소를 더 크게 조정 필요.`);
+    }
+    // E: 썸네일 경로 출력
+    if (thumbPath) {
+      ui.dim(`  🖼 피드 썸네일: ${thumbPath}`);
+    }
   }
 
   writeYaml(briefPath, brief);

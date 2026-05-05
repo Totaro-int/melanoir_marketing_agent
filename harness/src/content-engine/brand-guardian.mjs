@@ -1,6 +1,42 @@
 // Brand guardian — runs the channel checklist + global banned-word checks against a draft.
 // Returns a structured report. Phase 4 publisher refuses to upload when severity == 'block'.
 
+/**
+ * Inspect card visual HTML text for banned words and preferred-term violations.
+ * Returns findings[] with severity 'warn' (never 'block' — visual text has more latitude).
+ * @param {{ htmlContent: string, profile: object }} opts
+ */
+export function inspectVisualText({ htmlContent, profile }) {
+  // Strip <style> blocks and all tags to get rendered text
+  const text = htmlContent
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const findings = [];
+  const banned = profile?.banned ?? {};
+  const preferredTerms = profile?.tone?.preferredTerms ?? {};
+
+  for (const w of banned.words ?? []) {
+    if (text.includes(w)) findings.push({ severity: 'warn', code: 'visual.banned.word', detail: `카드 비주얼: "${w}"` });
+  }
+  for (const c of banned.claims ?? []) {
+    if (text.includes(c)) findings.push({ severity: 'warn', code: 'visual.banned.claim', detail: `카드 비주얼: "${c}"` });
+  }
+
+  for (const [abbr, preferred] of Object.entries(preferredTerms)) {
+    if (abbr === preferred) continue; // 허용된 고유명사는 스킵
+    // 단어 경계로 약어 단독 사용 감지 (한글 경계 포함)
+    const re = new RegExp(`(?<![A-Za-z가-힣(])${abbr}(?![A-Za-z가-힣(])`, 'g');
+    if (re.test(text)) {
+      findings.push({ severity: 'warn', code: 'visual.preferred_term', detail: `"${abbr}" → "${preferred}"` });
+    }
+  }
+
+  return { findings };
+}
+
 const CHANNEL_RULES = {
   threads: {
     maxLen: 500,

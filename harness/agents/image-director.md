@@ -298,6 +298,14 @@ background:
 - `imageContext.visual.colors.accent` → 강조 색
 - **2-C 디자인 품질 기준을 반드시 적용한다** — 배경 glow, 장식 요소 2개 이상, Hero stat 크기, 채널 톤 준수
 - **cardVisual의 수치/키워드는 크고 굵게** (최소 96px 이상), 요점 bullet은 26~32px
+- **Hero stat 요소에 `data-hero` 속성 필수**: `hook` / `single` 카드의 핵심 수치·키워드를 감싸는 최상위 컨테이너에 `data-hero` 속성을 반드시 추가한다. 이 속성이 없으면 hero 면적 자동 측정(generate.mjs)이 작동하지 않는다.
+  ```html
+  <!-- hook/single 카드 예시 -->
+  <div data-hero style="...">
+    5.2일 → <span style="color:#3B82F6">1.8일</span>
+  </div>
+  ```
+- **preferredTerms 준수**: `copyContext.profile.tone.preferredTerms` 가 있으면 카드 비주얼 텍스트에서도 금지 약어를 사용하지 않는다. (예: "API" 단독 사용 금지 → "연동 인터페이스" 또는 "API(연동 인터페이스)"로)
 - 카드는 **여백이 콘텐츠다** — 텍스트가 카드 면적의 50% 이하를 차지하도록
 - **배경 이미지 삽입 우선순위**:
   1. `generateImages === true` + 1-B에서 수집한 `bgImages[i].pngPath` 가 있으면: **full-bleed 배경**으로 삽입
@@ -343,6 +351,35 @@ HTML 파일 저장:
 ```
 Write(path=spec.cards[i].htmlPath, content=<생성된 HTML>)
 ```
+
+#### 3.5. 셀프 리뷰 루프 (A — 자동 품질 게이트)
+
+모든 HTML 파일 저장 후, **각 카드를 직접 렌더링해서 육안으로 확인**한다. AI가 HTML을 쓰고 끝내는 것과, 실제로 보고 판단하는 것은 다르다. 이 단계가 없으면 레이아웃 미스가 그대로 발행된다.
+
+**절차:**
+
+1. Bash로 카드별 임시 캡처:
+   ```bash
+   node harness/bin/screenshot.mjs \
+     --html=<card.htmlPath> \
+     --out=<card.htmlPath 에서 .html → -review.png> \
+     --width=<spec.dimensions.width> \
+     --height=<spec.dimensions.height> \
+     --measure-selector=[data-hero]
+   ```
+
+2. Read 도구로 해당 PNG를 읽어 **육안 체크리스트** 5항목을 평가한다 (각 1점):
+   - Hero stat이 카드 면적의 **25% 이상** 시각적으로 차지하는가?
+   - 배경이 flat 단색이 **아닌가** (glow/gradient 있는가)?
+   - 장식 요소(accent bar, divider, dot, badge 등)가 **2개 이상** 보이는가?
+   - 텍스트가 카드 면적의 **60% 이하** 를 차지하는가?
+   - Accent 색이 **적어도 1곳** 사용되는가?
+
+3. **점수 3점 미만** → 문제 항목을 구체적으로 기록하고 HTML을 수정 후 재저장. **최대 1회 재시도.**
+
+4. 재시도 후 점수 3점 이상이면 통과. 여전히 미달이면 `agent-output.json`의 해당 카드에 `"reviewScore": <점수>, "reviewNotes": "<문제 항목>"` 필드를 추가하고 continue.
+
+> 이 단계는 빠르다 — PNG 읽기 + 5항목 체크 + 1회 수정. 전체 과정에서 가장 ROI가 높은 단계다.
 
 #### 4. agent-output.json 저장
 
