@@ -54,6 +54,37 @@ cat <specPath>
 ```
 `spec.copyContext`, `spec.imageContext`, `spec.cards`, `spec.dimensions`, `spec.outputDir` 확인.
 
+#### 1-A. 디자인 레퍼런스 로드 (`imageContext.designRef` 가 있을 때만)
+
+`spec.imageContext.designRef`가 `null`이 아니면 이 단계를 실행한다. 없으면 건너뛴다.
+
+**목적**: 세계적인 브랜드 디자인 시스템을 슬라이드 HTML에 반영해 시각적 완성도를 높인다.
+
+**절차**:
+
+1. `imageContext.designRef.path` 경로의 DESIGN.md를 Read 도구로 읽는다.
+2. DESIGN.md에서 다음 토큰을 추출해 변수로 기억한다:
+   - **Primary color** (메인 브랜드 색상 hex)
+   - **Background color** (캔버스/배경 hex)
+   - **Text color** (주 텍스트 hex)
+   - **Accent color** (강조 색상 hex, 없으면 primary 재사용)
+   - **Typography feel**: 헤드라인 weight, letter-spacing 방향 (tight/loose), 폰트 분위기 (geometric/humanist/serif 등)
+   - **Surface style**: 그림자 방식 (flat/soft/layered), border-radius 경향 (sharp/rounded/pill)
+   - **Layout mood**: 여백 방향 (airy/dense), 구성 (centered/editorial/grid)
+3. 3단계 HTML 생성 시 추출한 토큰을 CSS 변수로 적용한다:
+   ```css
+   --ref-primary: <hex>;
+   --ref-bg: <hex>;
+   --ref-text: <hex>;
+   --ref-accent: <hex>;
+   ```
+4. 이 토큰을 **회사 프로필(`imageContext.visual`)과 블렌딩**한다:
+   - `visual.colors`가 있으면 회사 색상을 우선하되, 레퍼런스 브랜드의 **레이아웃·타이포·여백 스타일**을 차용한다.
+   - 회사 색상이 없으면 레퍼런스 팔레트를 그대로 사용한다.
+5. HTML 최상단 주석에 한 줄 표기: `<!-- design-ref: <brand> -->`
+
+**참고**: 레퍼런스 브랜드를 그대로 모방하는 것이 아니라, 그 브랜드가 가진 **시각적 DNA**(여백, 타이포그래피 리듬, 색상 역할 배분)를 흡수해 슬라이드에 적용하는 것이 목표다.
+
 #### 1-B. AI 배경 이미지 생성 (`generateImages === true` 일 때만)
 
 `spec.imageContext.generateImages`가 `true`이면 이 단계를 실행한다. `false`이면 건너뛴다.

@@ -128,8 +128,9 @@ function parseSourceMaterials(flags) {
   const texts = flags.sourceTexts
     ? String(flags.sourceTexts).split('|').map((p) => p.trim()).filter(Boolean)
     : [];
-  if (!images.length && !texts.length) return null;
-  return { images, texts };
+  const designRef = flags.designRef ? String(flags.designRef).toLowerCase().trim() : null;
+  if (!images.length && !texts.length && !designRef) return null;
+  return { images, texts, ...(designRef ? { designRef } : {}) };
 }
 
 // 4) Report.

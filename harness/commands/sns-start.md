@@ -100,9 +100,65 @@ node harness/bin/generate.mjs <slug> --with-images
 
 입력된 값은 `--sourceTexts="값1|값2"` 형태로 전달.
 
+### 비주얼 스타일 선택 (선택)
+
+카드뉴스 / 슬라이드의 시각적 방향을 세계적인 브랜드 디자인 시스템을 레퍼런스로 설정할 수 있다.
+
+```
+비주얼 스타일 방향이 있나요?
+  [Enter]      회사 프로필 기본값 사용
+  [브랜드명]   예: stripe, linear.app, apple, vercel
+  [목록]       카테고리별 브랜드 전체 보기
+> 
+```
+
+**[목록]** 입력 시 아래 카테고리 메뉴를 표시한다:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎨 디자인 레퍼런스 브랜드 목록
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  💳 핀테크 / B2B SaaS
+     stripe · wise · revolut · coinbase · mastercard · kraken
+
+  🖥  개발자 도구 / 인프라
+     linear.app · vercel · cursor · warp · supabase · sentry
+     posthog · raycast · hashicorp · opencode.ai
+
+  🤖 AI / LLM
+     claude · openai (x.ai) · mistral.ai · cohere · replicate
+     together.ai · minimax · runwayml · voltagent · elevenlabs
+
+  🍎 프리미엄 / 하드웨어
+     apple · tesla · ferrari · bmw · bmw-m · bugatti
+     lamborghini · renault · vodafone · spacex · playstation
+
+  🛍  소비자 / 라이프스타일
+     nike · spotify · starbucks · uber · pinterest · shopify
+
+  📰 미디어 / 디자인
+     wired · theverge · figma · framer · miro · webflow
+
+  🏢 엔터프라이즈
+     ibm · mongodb · clickhouse · sanity · intercom · zapier
+
+  🌟 기타
+     notion · airtable · cal · expo · mintlify · ollama
+     composio · resend · superhuman · lovable
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+브랜드명을 입력하거나 Enter로 기본값 사용:
+> 
+```
+
+입력된 브랜드명은 소문자로 정규화해 `harness/design-refs/<브랜드명>/DESIGN.md` 존재 여부를 확인한다.
+존재하지 않으면 경고 메시지 후 기본값(스킵)으로 처리한다.
+유효한 경우 `--designRef=<브랜드명>` 으로 campaign-new에 전달한다.
+
 위 질문에 대한 답변을 모두 수집한 뒤 아래 명령을 실행한다:
 
-`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...] [--sourceImages=...] [--sourceTexts=...]`
+`node harness/bin/campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--keyMessage=...] [--contentPoints=...] [--angle=...] [--sourceImages=...] [--sourceTexts=...] [--designRef=...]`
 
 ### 3.5단계 — 채널별 키워드 자동 추출
 

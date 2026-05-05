@@ -9,7 +9,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import {
-  PATHS, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
+  PATHS, HARNESS_ROOT, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect } from '../src/content-engine/brand-guardian.mjs';
@@ -128,6 +128,17 @@ function loadKeywordsMap(dir, slug) {
   }
 }
 
+function loadDesignRef(brief) {
+  const brand = brief.sourceMaterials?.designRef;
+  if (!brand) return null;
+  const p = resolve(HARNESS_ROOT, 'design-refs', brand, 'DESIGN.md');
+  if (!existsSync(p)) {
+    ui.warn(`design-refs/${brand}/DESIGN.md 없음 — 디자인 레퍼런스 스킵`);
+    return null;
+  }
+  return { brand, path: p };
+}
+
 // ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
 
 async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages = false }) {
@@ -135,6 +146,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
   mkdirSync(tmpSlideDir, { recursive: true });
 
   const keywordsMap = loadKeywordsMap(dir, slug);
+  const designRef   = loadDesignRef(brief);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
@@ -196,6 +208,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
         sourceMaterials: {
           images: (brief.sourceMaterials?.images ?? []).filter(existsSync),
         },
+        designRef: designRef ?? null,
       },
       outputDir: resolve(dir, channel),
     };
@@ -222,6 +235,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags }) {
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
   const keywordsMap = loadKeywordsMap(dir, slug);
+  const designRef   = loadDesignRef(brief);
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
@@ -277,6 +291,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
         channelStrategy:  channelDocs?.strategy  ?? '',
         channelTemplates: channelDocs?.templates ?? '',
       },
+      designRef: designRef ?? null,
       outputDir:  channelDir,
       outputPath,
       partial: cardN !== null
