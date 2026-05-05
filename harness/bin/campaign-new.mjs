@@ -7,11 +7,9 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import YAML from 'yaml';
 import {
-  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui, checkForUpdates,
+  PATHS, readYaml, slugify, todayKst, nowKstIso, activeChannels, enabledChannels, ui,
 } from './_lib.mjs';
 import { validateChannels } from '../src/publisher/registry.mjs';
-
-checkForUpdates();
 
 const argv = process.argv.slice(2);
 if (!argv.length || argv[0].startsWith('--')) {

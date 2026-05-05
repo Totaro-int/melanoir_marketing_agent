@@ -30,7 +30,7 @@ mkdirSync(dirname(resolve(outPath)), { recursive: true });
 const browser = await chromium.launch();
 const page    = await browser.newPage();
 await page.setViewportSize({ width, height });
-await page.setContent(htmlContent, { waitUntil: 'networkidle' });
+await page.setContent(htmlContent, { waitUntil: 'networkidle', timeout: 30_000 });
 await page.screenshot({
   path: resolve(outPath),
   type: 'png',

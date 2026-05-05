@@ -82,6 +82,10 @@ if (flags.finalize) {
 }
 
 if (provider.id === 'inhouse-slides') {
+  if (brief.cadence === 'thread') {
+    ui.err('inhouse-slides 프로바이더는 thread cadence를 지원하지 않습니다. brief.cadence를 single/series-3/series-5 로 변경하거나 다른 프로바이더를 사용하세요.');
+    process.exit(2);
+  }
   await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages });
   process.exit(0);
 }
@@ -130,13 +134,20 @@ function loadKeywordsMap(dir, slug) {
 
 function loadDesignRef(brief) {
   const brand = brief.sourceMaterials?.designRef;
-  if (!brand) return null;
-  const p = resolve(HARNESS_ROOT, 'design-refs', brand, 'DESIGN.md');
-  if (!existsSync(p)) {
-    ui.warn(`design-refs/${brand}/DESIGN.md 없음 — 디자인 레퍼런스 스킵`);
-    return null;
+  if (brand) {
+    const p = resolve(HARNESS_ROOT, 'design-refs', brand, 'DESIGN.md');
+    if (!existsSync(p)) {
+      ui.warn(`design-refs/${brand}/DESIGN.md 없음 — _default 폴백 사용`);
+    } else {
+      return { brand, path: p };
+    }
   }
-  return { brand, path: p };
+  // designRef 미지정 또는 경로 없으면 _default 폴백
+  const defaultPath = resolve(HARNESS_ROOT, 'design-refs', '_default', 'DESIGN.md');
+  if (existsSync(defaultPath)) {
+    return { brand: '_default', path: defaultPath };
+  }
+  return null;
 }
 
 // ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
@@ -697,7 +708,7 @@ function renderDraftMd(d) {
   return [
     `# ${d.slug} / ${d.channel}`,
     ``,
-    `> generated ${d.generatedAt} · provider \`${d.provider.provider}\` (${d.provider.model}) · image \`${d.image.provider}\` (${d.image.model})`,
+    `> generated ${d.generatedAt} · provider \`${d.provider?.provider ?? 'unknown'}\` (${d.provider?.model ?? '-'}) · image \`${d.image?.provider ?? 'unknown'}\` (${d.image?.model ?? '-'})`,
     ``,
     `## Copy`,
     ``,

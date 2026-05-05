@@ -63,7 +63,7 @@ cat <specPath>
 **절차**:
 
 1. `imageContext.designRef.path` 경로의 DESIGN.md를 Read 도구로 읽는다.
-2. DESIGN.md에서 다음 토큰을 추출해 변수로 기억한다:
+2. **Section 9 "Agent Prompt Guide" 를 먼저 찾는다.** 이 섹션이 있으면 그 안의 Quick Color Reference와 CSS 스니펫을 주요 토큰 출처로 사용한다 (섹션 1-8에서 재추출 불필요). 섹션이 없으면 DESIGN.md 전체를 읽어 아래 토큰을 직접 추출한다:
    - **Primary color** (메인 브랜드 색상 hex)
    - **Background color** (캔버스/배경 hex)
    - **Text color** (주 텍스트 hex)
@@ -71,17 +71,16 @@ cat <specPath>
    - **Typography feel**: 헤드라인 weight, letter-spacing 방향 (tight/loose), 폰트 분위기 (geometric/humanist/serif 등)
    - **Surface style**: 그림자 방식 (flat/soft/layered), border-radius 경향 (sharp/rounded/pill)
    - **Layout mood**: 여백 방향 (airy/dense), 구성 (centered/editorial/grid)
-3. 3단계 HTML 생성 시 추출한 토큰을 CSS 변수로 적용한다:
-   ```css
-   --ref-primary: <hex>;
-   --ref-bg: <hex>;
-   --ref-text: <hex>;
-   --ref-accent: <hex>;
-   ```
-4. 이 토큰을 **회사 프로필(`imageContext.visual`)과 블렌딩**한다:
-   - `visual.colors`가 있으면 회사 색상을 우선하되, 레퍼런스 브랜드의 **레이아웃·타이포·여백 스타일**을 차용한다.
-   - 회사 색상이 없으면 레퍼런스 팔레트를 그대로 사용한다.
-5. HTML 최상단 주석에 한 줄 표기: `<!-- design-ref: <brand> -->`
+3. 추출한 토큰을 **회사 프로필(`imageContext.visual`)과 블렌딩**한다:
+   - `visual.colors`가 있으면 **실제 HTML 배경색·텍스트색은 반드시 `imageContext.visual.colors.*`를 사용**한다. 레퍼런스 토큰은 레이아웃·타이포그래피·여백·그림자·border-radius **스타일 DNA에만** 적용한다. 색상 자체는 차용하지 않는다.
+   - `visual.colors`가 없으면 레퍼런스 팔레트를 그대로 사용한다.
+4. 레퍼런스에서 가져오는 스타일 DNA는 아래 항목에만 적용한다 (색상이 아닌 것):
+   - `letter-spacing`, `font-weight`, `line-height` 패턴
+   - `box-shadow` 공식 (shadow size/blur/opacity)
+   - `border-radius` 스케일 (0px / 4px / 8px / 16px / pill 중 선택)
+   - 여백 비율 (airy → padding 크게 / dense → padding 작게)
+   - 구성 방향 (centered / editorial / grid)
+5. HTML 최상단 주석에 한 줄 표기: `<!-- design-ref: <brand> (colors: visual.colors 우선 적용) -->`
 
 **참고**: 레퍼런스 브랜드를 그대로 모방하는 것이 아니라, 그 브랜드가 가진 **시각적 DNA**(여백, 타이포그래피 리듬, 색상 역할 배분)를 흡수해 슬라이드에 적용하는 것이 목표다.
 

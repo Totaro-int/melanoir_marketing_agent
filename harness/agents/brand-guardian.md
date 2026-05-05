@@ -24,7 +24,14 @@ tools: Read, Bash
 { ok: bool, severity: "ok" | "warn" | "block", findings: [...], summary: {...}, suggestion: string? }
 ```
 
+## banned.topics 처리 주의
+
+`brand-guardian.mjs`의 결정론적 체크는 `banned.words`와 `banned.claims`만 다룬다.  
+`banned.topics`(예: "경쟁사 비방", "의료 효능 주장")는 의미론적 판단이 필요하므로 기계 체크 대상이 아니다.  
+**topics 위반 여부는 copywriter 단계에서 자가검열(step 5)이 마지막 방어선**이며 이 에이전트는 topics를 판단하지 않는다.
+
 ## 금지
 - 룰을 임의 추가하거나 우회
 - block을 warn으로 다운그레이드 (룰 변경은 PR로)
 - 회사 프로필에 없는 금기를 추측해서 차단
+- `banned.topics` 를 이 에이전트에서 직접 판단하거나 block 처리
