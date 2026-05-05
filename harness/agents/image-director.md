@@ -48,6 +48,29 @@ tools: Read, Write, Bash
 
 ### 절차
 
+#### 0. regenerationFeedback 확인 (`spec.regenerationFeedback` 가 있을 때만)
+
+`spec.regenerationFeedback` 필드가 존재하면 이 단계를 실행한다. 없으면 건너뛰고 1단계로 이동한다.
+
+이 필드는 card-evaluator 가 카드를 채점한 뒤 `generate.mjs --regen` 이 주입한 것이다. 점수가 낮은 카드에 대한 구체적인 개선 지시사항이 들어 있다.
+
+**절차**:
+
+1. `spec.regenerationFeedback.cards[]` 를 읽어 실패 카드 목록과 피드백을 파악한다.
+2. 각 카드의 `feedback[]` 항목을 순서대로 확인한다. 각 항목은 `"기준: 구체적 개선 지시"` 형태다.
+3. 아래 카드별 HTML 생성(3단계)에서 해당 카드의 피드백을 **반드시 전부 반영**한다:
+   - `hierarchy` 관련 → hero stat 크기·면적 확대
+   - `whitespace` 관련 → 빈 공간 활용 (badge 추가 또는 콘텐츠 재배치)
+   - `decoration` 관련 → accent bar, divider, dot 등 장식 요소 추가·강화
+   - `scrollStop` 관련 → 수치 임팩트 강화, 시각적 긴장감 추가
+   - `brand` 관련 → accent 색 사용 확대, 워터마크 확인
+   - `contrast` 관련 → 텍스트-배경 대비 강화
+   - `antiPattern` 관련 → 해당 안티패턴 제거
+4. 피드백이 없는 카드는 기존 디자인을 유지한다. 피드백 있는 카드만 다시 생성한다.
+5. 모든 피드백을 처리했음을 `agent-output.json` 에 `"regenAddressed": true` 필드로 기록한다.
+
+> 피드백은 card-evaluator 가 실제 PNG를 보고 측정한 근거 기반 지적이다. 추상적인 개선이 아닌, 각 항목의 지시사항을 문자 그대로 따른다.
+
 #### 1. spec 읽기
 ```bash
 cat <specPath>

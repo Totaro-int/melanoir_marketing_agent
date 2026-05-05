@@ -73,6 +73,12 @@ const withImages =
 
 // ── 라우팅 ──────────────────────────────────────────────────────────────────
 
+// F: --regen — eval.json 피드백을 slide-spec에 주입 (image-director 재실행 전에)
+if (flags.regen) {
+  await injectRegenFeedback({ slug, dir, brief, channels });
+  process.exit(0);
+}
+
 // C: --select-variant=N — 선택된 hook 변형을 canonical card1 슬롯에 적용
 if (flags['select-variant']) {
   const variantIdx = parseInt(flags['select-variant'], 10);
@@ -742,6 +748,57 @@ async function selectVariant({ slug, dir, briefPath, brief, profile, channel, va
 
   ui.ok(`card1 PNG 업데이트 완료 → ${persistPng}`);
   ui.dim('다음: node harness/bin/generate.mjs <slug> --finalize (이미 finalize 됐으면 preview 만 재실행)');
+}
+
+// F: eval.json 피드백을 slide-spec.json 의 regenerationFeedback 필드에 주입
+async function injectRegenFeedback({ slug, dir, brief, channels }) {
+  for (const channel of channels) {
+    const channelDir = resolve(dir, channel);
+    const evalPath   = resolve(channelDir, 'eval.json');
+    const specPath   = resolve(channelDir, 'slide-spec.json');
+
+    if (!existsSync(evalPath)) {
+      ui.warn(`[${channel}] eval.json 없음 — evaluate.mjs 와 card-evaluator 를 먼저 실행하세요.`);
+      continue;
+    }
+    if (!existsSync(specPath)) {
+      ui.err(`[${channel}] slide-spec.json 없음 — generate.mjs 를 먼저 실행하세요.`);
+      continue;
+    }
+
+    const evalData = JSON.parse(readFileSync(evalPath, 'utf8'));
+    const spec     = JSON.parse(readFileSync(specPath, 'utf8'));
+
+    const failedCards = (evalData.cards ?? []).filter((c) => !c.pass);
+    if (failedCards.length === 0) {
+      ui.ok(`[${channel}] 모든 카드 합격 — 재생성 불필요`);
+      continue;
+    }
+
+    spec.regenerationFeedback = {
+      evaluatedAt: evalData.evaluatedAt ?? null,
+      overallScore: evalData.overallScore ?? null,
+      cards: failedCards.map((c) => ({
+        index:    c.index,
+        role:     c.role,
+        score:    c.score,
+        feedback: c.feedback ?? [],
+        breakdown: Object.fromEntries(
+          Object.entries(c.breakdown ?? {})
+            .filter(([, v]) => v.score === 0)
+            .map(([k, v]) => [k, v.note])
+        ),
+      })),
+    };
+
+    writeFileSync(specPath, JSON.stringify(spec, null, 2), 'utf8');
+    ui.ok(`[${channel}] regenerationFeedback → slide-spec.json 에 주입 완료 (실패 카드: ${failedCards.map((c) => c.index).join(', ')})`);
+
+    console.log();
+    ui.info('이제 image-director 에이전트를 다시 인라인으로 실행하세요:');
+    ui.dim(`  harness/agents/image-director.md 를 읽고 ${specPath} 를 처리`);
+    ui.dim(`  이후: node harness/bin/generate.mjs ${slug} --channel=${channel} --finalize`);
+  }
 }
 
 function mergeHashtags(text, fromProvider, profile) {

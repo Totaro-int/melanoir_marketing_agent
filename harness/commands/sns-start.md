@@ -306,6 +306,62 @@ finalize 단계에서 각 변형의 PNG가 이미 캡처돼 있으므로, **Read
 
 `selectedVariant` 가 확정되면 `hook-variants.json` 에 저장되고, `card1-<ts>.png` 가 선택된 안으로 업데이트된다.
 
+### 4.6단계 — 카드 품질 평가 + 재생성 게이트 (inhouse-slides 전용)
+
+provider 가 `inhouse-slides` 일 때만 이 단계를 실행한다. 그 외 provider 는 건너뛴다.
+
+#### 평가 실행
+
+```bash
+node harness/bin/evaluate.mjs <slug>
+```
+
+채널별 `evalSpec.json` 이 생성된다. 이후 **`harness/agents/card-evaluator.md` 를 읽고 인라인으로** 실행한다:
+- evalSpec.json 의 각 카드 PNG 를 Read 도구로 읽어 10점 루브릭 채점
+- `eval.json` 에 결과 저장 (overallPass, per-card score, feedback)
+
+card-evaluator 완료 후 결과를 아래 형식으로 출력한다:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎯 카드 품질 평가 — <channel>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Card 1 (hook)   ████████░░  8/10  ✅ PASS
+  Card 2 (body)   ██████░░░░  6/10  ⚠ FAIL
+  Card 3 (cta)    █████████░  9/10  ✅ PASS
+
+  Overall: 7.67/10  ✅ 통과
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+#### 재생성 게이트
+
+모든 채널의 `overallPass` 가 `true` 이면 → 5단계 진행.
+
+하나라도 `overallPass: false` 인 채널이 있으면 아래 프롬프트를 표시한다:
+
+```
+일부 카드가 기준 미달입니다.
+  [R]     피드백 반영해서 재생성 (1회)
+  [Enter] 그대로 5단계 진행
+```
+
+- **Enter** → 5단계 진행 (품질 미달 상태로 계속).
+- **R** → 아래 재생성 루프 실행:
+  1. `node harness/bin/generate.mjs <slug> [--channel=<ch>] --regen`
+     - eval.json 피드백 → slide-spec.json 의 `regenerationFeedback` 에 주입
+  2. **`harness/agents/image-director.md` 를 인라인으로 재실행**
+     - `spec.regenerationFeedback` 를 읽고 실패 카드만 다시 생성
+     - 피드백 항목 전부 반영
+  3. `node harness/bin/generate.mjs <slug> [--channel=<ch>] --finalize`
+     - 재캡처 + draft 업데이트
+  4. card-evaluator 를 인라인으로 재실행 → 결과 재출력
+  5. 결과와 관계없이 5단계로 진행 (재생성은 1회만).
+
+> 재생성 루프는 최대 1회만 수행한다. 재시도 후에도 기준 미달이면 경고만 표시하고 계속 진행한다.
+
 ### 5단계 — 미리보기
 `node harness/bin/preview.mjs <slug>`
 
