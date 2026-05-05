@@ -182,6 +182,108 @@ SNS 피드에 올라갈 실제 글. **두괄식**으로 쓰고, 맥락과 스토
 
 > **단계 1-B 결과 활용**: `generateImages === true`이었다면, 단계 1-B에서 카드별로 기록한 PNG 경로(`bgImages`)를 아래 HTML 생성에 사용한다.
 
+#### 2-C. 카드 디자인 품질 기준 ← HTML 생성 전 반드시 읽을 것
+
+카드뉴스는 0.5초 안에 스크롤을 멈춰야 한다. 그러려면 **"알아볼 수 있는 디자인"이 아니라 "멈출 수밖에 없는 디자인"** 이어야 한다.
+
+---
+
+##### 타이포그래피 계층
+
+| 레이어 | 용도 | 크기 | weight | letter-spacing |
+|--------|------|------|--------|----------------|
+| Hero stat | 핵심 수치 · 키워드 | 96~130px | 300 | −3px~−5px |
+| Sub stat / label | 단위 · 부제 | 28~36px | 300~400 | −0.5px~−1px |
+| Eyebrow | 카테고리 라벨 | 16~20px | 500 | +0.1em (uppercase) |
+| Bullet text | 요점 | 26~32px | 400 | −0.3px |
+| Brand watermark | 우하단 | 20~24px | 400 | +0.04em, opacity 0.3~0.4 |
+
+- **Hero stat은 카드 면적의 30~45%를 시각적으로 차지해야 한다.** 작으면 임팩트 없음.
+- Hero stat의 숫자에는 accent 색상을 과감하게 사용한다 (전체가 아닌 변화 값에만 칠하거나, 화살표·단위에 accent 적용).
+- 동일 weight 연속 금지 — 반드시 300(헤드라인) vs 400~500(라벨) 대비를 만들어야 한다.
+
+---
+
+##### 배경 · 깊이감 레이어링
+
+배경이 단색 flat이면 카드가 종이 쪽지처럼 보인다. 최소한 다음 중 하나를 반드시 적용한다.
+
+**옵션 A — Radial glow (권장, 밝은 배경)**
+```css
+background:
+  radial-gradient(ellipse 70% 50% at 80% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+  radial-gradient(ellipse 50% 40% at 5% 90%, rgba(83,58,253,0.05) 0%, transparent 55%),
+  #F8FAFC;
+```
+
+**옵션 B — Dark atmospheric (어두운 배경)**
+```css
+background:
+  radial-gradient(ellipse 60% 55% at 50% 25%, rgba(59,130,246,0.18) 0%, transparent 60%),
+  radial-gradient(ellipse 45% 40% at 10% 80%, rgba(83,58,253,0.12) 0%, transparent 45%),
+  #0F172A;
+```
+
+**옵션 C — Mesh gradient (프리미엄)**
+```css
+background:
+  radial-gradient(at 0% 0%, rgba(59,130,246,0.12) 0, transparent 50%),
+  radial-gradient(at 100% 0%, rgba(83,58,253,0.10) 0, transparent 50%),
+  radial-gradient(at 100% 100%, rgba(59,130,246,0.08) 0, transparent 50%),
+  #F8FAFC;
+```
+
+---
+
+##### 장식 요소 — 최소 2개 반드시 포함
+
+아래 목록에서 카드 콘텐츠와 어울리는 것 2개 이상 선택해 적용한다.
+
+1. **Accent bar** (상단 또는 좌측): 4px 높이, `linear-gradient(90deg, accent, purple)`, `z-index:10`
+2. **Divider** (섹션 구분): 44~52px × 2px, accent 색, opacity 0.3~0.5
+3. **Eyebrow label**: 대문자 16~20px 카테고리 태그 (NEW / BEFORE·AFTER / 숫자로 말하다 등)
+4. **Stat card / badge**: 흰 배경 + `border: 1px solid #e5edf5` + `box-shadow: 0 4px 16px rgba(50,50,93,0.12), 0 1px 6px rgba(0,0,0,0.07)` — 수치를 card UI처럼 감싸기
+5. **Quote block**: `border-left: 3px solid accent` + 좌측 패딩 + 이탤릭 텍스트 — 고객 인용구에 사용
+6. **Gradient text**: Hero stat에 `background: linear-gradient(135deg, accent 0%, purple 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent`
+7. **Noise / grain overlay**: `opacity: 0.025` svg base64 noise — 고급스러운 텍스처감
+8. **Large ghost number**: Hero stat을 `opacity:0.04~0.06`으로 배경에 초대형(200~260px)으로 깔기
+9. **Thin border card**: 전체 카드에 `border: 1px solid rgba(accent, 0.15)` + `border-radius: 0` — 깔끔한 프레임
+10. **Bullet dots**: 8px 원형 dot + accent 색, opacity 0.6~0.8 — 불릿 포인트 디자인
+
+---
+
+##### 색상 활용 패턴
+
+- **밝은 배경 카드**: body = `#F8FAFC` 또는 `#ffffff`. Hero stat = `--brand-primary`. Accent 부분(화살표·변화값·dot) = `--brand-accent`. 배경에 glow 옵션 A/C 적용.
+- **어두운 배경 카드**: body = `--brand-primary` (`#0F172A`). Hero stat 전체 = `#ffffff`. 변화 강조 = `--brand-accent`. 배경에 glow 옵션 B 적용. 본문 텍스트 = `rgba(255,255,255,0.75)`.
+- **Accent 색(파란색)은 최대 3곳**에만 집중 사용 — 남발하면 임팩트 소멸.
+- 텍스트 계층: `#0F172A` (hero) → `#3d526b` (body) → `#64748d` (caption) — 반드시 3단계 이상.
+
+---
+
+##### 채널별 디자인 톤
+
+| 채널 | 배경 | 기조 | 필수 요소 |
+|------|------|------|-----------|
+| **X** | 밝은 배경 (#F8FAFC) | 극도 미니멀. 수치 하나가 전부. | Hero stat 극대화(120px+), eyebrow, divider |
+| **Threads** | 밝은 배경 | Editorial 클린. 여백이 풍부. | Accent bar, bullet dots, eyebrow, glow A |
+| **Instagram** | 어두운 배경 (#0F172A) | 감성·임팩트. 수치가 빛나야 함. | Glow B (강하게), Before→After 구분, gradient text 검토 |
+| **LinkedIn** | 밝은 배경 + 흰 카드 | 구조적·신뢰감. 데이터 중심. | Quote block, stat card badge, divider, glow A 약하게 |
+
+---
+
+##### 안티패턴 — 절대 금지
+
+- ❌ 배경이 단색 flat + 장식 요소 0개 (종이 쪽지 수준)
+- ❌ Hero stat이 60px 이하 (임팩트 없음)
+- ❌ 모든 텍스트가 같은 weight·같은 크기 (계층 없음)
+- ❌ 텍스트가 카드 면적의 70% 이상 차지 (숨막히는 레이아웃)
+- ❌ accent 색 미사용 (브랜드 없는 카드)
+- ❌ padding이 상하좌우 동일 (boring grid, 에디토리얼 느낌 없음)
+- ❌ 해시태그를 카드 이미지 중앙에 배치 (우하단 또는 좌하단에 small text로만)
+
+---
+
 #### 3. 카드별 HTML 생성
 
 각 카드마다 완성된 HTML 파일을 `spec.cards[i].htmlPath` 경로에 저장한다.
@@ -195,7 +297,8 @@ SNS 피드에 올라갈 실제 글. **두괄식**으로 쓰고, 맥락과 스토
 - `imageContext.visual.colors.background` → body 배경색
 - `imageContext.visual.colors.primary` → 주요 텍스트 색
 - `imageContext.visual.colors.accent` → 강조 색
-- **cardVisual의 수치/키워드는 크고 굵게** (최소 60px 이상), 요점 bullet은 28~36px
+- **2-C 디자인 품질 기준을 반드시 적용한다** — 배경 glow, 장식 요소 2개 이상, Hero stat 크기, 채널 톤 준수
+- **cardVisual의 수치/키워드는 크고 굵게** (최소 96px 이상), 요점 bullet은 26~32px
 - 카드는 **여백이 콘텐츠다** — 텍스트가 카드 면적의 50% 이하를 차지하도록
 - **배경 이미지 삽입 우선순위**:
   1. `generateImages === true` + 1-B에서 수집한 `bgImages[i].pngPath` 가 있으면: **full-bleed 배경**으로 삽입
