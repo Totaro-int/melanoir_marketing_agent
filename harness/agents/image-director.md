@@ -122,31 +122,71 @@ cat <specPath>
    - `gen-image.mjs`가 exit 1 → 해당 카드는 이미지 없이 진행 (배경 단색 유지)
    - `FAL_KEY not set` 오류 → 전체 중단 후 출력: "FAL_KEY가 없습니다. .env.local에 FAL_KEY를 추가하거나 --with-images를 제거하세요."
 
-#### 2. 카드별 카피 생성
+#### 2. 카드별 콘텐츠 생성 — 카드 비주얼과 SNS 글을 반드시 분리한다
 
-각 `spec.cards[i]` 에 대해, `spec.copyContext` 를 바탕으로 카피를 작성한다.
+카드 이미지에 들어갈 내용과 SNS에 올라갈 글은 **목적이 다르다**. 같은 텍스트를 쓰지 않는다.
 
-**카피 작성 규칙:**
-- `copyContext.profile.tone.voiceNotes` 가 있으면 그 어조로
-- `copyContext.profile.writing.emojiUsage` 에 따라 이모지 사용 (필드 없으면 `minimal` 처리):
-  - `none` → 이모지 없음
-  - `minimal` → 강조 1~2개만
-  - `moderate` → 자연스럽게
-- 첫 줄 80자(한글 기준) 이내
-- `copyContext.profile.banned.words` / `banned.claims` 위반 금지
-- 채널이 `linkedin`이면 tone을 한 단계 professional로
-- `role`별 지침:
-  - `hook`: 오버사이즈 임팩트 한 줄. 스크롤 멈춤.
-  - `body`: 핵심 내용 1가지. 구체적 수치나 사례.
-  - `cta`: 행동 유도 + 브랜드 언급.
-  - `single`: 주제를 한눈에 전달.
-- 해시태그는 카피 끝에 줄바꿈 후 (채널 한도 준수)
+| 구분 | 목적 | 형식 |
+|------|------|------|
+| **cardVisual** | 한눈에 핵심을 전달하는 시각적 요약 | 임팩트 있는 수치·키워드·3줄 이내 요점 |
+| **postCopy** | 맥락·스토리·CTA가 담긴 SNS 발행 글 | 두괄식, 자세한 내러티브, 해시태그 포함 |
+
+---
+
+##### 2-A. cardVisual 작성 — 카드 이미지용 시각 요약
+
+카드 이미지에 렌더링될 내용. **읽는 글이 아니라 보는 글**이다.
+
+규칙:
+- **임팩트 수치 또는 핵심 키워드 1개**를 크게 배치 (예: `5일 → 1.8일`, `연동 1번으로`)
+- **요점 2~3줄**: 한 줄당 15자 이내, 명사형 또는 짧은 동사형 종결
+- 문장 형태의 설명, 접속사, "~했습니다" 금지 — 카드는 스캔하는 것
+- `banned.words / claims` 위반 금지
+- `suggestedKeywords.keywords` 가 있으면 핵심 수치·단어로 우선 사용
+
+`role`별 cardVisual 지침:
+- `hook`: 임팩트 수치 1개 + 한 줄 단정. 카드 면적의 60% 이상이 여백.
+- `body`: 소제목 + 요점 2~3개 bullet. 구조적이고 깔끔.
+- `cta`: 브랜드 + 행동 문구 1줄. 컬러 강조.
+- `single`: 핵심 수치 또는 한 줄 요약 + 부제 2줄 이내.
+
+예시 (신기능 소개, single):
+```
+headline: 5일 → 1.8일
+sub: 정산 주기 자동 단축
+bullets:
+  - 여러 PG 정산 자동 통합
+  - 단일 대시보드 실시간 확인
+  - 별도 개발 불필요
+```
+
+---
+
+##### 2-B. postCopy 작성 — SNS 발행 글
+
+SNS 피드에 올라갈 실제 글. **두괄식**으로 쓰고, 맥락과 스토리를 담는다.
+
+규칙:
+- **첫 문장 = 결론 또는 가장 구체적인 숫자/사실** (배경 설명, 인사 금지)
+- 이어지는 문장: 왜 그게 의미 있는지, 어떤 문제를 해결하는지 구체적으로
+- 자연스러운 문장 흐름 — 단문 나열 금지, 문단처럼 읽히게
+- 종결어미 다양화 — "~습니다"를 3회 이상 연속 반복 금지
+- 채널별 길이 준수:
+  - Threads: 250~450자
+  - LinkedIn: 600~1200자 (문단 3~5개)
+  - Instagram: 150~300자
+  - X: 100자 이내
+- `suggestedKeywords.angle` 이 있으면 그 관점을 카피의 포커스로
+- `banned.words / claims` 위반 금지
+- 해시태그는 글 끝에 빈 줄 후 (채널 한도 준수)
 
 > **단계 1-B 결과 활용**: `generateImages === true`이었다면, 단계 1-B에서 카드별로 기록한 PNG 경로(`bgImages`)를 아래 HTML 생성에 사용한다.
 
 #### 3. 카드별 HTML 생성
 
 각 카드마다 완성된 HTML 파일을 `spec.cards[i].htmlPath` 경로에 저장한다.
+
+**HTML에는 cardVisual 내용만 사용한다. postCopy를 HTML에 넣지 않는다.**
 
 **HTML 요구사항:**
 - `<html>~</html>` 완전한 단일 파일. 외부 URL 참조 금지.
@@ -155,7 +195,8 @@ cat <specPath>
 - `imageContext.visual.colors.background` → body 배경색
 - `imageContext.visual.colors.primary` → 주요 텍스트 색
 - `imageContext.visual.colors.accent` → 강조 색
-- 카피 텍스트 반드시 포함 (읽기 쉬운 크기, 한글 기준 최소 28px)
+- **cardVisual의 수치/키워드는 크고 굵게** (최소 60px 이상), 요점 bullet은 28~36px
+- 카드는 **여백이 콘텐츠다** — 텍스트가 카드 면적의 50% 이하를 차지하도록
 - **배경 이미지 삽입 우선순위**:
   1. `generateImages === true` + 1-B에서 수집한 `bgImages[i].pngPath` 가 있으면: **full-bleed 배경**으로 삽입
   2. `imageContext.sourceMaterials.images[i]` 가 있으면: 해당 경로 파일을 base64로 읽어 **full-bleed 배경**으로 삽입
@@ -171,7 +212,7 @@ cat <specPath>
     opacity: 0.20; z-index: 0;
   "></div>
   <div style="position: relative; z-index: 1; ...">
-    <!-- 텍스트 -->
+    <!-- cardVisual 텍스트 -->
   </div>
   ```
   opacity: 0.15~0.25. 텍스트 가독성이 최우선.
@@ -186,15 +227,15 @@ cat <specPath>
      background-image: url('data:image/png;base64,<여기에 base64 문자열 붙여넣기>');
      ```
   경로는 `bgImages[i].pngPath` 또는 `imageContext.sourceMaterials.images[i]` 절대 경로를 사용한다.
-- 우하단에 브랜드명 텍스트 (24px, opacity 0.6)
+- 우하단에 브랜드명 텍스트 (24px, opacity 0.5)
 - 애니메이션 없음. 인쇄 품질.
 - **HTML 코드만** 파일에 쓴다. 설명·마크다운 펜스 없음.
 
 `role`별 레이아웃:
-- `hook`: 헤드라인이 화면 70% 차지. 굵고 크게.
-- `body`: 상단 작은 키워드 + 중단 본문 + 하단 여백.
-- `cta`: 브랜드 컬러 배경. 행동 유도 문구 중앙 크게.
-- `single`: 헤드라인 + 서브텍스트 + 여백. 균형 있게.
+- `hook`: 임팩트 수치가 화면 중앙 크게. 여백 충분히. 부제 작게 아래.
+- `body`: 소제목 상단 + bullet 리스트 중앙 정렬. 구조적.
+- `cta`: 브랜드 컬러 배경 또는 강조색 배경. 행동 문구 중앙 크게.
+- `single`: 핵심 수치/키워드 크게 + 부제 2줄 + 넓은 여백. 깔끔하게.
 
 HTML 파일 저장:
 ```
@@ -203,15 +244,19 @@ Write(path=spec.cards[i].htmlPath, content=<생성된 HTML>)
 
 #### 4. agent-output.json 저장
 
-모든 카드 처리 후, `spec.outputDir/agent-output.json` 에 저장:
+모든 카드 처리 후, `spec.outputDir/agent-output.json` 에 저장.
+
+**`text` 필드에는 postCopy(SNS 발행 글)를 저장한다. cardVisual은 HTML에만 반영되고 여기에는 저장하지 않는다.**
 
 ```json
 {
   "ts": "<spec.ts>",
   "cards": [
-    { "role": "hook",   "text": "<카드1 카피>", "hashtags": ["#tag1"] },
-    { "role": "body",   "text": "<카드2 카피>", "hashtags": [] },
-    { "role": "cta",    "text": "<카드3 카피>", "hashtags": [] }
+    {
+      "role": "single",
+      "text": "<postCopy 전문 — 두괄식, 맥락+스토리+해시태그>",
+      "hashtags": ["#tag1", "#tag2"]
+    }
   ]
 }
 ```
