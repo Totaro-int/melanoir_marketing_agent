@@ -4,6 +4,10 @@
 
 토타로(Totaro) 사내·고객사 전용. Claude Code 위에서 동작합니다.
 
+> **⚠️ Claude 데스크탑 앱(Mac/Windows)·웹(claude.ai)에서는 동작하지 않습니다.**
+> 로컬 파일 접근, 터미널 실행, 커스텀 스킬(`/sns-start` 등)은 **Claude Code CLI 전용** 기능입니다.
+> 반드시 터미널에서 `claude` 명령어로 진입해 사용하세요.
+
 ---
 
 ## 무엇을 해주나요?
