@@ -16,6 +16,8 @@ import { resolve } from 'node:path';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { ROOT, readYaml, nowKstIso, nowKstFilename, ui } from './_lib.mjs';
 
+const MAX_FEED_BYTES = 5 * 1024 * 1024; // 5MB — 정상 RSS/Atom 피드는 보통 100KB 미만.
+
 const argv = process.argv.slice(2);
 const onlySource = argv.find((a) => a.startsWith('--source='))?.split('=')[1];
 const jsonOut = argv.includes('--json');
@@ -101,8 +103,32 @@ async function rssFetch(src) {
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const xml = await res.text();
+  // Content-Length 가 명시되어 있으면 즉시 거부 (대부분 케이스)
+  const declared = Number(res.headers.get('content-length') || 0);
+  if (declared && declared > MAX_FEED_BYTES) {
+    throw new Error(`response too large: ${declared} bytes > ${MAX_FEED_BYTES}`);
+  }
+  // chunked 등 헤더 없는 케이스: 스트림 누적하면서 임계값 초과 시 abort.
+  const xml = await readBounded(res, MAX_FEED_BYTES);
   return parseRss(xml);
+}
+
+async function readBounded(res, maxBytes) {
+  const reader = res.body?.getReader();
+  if (!reader) return res.text(); // 스트림 미지원 환경 fallback
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > maxBytes) {
+      reader.cancel();
+      throw new Error(`response exceeds ${maxBytes} bytes (streamed)`);
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder('utf-8').decode(Buffer.concat(chunks));
 }
 
 // 의존성 없는 미니 RSS/Atom 파서.

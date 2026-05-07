@@ -83,14 +83,22 @@ try {
   } else if (channel === 'linkedin') {
     result = await publishLinkedin(page, draft, cardPaths, { dryRun, autoClick });
   }
+  // gate() 에서 사용자가 N 을 누른 경우 publish 함수가 cancelled=true 로 반환.
+  // 이 케이스는 brief.status 를 건드리지 않고 (approved 그대로 유지) result.json 만 기록.
+  const cancelled = result?.cancelled === true;
   saveResult(dir, channel, brief, briefPath, {
-    ok: true,
+    ok: !cancelled,
     via: 'browser',
     dryRun,
+    cancelled,
     url: result?.url ?? null,
     publishedAt: nowKstIso(),
-  }, /* failed */ false, dryRun);
-  ui.ok(`[${channel}] ${dryRun ? 'dry-run 완료' : '발행 완료'}${result?.url ? ' → ' + result.url : ''}`);
+  }, /* failed */ false, /* skipStatusPatch */ dryRun || cancelled);
+  if (cancelled) {
+    ui.warn(`[${channel}] 사용자 취소 — status 'approved' 유지`);
+  } else {
+    ui.ok(`[${channel}] ${dryRun ? 'dry-run 완료' : '발행 완료'}${result?.url ? ' → ' + result.url : ''}`);
+  }
 } catch (e) {
   ui.err(`[${channel}] 실패: ${e.message}`);
   saveResult(dir, channel, brief, briefPath, {
@@ -124,9 +132,9 @@ function collectCardPaths(draftPath, campaignDir, channel) {
   return matches.sort((a, b) => a.idx - b.idx).map((m) => m.path);
 }
 
-function saveResult(campaignDir, channel, brief, briefPath, result, failed, dry) {
+function saveResult(campaignDir, channel, brief, briefPath, result, failed, skipStatusPatch) {
   writeYaml(resolve(campaignDir, channel, 'result.json'), result);
-  if (!dry) brief.status[channel] = failed ? 'failed' : 'published';
+  if (!skipStatusPatch) brief.status[channel] = failed ? 'failed' : 'published';
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
 }
@@ -188,7 +196,7 @@ async function publishThreads(page, draft, cardPaths, opts) {
 
   ui.step(5, 5, '게시 직전 멈춤');
   const decision = await gate(page, 'Threads 게시');
-  if (decision !== 'Y') return { url: null };
+  if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // "Post" 버튼 클릭
   const postBtn = page.getByRole('button', { name: /^Post$|^게시$/i }).last();
@@ -245,7 +253,7 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '게시 직전 멈춤');
   const decision = await gate(page, 'LinkedIn 게시');
-  if (decision !== 'Y') return { url: null };
+  if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // 컴포저의 최종 "Post" 버튼 — aria-label 또는 footer 영역
   const postBtn = page.locator(
