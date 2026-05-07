@@ -48,6 +48,20 @@ properties:
     description: "needs_attention 사유 (자동 발행 실패 등)"
     additionalProperties:
       type: string
+  inspection:
+    type: object
+    description: "가이드라인 재검수 결과 (채널별). inspect-guidelines.mjs 가 채움."
+    additionalProperties:
+      type: object
+      required: [ok, ts]
+      properties:
+        ok:             { type: boolean }
+        score:          { type: [integer, "null"] }
+        max:            { type: [integer, "null"] }
+        ts:             { type: string, format: date-time }
+        blocking:       { type: array, items: { type: string } }
+        needsLlmReview: { type: boolean }
+        llmRanAt:       { type: [string, "null"], format: date-time }
   sourceMaterials:
     type: [object, "null"]
     description: "캠페인 소재 — 슬라이드 생성 시 참조"

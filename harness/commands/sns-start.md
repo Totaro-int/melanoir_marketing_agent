@@ -128,11 +128,66 @@ node harness/bin/schedule-plan.mjs --topic="<주제>" --channels=<...> \
     --frequency=<N> --time=<HH:MM> [--titles="..."] [--no-auto-publish] \
     --slugs="<slug1>,<slug2>,..." --cadence=<...> --goal=<...>
   ```
+
+#### 3-S.1단계 — 가이드라인 재검수 (deterministic + 의미론)
+
+`--no-generate` 가 아니어서 pre-generate 가 됐을 때만 실행. draft 가 없으면 이 단계는 건너뛴다.
+
+각 (slug × channel) 조합마다:
+
+1. deterministic 검수 실행
+   ```
+   node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --json
+   ```
+   결과를 파싱해 `ok`/`blocking`/`needsLlmReview` 를 확인한다.
+
+2. `needsLlmReview === true` 인 경우 LLM 의미론 검수도 실행한다 (시리즈는 자동 발행될 예정이므로 한 번 더 검증).
+   ```
+   node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --spec
+   ```
+   → `guideline-spec-<ts>.json` 생성됨.
+   `harness/agents/guideline-reviewer.md` 서브에이전트를 호출해 spec 을 처리하게 한 뒤,
+   ```
+   node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --merge-llm --json
+   ```
+   로 결과를 brief 에 머지한다.
+
+3. 결과 표시 (시리즈 전체 1표 형식):
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  📋 시리즈 가이드라인 재검수
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  [1/3] 2026-05-08-신제품-A   threads ✅ 8/8   linkedin ✅ 8/8
+  [2/3] 2026-05-10-신제품-B   threads ❌ 6/8 (key_message)   linkedin ✅ 8/8
+  [3/3] 2026-05-13-신제품-C   threads ✅ 8/8   linkedin ⚠ 7/8 +LLM(voice_tone)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+4. 미준수 항목이 하나라도 있으면 사용자에게 묻는다:
+
+```
+일부 항목이 가이드라인을 못 맞췄습니다.
+  [F] 미준수 항목만 재생성 (실패 채널의 generate 다시)
+  [E] /sns-edit 로 직접 수정
+  [C] 그대로 두기 (워커가 발행 시점에 needs_attention 으로 차단)
+```
+
+- **F** → 실패 채널마다 `node harness/bin/generate.mjs <slug> --channel=<ch>` 후 다시 검수. 1회만.
+- **E** → 명령 종료. 사용자가 `/sns-edit` 로 처리.
+- **C** → 명령 종료. 워커가 자동 발행 시점에 다시 검수해서 미준수면 자동 발행을 차단(needs_attention).
+
+모두 통과하면 자동으로 다음 단계.
+
+#### 3-S.2단계 — 워커 안내
+
 - 칸반 1회 표시: `node harness/bin/board.mjs` (전체 캠페인 보드).
 - 워커 안내 출력:
   ```
   ✅ 시리즈 N건 예약 완료
-    · 발행 시각 도달 시 자동 처리됩니다
+    · 발행 시각 도달 시 자동 처리됩니다 (워커가 한 번 더 가이드라인 재검수 후 발행)
     · 자동 워커 설치: node harness/bin/install-cron.mjs install
     · 수정/취소:    /sns-edit
   ```

@@ -42,6 +42,19 @@ for (const ch of channels) {
     const c = f.severity === 'block' ? pc.red : f.severity === 'warn' ? pc.yellow : pc.dim;
     console.log('  ' + c(`${f.severity} ${f.code}${f.detail ? ' — ' + f.detail : ''}`));
   }
+  // 가이드라인 재검수 (있으면 표시)
+  const insp = brief.inspection?.[ch];
+  if (insp) {
+    const ic = insp.ok ? pc.green : pc.red;
+    const llm = insp.llmRanAt ? ' +LLM' : '';
+    console.log(ic(`guidelines: ${insp.ok ? 'pass' : 'fail'}  ·  ${insp.score}/${insp.max}${llm}`));
+    if (insp.blocking?.length) {
+      console.log('  ' + pc.red(`blocking: ${insp.blocking.join(', ')}`));
+    }
+    if (insp.needsLlmReview && !insp.llmRanAt) {
+      console.log('  ' + pc.dim(`(의미론 항목 미검증 — /sns-edit 에서 LLM 재검수 가능)`));
+    }
+  }
   console.log();
 }
 

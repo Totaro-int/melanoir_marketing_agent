@@ -68,6 +68,33 @@ for (const slug of slugs) {
       continue;
     }
 
+    // 가이드라인 재검수 — 사용자가 슬롯/브리프에 정의한 가이드라인 대비 draft 정합성.
+    // deterministic 만 실행 (LLM 의미론 검증은 사람이 /sns-edit 에서 명시적 트리거).
+    // 실패 시 자동 발행 차단 → needs_attention.
+    if (status === 'scheduled' || status === 'approved') {
+      if (dryRun) {
+        results.push({ slug, channel: ch, action: 'would-inspect-guidelines', dueAt: at });
+      } else {
+        const ig = spawnSync(process.execPath, [
+          resolve(here, 'inspect-guidelines.mjs'), slug, `--channel=${ch}`, '--json',
+        ], { encoding: 'utf8', env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' } });
+        let report = null;
+        try { report = JSON.parse(ig.stdout || '{}'); } catch {}
+        if (!report || report.ok !== true) {
+          const codes = (report?.blocking ?? []).join(', ') || (report?.error ?? 'inspect 실패');
+          // brief가 inspect-guidelines 실행으로 갱신됐을 수 있어 reload.
+          try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch {}
+          markAttention(brief, ch, `가이드라인 미준수: ${codes}`);
+          mutated = true;
+          results.push({ slug, channel: ch, action: 'attention', reason: `guidelines: ${codes}` });
+          log(`⚠️  ${slug} [${ch}] 가이드라인 미준수 → needs_attention (${codes})`);
+          continue;
+        }
+        // 통과 — brief 가 inspect 로 갱신됐으므로 reload (다음 채널 처리 위해).
+        try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch {}
+      }
+    }
+
     // auto-publish path: status가 scheduled면 먼저 approved로 올려야 publish가 받음.
     // 단, 가드 통과 여부는 approve.mjs 가 검사. 실패하면 needs_attention.
     if (status === 'scheduled') {
