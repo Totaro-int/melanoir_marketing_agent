@@ -12,10 +12,12 @@ import { adapter as mastodon } from './adapters/mastodon.mjs';
 import { adapter as pinterest } from './adapters/pinterest.mjs';
 import { adapter as tiktok } from './adapters/tiktok.mjs';
 import { adapter as youtube } from './adapters/youtube.mjs';
+import { adapter as naverBlog } from './adapters/naver-blog.mjs';
 
 const ADAPTERS = {
   threads, linkedin, instagram, facebook, x,
   reddit, bluesky, mastodon, pinterest, tiktok, youtube,
+  'naver-blog': naverBlog,
 };
 
 // 채널별 메타: onboard / doctor 가 사용자에게 보여주는 라벨, 미디어 요구.
@@ -31,6 +33,7 @@ export const CHANNEL_META = {
   pinterest: { label: 'Pinterest',   media: 'image (1장)',         auth: 'OAuth2 (accessToken+boardId)' },
   tiktok:    { label: 'TikTok',      media: '영상 전용 (.mp4 등)', auth: 'OAuth2 (accessToken+openId)' },
   youtube:   { label: 'YouTube',     media: '영상 전용 (.mp4 등)', auth: 'OAuth2 (accessToken)' },
+  'naver-blog': { label: 'Naver Blog', media: 'text(blog post) — 이미지 선택, 카드뉴스 X', auth: 'OAuth2 (accessToken + blogId)' },
 };
 
 export function knownChannels() {

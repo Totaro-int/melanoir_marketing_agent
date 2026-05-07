@@ -2,6 +2,7 @@
   { "id": "threads",   "status": "reference", "path": "harness/channels/threads" },
   { "id": "linkedin",  "status": "reference", "path": "harness/channels/linkedin" },
   { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
+  { "id": "naver-blog","status": "active",    "path": "harness/channels/naver-blog", "kind": "blog", "skipImageDirector": true },
   { "id": "facebook",  "status": "disabled",  "path": "harness/channels/facebook" },
   { "id": "x",         "status": "disabled",  "path": "harness/channels/x" },
   { "id": "reddit",    "status": "disabled",  "path": "harness/channels/reddit" },
