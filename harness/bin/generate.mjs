@@ -304,6 +304,8 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
   console.log();
   ui.info('⚡ inhouse-slides: image-director 에이전트가 각 채널의 slide-spec.json 을 처리해야 합니다.');
+  // Resolve hookVariants from brief (fallback to 1) so the message is optional and never throws.
+  const hookVariants = brief.hookVariants ?? brief.hook_variants ?? 1;
   if (hookVariants > 1) {
     ui.info(`📌 hook 카드 ${hookVariants}종 변형 생성 예정 — finalize 전 --select-variant=N 으로 원하는 안 선택 가능 (미선택 시 V1 기본 적용)`);
   }
