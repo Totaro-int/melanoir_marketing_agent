@@ -1,0 +1,37 @@
+version: 1
+slug: 2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼
+topic: TOTARO COS 정식 런칭 — K-뷰티 매칭 플랫폼
+goal: launch
+channels:
+  - linkedin
+  - threads
+  - instagram
+  - naver-blog
+cadence: series-5
+keyMessage: 조건을 말하면 3초 안에 검증된 K-뷰티 제조사를 매칭합니다
+contentPoints:
+  - 1만 5천여 한국 화장품 제조사 DB
+  - HACCP·ISO·CGMP 인증 자동 검증
+  - 평균 매칭 시간 3초
+  - 한국어·영어·일본어 3개 언어 지원
+  - MOQ·리드타임·인증 조건 필터링
+  - AI 자연어 검색 (Claude·ChatGPT MCP 호환)
+angle: null
+notes: null
+sourceMaterials:
+  images: []
+  texts: []
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude: []
+  mustExclude: []
+status:
+  linkedin: approved
+  threads: approved
+  instagram: drafting
+  naver-blog: preview
+meta:
+  createdAt: 2026-05-06T22:28:27.011+09:00
+  updatedAt: 2026-05-07T17:51:04.475+09:00
+  profileBrand: TOTARO
