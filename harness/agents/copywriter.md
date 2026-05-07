@@ -265,6 +265,56 @@ PG마다 정산일이 달라서 현금흐름을 예측하기 어렵다는 얘기
 
 ---
 
+## Blog Mode (kind=blog 채널 — naver-blog / tistory / brunch)
+
+Blog Mode 채널은 카드뉴스 X, 본문 markdown에 이미지 4~5장 인라인. copywriter는 **본문에 이미지 슬롯 placeholder 명시 + 슬롯 의도(intent)만 정의**. 디테일 prompt 조립은 image-director가 자동 처리.
+
+### 작성 절차 (Blog Mode 추가 단계)
+
+1. 본문 작성 시 글 종류(B1~B5) 따른 슬롯 위치에 markdown placeholder 삽입:
+   ```markdown
+   ![{한글 ALT}](IMAGE_PLACEHOLDER_N "{slot intent — 한 줄 한국어}")
+   ```
+
+2. `cards[0].imageSlots` 배열에 N개 슬롯 정의 (intent 만으로 OK):
+   ```json
+   {
+     "imageSlots": [
+       {
+         "index": 1,
+         "placeholder": "IMAGE_PLACEHOLDER_1",
+         "position": "header",
+         "intent": "K-뷰티 OEM 매칭 플랫폼 헤더 컨셉",
+         "alt": "한국 화장품 OEM 매칭 플랫폼 컨셉 이미지"
+       },
+       { "index": 2, "position": "problem", "intent": "흩어진 정보 메타포", "alt": "..." },
+       { "index": 3, "position": "solution", "intent": "1만 5천 정규화 데이터 시각", "alt": "..." },
+       { "index": 4, "position": "feature", "intent": "AI 자연어 검색 인터페이스", "alt": "..." },
+       { "index": 5, "position": "cta", "intent": "K-뷰티 새로운 시작 컨셉", "alt": "..." }
+     ]
+   }
+   ```
+
+3. **prompt 필드는 비워두기** (또는 generic 한 줄만) — image-director 가 brand DNA × position × medium 6-component 공식으로 자동 조립.
+   - `position` 가능 값: `header / problem / solution / feature / case / cta`
+   - `intent`: 한국어 한 줄, "이 슬롯이 뭘 표현해야 하는지"
+
+### 슬롯 수 권장 (글 종류별)
+
+`harness/channels/blog/strategy.md` 의 "이미지 슬롯 가이드" 표 참조:
+- B1 가이드형 4~5장 / B2 케이스 3~4장 / B3 비교 3~5장 / B4 인사이트 2~3장 / B5 제품 4~5장
+- 헤더 슬롯은 모든 글 종류에서 **필수**
+
+### 영문 prompt 작성 권한 (선택)
+
+copywriter가 영문 prompt를 직접 적고 싶으면 imageSlots[].prompt에 명시 가능. 단:
+- generic ("abstract minimal") prompt 작성 X — image-director 6-component 공식이 더 디테일
+- copywriter prompt 가 있으면 image-director 가 그 위에 brand DNA 키워드를 **추가 보강** (덮어쓰지 않음)
+
+자세한 6-component 공식은 `harness/agents/image-director.md` 의 "Brand DNA → Prompt 조립 공식" 섹션 참조.
+
+---
+
 ## PESONA 공식 (모든 카피의 골격)
 
 > 출처: 간다 마사노리·기누타 준이치 《무조건 팔리는 카피 단어장》(동양북스 2025)

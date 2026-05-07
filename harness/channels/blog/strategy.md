@@ -106,6 +106,24 @@
 7. **비율**: portrait_4_3 (블로그 본문 적합) 또는 landscape_4_3 (헤더 16:9 같은)
 8. **모델**: `fal-ai/fast-sdxl` (작동 확인) 또는 `fal-ai/sana` (개발 환경 권한 확인 후)
 
+### Brand DNA × Slot Position × Medium 디테일 prompt 조립 공식
+
+generic prompt로는 회사별 차별이 안 됨. 6-component 자동 조립:
+
+```
+prompt = INDUSTRY MOTIF (profile.industry → 시각 모티프)
+       + AESTHETIC (profile.imageStyle.aestheticDirection → 스타일 키워드)
+       + BRAND COLORS (profile.visual.colors → hex 명시)
+       + MOOD (moodWords 또는 tone.preset → 형용사)
+       + SLOT COMPOSITION (slot.position → header/problem/solution/feature/CTA 컨벤션)
+       + NEGATIVE (매체별 제약)
+```
+
+자세한 매핑 표 (industry × aesthetic × mood × position → 키워드)와 cos.totaro 적용 예시는  
+`harness/agents/image-director.md` 의 **"Brand DNA → Prompt 조립 공식"** 섹션 참조.
+
+이 공식에 따라 image-director sub-agent가 모든 slot prompt를 자동 디테일화함 — copywriter가 generic intent만 적어도 OK.
+
 ### 이미지 안티패턴
 
 - ❌ 이미지 안에 글자/로고/UI 스크린샷
