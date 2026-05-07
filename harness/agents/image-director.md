@@ -428,10 +428,15 @@ background:
 
 | 채널 | 배경 | 기조 | 필수 요소 |
 |------|------|------|-----------|
-| **X** | 밝은 배경 (#F8FAFC) | 극도 미니멀. 수치 하나가 전부. | Hero stat 극대화(120px+), eyebrow, divider |
-| **Threads** | 밝은 배경 | Editorial 클린. 여백이 풍부. | Accent bar, bullet dots, eyebrow, glow A |
-| **Instagram** | **풀-블리드 사진/그라디언트 우선** (단색 X) | **한국 카드뉴스 톤** — 카테고리 pill 필수, bold 헤드라인 (weight 800+), 사진 또는 그라디언트 배경, brand mark 우상/우하단 일관. 단색 + 작은 텍스트 조합은 절대 금지 | 카테고리 pill ("📌/🌿/📊" 류), 풀-블리드 사진+overlay 또는 풀 그라디언트, bold Korean typography, brand mark 작게, 깊이감을 위한 사진 컷아웃 또는 카드 레이어 |
-| **LinkedIn** | 밝은 배경 + 흰 카드 | 구조적·신뢰감. 데이터 중심. | Quote block, stat card badge, divider, glow A 약하게 |
+| **Instagram** | **풀-블리드 사진/그라디언트 우선** (단색 X) | **한국 카드뉴스 톤** — 카테고리 pill 필수, bold 헤드라인 (weight 800+), 사진 또는 그라디언트 배경, brand mark 우상/우하단 일관. 단색 + 작은 텍스트 조합 금지 | 카테고리 pill ("📌/🌿/📊"), 풀-블리드 사진+overlay 또는 풀 그라디언트, bold Korean typography, brand mark 작게, 깊이감 컷아웃 또는 카드 레이어 |
+| **Threads** | 밝은 배경 (#F8FAFC) | **Editorial clean** — 텍스트 우선 매체, glow 약함, 여백 풍부 | Accent bar + eyebrow text, 작은 brand mark 우하단, bullet dots, 필요 시 glow A 매우 약하게. Instagram 임팩트형 X |
+| **LinkedIn** | 밝은 배경 + 흰 카드 (1:1 square) | **B2B 구조적·데이터 중심** — 캐러셀 PDF 우선 | Quote block / Stat card badge / hairline divider, single brand accent, hero 80~120px (절제), 인물 자제. PDF 5~10장 캐러셀 |
+| **Facebook** | 밝은 또는 그라디언트 (1:1 또는 16:9) | **균형 친근** — 소셜 친화 | brand mark + 짧은 caption (이미지 안), hero 80~100px, 인물 OK, glow 자연스럽게 |
+| **Bluesky** | 자연스럽게 (밝/어둡 자유, 1:1 또는 16:9) | **친근·캐주얼** — 광고 외양 절대 X | 절제된 brand presence, hand-drawn 또는 illustrative 느낌, glow 약함, 인물 OK |
+| **X** | 밝은 배경 (#F8FAFC) 또는 단색 1색 | **극도 미니멀** — 수치 하나가 전부, 16:9 landscape | Hero stat 150~200px (큼), 작은 eyebrow + 1 divider만, decoration 0, raw sans-serif, 인물 자제 |
+| **Reddit** | (이미지 거의 X — text-first 매체) | **광고 외양 절대 X** | 데이터 차트 1장만 사용 시: plain background, no branding visible, no marketing aesthetic, 단순 스크린샷 OK |
+| **Naver-blog** | (Blog Mode — 이미지 인라인 markdown) | **본문 보조** — header + 본문 1~3장 | Landscape 16:9 또는 4:3, ALT 텍스트 필수 (네이버 SEO), 인물 자제, 추상·인포그래픽·차트 우선 |
+| **Tistory** | (Blog Mode — 이미지 인라인 markdown) | **본문 보조 + 다음·구글 SEO** | Landscape 16:9 또는 4:3, ALT 필수, 미니멀 일러스트 우선, 인물 자제 |
 
 ---
 
