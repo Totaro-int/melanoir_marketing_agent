@@ -145,7 +145,12 @@ async function gate(page, label) {
   ui.warn(`  🛑 게시 직전 — ${label}`);
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   if (autoClick) {
-    ui.warn('  --auto-click 지정 — 자동 클릭');
+    ui.warn('  --auto-click 지정 — 5초 카운트다운 (Ctrl+C 로 중단)');
+    for (let i = 5; i > 0; i--) {
+      process.stdout.write(`\r  ⏳ ${i} 초 후 자동 게시...`);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    process.stdout.write('\r' + ' '.repeat(40) + '\r');
     return 'Y';
   }
   if (dryRun) {
@@ -171,7 +176,7 @@ async function publishThreads(page, draft, cardPaths, opts) {
   await page.goto('https://www.threads.net/', { waitUntil: 'domcontentloaded' });
 
   // 로그인 미완료 체크 — "Log in" 텍스트 보이면 사용자 로그인 대기
-  await ensureLoggedIn(page, /Log in|Continue with|로그인/i, 'threads');
+  await ensureLoggedIn(page, 'threads');
 
   ui.step(2, 5, '컴포저 열기');
   // "What's new?" 또는 "Start a thread..." placeholder 클릭
@@ -212,7 +217,7 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
   ui.step(1, 6, 'linkedin.com 이동');
   await page.goto('https://www.linkedin.com/feed/', { waitUntil: 'domcontentloaded' });
 
-  await ensureLoggedIn(page, /Sign in|Join now|로그인/i, 'linkedin');
+  await ensureLoggedIn(page, 'linkedin');
 
   ui.step(2, 6, '"Start a post" 클릭');
   const startBtn = page.locator('button:has-text("Start a post"), button:has-text("게시물 작성")').first();
@@ -267,10 +272,16 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
 
 // ────────────────────────────────────────────── helpers ──────────────────
 
-async function ensureLoggedIn(page, signedOutPattern, channel) {
+async function ensureLoggedIn(page, channel) {
   await page.waitForTimeout(1500);
-  const html = await page.content().catch(() => '');
-  if (signedOutPattern.test(html.slice(0, 4000))) {
+  // DOM 기반 — Log in / Sign in / 로그인 버튼이 실제로 클릭 가능한 상태인지 확인.
+  // SPA 가 늦게 렌더링해 4000자 슬라이스에서 빠지는 케이스를 방지.
+  const signInBtn = page.getByRole('button', { name: /log in|sign in|로그인/i }).first();
+  const signInLink = page.getByRole('link', { name: /log in|sign in|로그인/i }).first();
+  const isVisible =
+    (await signInBtn.isVisible().catch(() => false)) ||
+    (await signInLink.isVisible().catch(() => false));
+  if (isVisible) {
     ui.warn(`[${channel}] 로그인 필요 — 브라우저에서 직접 로그인하세요. 완료 후 Enter.`);
     await promptLine('  로그인 완료', { optional: true });
   }

@@ -58,16 +58,18 @@ const allText = cardsText ? `${draftText}\n\n${cardsText}` : draftText;
 const draftHashtags = Array.isArray(draft.hashtags) ? draft.hashtags : [];
 
 // 카드별 위반 위치를 사람이 읽기 좋게 라벨링: 본문 / 카드1(hook) / 카드2(body) ...
+// 케이스 무시 매칭 — 영문 banned word ("FREE" vs "free") 도 잡는다. 한글은 영향 없음.
 function locateHits(needles) {
-  const sources = [{ label: '본문', text: draftText }];
+  const sources = [{ label: '본문', text: draftText.toLowerCase() }];
   cardsList.forEach((c, i) => {
     const role = c?.role ? `(${c.role})` : '';
-    sources.push({ label: `카드${i + 1}${role}`, text: String(c?.text ?? '') });
+    sources.push({ label: `카드${i + 1}${role}`, text: String(c?.text ?? '').toLowerCase() });
   });
   const out = new Map();
   for (const n of needles) {
     if (!n) continue;
-    const where = sources.filter((s) => s.text.includes(n)).map((s) => s.label);
+    const needle = String(n).toLowerCase();
+    const where = sources.filter((s) => s.text.includes(needle)).map((s) => s.label);
     if (where.length) out.set(n, where);
   }
   return out;

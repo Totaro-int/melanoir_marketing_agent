@@ -555,7 +555,7 @@ draft 카피, 가디언 결과, 자산 경로를 채널별로 출력.
 3. 실행:
    - **API**: `node harness/bin/publish.mjs <slug> --channel=<ch> [--dry-run]`
    - **Browser**: `node harness/bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run]`
-     - `--dry-run` 인 경우 컴포저까지만 채우고 게시 직전에 멈춤. 사용자가 시각적으로 확인 후 종료.
+   - **`--dry-run` 전파 규칙**: `/sns-start --dry-run` 으로 진입했다면 위 두 명령에도 반드시 `--dry-run` 을 붙여 전달한다 (3단계 publishMode 결정 시 기억해 둔 `dryRun` 플래그를 그대로 사용). API 모드는 dry-run 시 네트워크 호출 없이 payload 출력, browser 모드는 컴포저까지만 채우고 게시 직전에 멈춰 사용자가 시각적으로 확인 후 종료.
 
 ### 8단계 — 완료
 **칸반 자동 표시 (2차)**: `node harness/bin/board.mjs <slug>`
