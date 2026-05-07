@@ -147,6 +147,77 @@ cat <specPath>
 
 **참고**: 레퍼런스 브랜드를 그대로 모방하는 것이 아니라, 그 브랜드가 가진 **시각적 DNA**(여백, 타이포그래피 리듬, 색상 역할 배분)를 흡수해 슬라이드에 적용하는 것이 목표다.
 
+**대표 레퍼런스 브랜드별 시각 DNA 요약** (DESIGN.md가 이 중 하나면 빠르게 감 잡기용):
+
+| 브랜드 | 색 운용 | 타이포 | 레이아웃 | 장식 |
+|--------|--------|-------|---------|------|
+| **linear.app** | 모노크롬 + 1 accent (대부분 violet/blue), 텍스트가 색상보다 우선 | sharp, geometric, weight 대비 강함 (300/700) | 정밀한 grid, 과한 여백 X | sharp corners (border-radius 0~4px), 그림자 거의 X |
+| **stripe** | 그라디언트 다채로움, 색이 메시지의 일부 | humanist, 친근하지만 정확 | airy, centered, 카드형 구성 | soft shadows, gradient backgrounds, 깊이감 핵심 |
+| **vercel** | 흑백 + bold accent (cyan/magenta) | tight tracking, 큰 weight 대비 (400/900) | 극단적 미니멀, 극단적 여백 | flat, decoration 거의 X, 텍스트 자체가 디자인 |
+| **notion** | warm neutral + minimal accent | humanist serif/sans 혼용 가능 | editorial, 글이 우선 | soft borders, subtle texture, 친근한 둥글기 |
+| **figma** | playful palette (multi-color) | rounded, 친근 | grid + flexible | rounded corners (8~16px), playful shapes |
+
+DESIGN.md가 위 5개 중 하나에 가까우면 그 행을 출발점으로 삼고, `imageContext.visual.colors`로 색상만 덮어쓴다.
+
+**한국 카드뉴스 톤 레퍼런스** (인스타그램·네이버 블로그용 — 더 시각적·감성적):
+
+| 톤 | 색 운용 | 타이포 | 레이아웃 | 장식 |
+|----|--------|-------|---------|------|
+| **toss** | 큰 컬러 면(블록), 사진+오버레이 | Pretendard 800-900, 매우 굵음 | 풀-블리드 사진 + 카테고리 pill + bold 헤드라인 | 알약 모양 카테고리 pill 필수, 작은 brand mark 우상단 |
+| **musinsa** | 패션 사진 + 텍스트 오버레이 | SUIT/Pretendard 700-900 | 사진이 면적의 60~70%, 텍스트 영역 분리 | bold 한글 타이포 자체가 핵심 시각 |
+| **29cm** | minimal + 사진 활용 | serif/sans 믹스 | editorial, 사진+여백 | 절제된 장식, 색은 사진에서 |
+| **러닝클럽 톤** (사용자 레퍼런스) | 사진+그라디언트 오버레이 / 풀그라디언트 | Pretendard 800-900 흰색/검정 | 카테고리 pill + 큰 헤드라인 + 부제 + brand mark 일관 위치 | 알약 pill ("📌 OOO", "📄 OOO") + 작은 별·로고 우상/우하단 |
+
+**한국 카드뉴스 핵심 패턴 5종** (인스타그램·SNS용, B2C/B2B 모두 통함):
+
+1. **카테고리 pill 필수**:
+   ```html
+   <span style="
+     display: inline-flex; align-items: center; gap: 6px;
+     padding: 8px 16px;
+     background: rgba(255,255,255,0.08);
+     border: 1px solid rgba(255,255,255,0.15);
+     border-radius: 999px;
+     font-size: 16px; font-weight: 500;
+     letter-spacing: -0.01em;
+   ">📌 카테고리명</span>
+   ```
+   (어두운 배경) 또는 (밝은 배경에서는 background: rgba(0,0,0,0.05))
+   카테고리 예: "📌 정식 런칭", "🌿 K-뷰티 매칭", "📊 기능 소개", "🎯 사용 가이드", "💬 자주 묻는 질문"
+
+2. **풀-블리드 배경 + 텍스트 오버레이**:
+   - 단색 배경 금지. 다음 중 하나:
+     - (a) AI 생성 사진 + 어두운 그라디언트 overlay (`linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)`)
+     - (b) 풀 그라디언트 (예: `linear-gradient(135deg, #1e3a8a 0%, #6d28d9 50%, #be185d 100%)`)
+     - (c) 단색 + 큰 사진 카드 (사진이 면적 50%+)
+
+3. **Bold Korean Typography**:
+   - 한글 헤드라인 weight **800-900** 권장 (시스템 폰트로는 'Apple SD Gothic Neo' Bold + `font-weight:800` 강제)
+   - line-height: 1.15~1.25 (촘촘하게)
+   - letter-spacing: -0.02em ~ -0.04em (negative tracking)
+   - 절대 weight 300-400 X (얇으면 한국 SNS 톤 안 남)
+
+4. **레이어 컴포지션**:
+   - 배경 (사진/그라디언트) → 카테고리 pill → 헤드라인 → 부제 → brand mark
+   - 가능하면 작은 카드/badge를 헤드라인 옆에 겹치기 (깊이감)
+
+5. **Brand Mark Consistency**:
+   - 모든 카드 동일 위치 (우상단 또는 우하단)
+   - 작게, 0.7~0.9 opacity
+   - 텍스트 brand 보다는 **로고 마크 또는 ★/✦ 같은 심볼**이 더 임팩트
+
+**한국 카드뉴스 안티패턴** (절대 금지):
+- ❌ 단색 배경 only (그라디언트도 사진도 없음) — 가장 흔한 실수
+- ❌ 한글 weight 300-400 (얇아서 SNS 임팩트 무)
+- ❌ 카테고리 표시 없음 (eyebrow text 만으로는 부족)
+- ❌ 텍스트 그리드 평면 배치 (레이어 X, 깊이 X)
+- ❌ 브랜드 표기가 큰 텍스트 (작은 마크가 더 세련)
+
+**ref 학습 시 절대 금지**:
+- 레퍼런스 색상을 그대로 차용 (linear의 violet을 우리 카드에 그대로 X — visual.colors 우선)
+- 레퍼런스 로고·아이콘·이미지 그대로 사용
+- 레퍼런스 브랜드명 카드에 노출
+
 #### 1-B. AI 배경 이미지 생성 (`generateImages === true` 일 때만)
 
 `spec.imageContext.generateImages`가 `true`이면 이 단계를 실행한다. `false`이면 건너뛴다.
@@ -323,14 +394,86 @@ background:
 
 ---
 
+##### 카드 레이아웃 카탈로그 5종
+
+각 카드는 아래 5가지 레이아웃 중 하나를 선택해 디자인한다. **카드 role(`hook`/`body`/`cta`/`single`)과 매칭**해서 골라야 한다.
+
+| 레이아웃 | 핵심 시각 | 적합 role | 적합 채널 | 적합 goal |
+|---------|---------|---------|---------|---------|
+| **Stat Card** | Hero stat 단독 거대화 (120px+), eyebrow + 1줄 caption | hook, single | X, LinkedIn | awareness, conversion |
+| **Full-Bleed** | 배경 이미지/그라디언트 풀커버 + 텍스트 오버레이, 강한 분위기 | hook, single | Instagram, Threads | launch, engagement |
+| **Split Layout** | 좌우(또는 상하) 2분할. 한쪽 텍스트 / 다른쪽 비주얼·다이어그램 | body | LinkedIn, Threads | education, awareness |
+| **Quote Block** | 큰 따옴표 + 인용문 강조. 인물·사례 인용. small caption 출처 표기 | body, cta | Threads, LinkedIn | engagement, awareness |
+| **Carousel-friendly** | 시리즈 일관 레이아웃 (페이지 인디케이터 1/3, 2/3 표기). 제목 위치 고정 | series 모든 카드 | Instagram, Threads | series-3/5 모두 |
+
+**레이아웃 선택 절차**:
+
+1. **Role + Goal + Channel** 3개 매트릭스로 탐색
+2. 위 표에서 둘 이상 후보면 **gloal 우선** (launch → Full-Bleed, conversion → Stat Card)
+3. series 카드는 **첫 카드(hook) Carousel-friendly + Stat/Full-Bleed 혼합** 가능, body·cta는 동일 레이아웃 유지
+
+**레이아웃별 시각 비율 가이드** (텍스트 점유 면적):
+
+| 레이아웃 | 텍스트 점유 | 여백 점유 | 장식·시각 점유 |
+|---------|-----------|---------|--------------|
+| Stat Card | 30~40% | 50% | 10~20% (eyebrow, divider, accent dot) |
+| Full-Bleed | 20~30% | 30~40% | 30~50% (배경·overlay) |
+| Split Layout | 35~45% (한쪽) | 20~30% | 30~40% (반대쪽 비주얼) |
+| Quote Block | 50~60% (인용문 큼) | 30~40% | 10% (큰따옴표 자체가 장식) |
+| Carousel-friendly | 40~50% | 30~40% | 10~20% (페이지 표시 + accent) |
+
+> 텍스트 점유율이 70% 넘어가면 어느 레이아웃이든 안티패턴 (안티패턴 섹션 참조).
+
 ##### 채널별 디자인 톤
 
 | 채널 | 배경 | 기조 | 필수 요소 |
 |------|------|------|-----------|
 | **X** | 밝은 배경 (#F8FAFC) | 극도 미니멀. 수치 하나가 전부. | Hero stat 극대화(120px+), eyebrow, divider |
 | **Threads** | 밝은 배경 | Editorial 클린. 여백이 풍부. | Accent bar, bullet dots, eyebrow, glow A |
-| **Instagram** | 어두운 배경 (#0F172A) | 감성·임팩트. 수치가 빛나야 함. | Glow B (강하게), Before→After 구분, gradient text 검토 |
+| **Instagram** | **풀-블리드 사진/그라디언트 우선** (단색 X) | **한국 카드뉴스 톤** — 카테고리 pill 필수, bold 헤드라인 (weight 800+), 사진 또는 그라디언트 배경, brand mark 우상/우하단 일관. 단색 + 작은 텍스트 조합은 절대 금지 | 카테고리 pill ("📌/🌿/📊" 류), 풀-블리드 사진+overlay 또는 풀 그라디언트, bold Korean typography, brand mark 작게, 깊이감을 위한 사진 컷아웃 또는 카드 레이어 |
 | **LinkedIn** | 밝은 배경 + 흰 카드 | 구조적·신뢰감. 데이터 중심. | Quote block, stat card badge, divider, glow A 약하게 |
+
+---
+
+##### 산업 무관 시각 적응 가이드
+
+이 에이전트는 특정 산업에 묶이지 않는다. 회사 프로필의 `imageContext.visual`·`imageContext.imageStyle` 단서로 어떤 산업이든 적응한다.
+
+**profile 시각 필드 → 시각 의사결정 매핑**:
+
+| profile 필드 | 어디에 영향 |
+|------------|-----------|
+| `imageStyle.aestheticDirection` (`organic`/`modern`/`minimalist`/`bold`/...) | 전반적 분위기 — 곡선 vs 직선, 텍스처 vs 플랫 |
+| `imageStyle.moodWords` (예: `["calm", "trustworthy", "natural"]`) | 색온도, 그림자 강도, 폰트 weight |
+| `imageStyle.referencesBrands` | 위 1-A "대표 ref 브랜드 시각 DNA" 표 참고 |
+| `visual.colors.{primary, accent, background, text}` | **HTML 실제 색상 — 항상 우선** |
+| `visual.fonts.{heading, body}` | font-family 직접 지정 |
+| `industry` | aestheticDirection 추정 보조 단서 (명시 안 됐을 때만) |
+
+**aestheticDirection 별 시각 톤** (가이드, 절대 X):
+
+| direction | 곡선/직선 | 그림자 | 장식 | 적합 산업 예시 |
+|----------|---------|------|------|--------------|
+| **organic** | 곡선 우세, border-radius 12~24px | soft, 큰 blur | 자연 텍스처, gradient soft | 화장품·F&B·웰니스·라이프스타일 |
+| **modern** | 직선 + 약간 둥글기 (4~8px) | flat ~ medium | grid·carousel-friendly | SaaS·tech·미디어 |
+| **minimalist** | sharp (0~4px), 얇은 line | flat 또는 거의 없음 | 텍스트 자체가 장식 | B2B·핀테크·전문 서비스 |
+| **bold** | 강한 대비, large radius 또는 0px | high contrast | 큰 색면, 큰 타입 | 패션·엔터테인먼트·캠페인성 |
+| **editorial** | 다양 혼용 | soft, layered | 인용·이미지·여백 강조 | 미디어·콘텐츠·교육 |
+| **playful** | 곡선 + 둥글기 16px+ | soft + bouncy | shape·color 다채롭게 | 키즈·게임·소셜 |
+
+**산업이 명시되어 있고 imageStyle이 부분적일 때**:
+- profile.industry가 "B2B SaaS — 정산 자동화" 같으면 → `minimalist` + `modern` 혼합 우선
+- "K-뷰티 매칭 플랫폼" 같으면 → `organic` 베이스 + `modern` 구조 혼합
+- "카페 브랜드" 같으면 → `organic` + `editorial` 혼합
+
+단, **profile.imageStyle이 명시되어 있으면 그것이 최우선**. 산업 추정은 명시 없을 때만 보조.
+
+**시각 적응 4원칙**:
+
+1. **색은 visual.colors에서만**. 산업 추정 색상 자동 부여 금지.
+2. **폰트는 visual.fonts 우선**. 없으면 시스템 폰트 (Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR).
+3. **장식 강도는 aestheticDirection 따라**. organic → 풍부, minimalist → 절제.
+4. **B2B는 데이터·구조 강조, B2C는 감성·여운 강조**. targetAudience.painPoints가 업무 단어 (정산일·KPI·MOQ 등) 많으면 B2B, 일상 단어 (주말·맛·기다림 등) 많으면 B2C.
 
 ---
 
@@ -343,6 +486,92 @@ background:
 - ❌ accent 색 미사용 (브랜드 없는 카드)
 - ❌ padding이 상하좌우 동일 (boring grid, 에디토리얼 느낌 없음)
 - ❌ 해시태그를 카드 이미지 중앙에 배치 (우하단 또는 좌하단에 small text로만)
+- ❌ 이모지·아이콘 떠다니듯 배경에 흩뿌리기 (의도 없는 장식)
+- ❌ 그림자 다중 적용으로 sticker 처럼 보이게 만들기
+
+##### bad → good 시각 변환 예시 3쌍
+
+설명을 위한 ASCII 도해. 실제 카드는 HTML+CSS로 생성.
+
+**쌍 1 — 텍스트 과밀 → 여백 확보 + 계층 분명**
+
+```
+❌ bad (한 카드에 5문장 빽빽이)
+┌─────────────────────────────┐
+│ 우리는 혁신적인 솔루션을 만 │
+│ 들었습니다. 정산 시스템이 자│
+│ 동화되며 업무 효율이 크게 향│
+│ 상되었습니다. 도입 후 시간이│
+│ 60% 줄었고 비용도 절감되었습│
+│ 니다. 지금 바로 시작하세요! │
+└─────────────────────────────┘
+→ 텍스트 점유 80%, 계층 0, 임팩트 0
+
+✅ good (Hero stat + eyebrow + 1줄 caption)
+┌─────────────────────────────┐
+│ ▎정산 자동화 │ 6개월 사례   │  ← eyebrow (작게)
+│                              │
+│         5.2일 → 1.8일        │  ← Hero stat 96~120px
+│                              │
+│  도입한 팀들의 정산 시간 평균│  ← caption 1줄
+│                              │
+│                  업플로우 ▌  │  ← 우하단 brand
+└─────────────────────────────┘
+→ 텍스트 점유 35%, 3단계 계층, 수치 임팩트 살림
+```
+
+**쌍 2 — 단조로운 단색 + 장식 0 → glow + accent + texture**
+
+```
+❌ bad (흰 배경 + 검정 텍스트 only)
+┌─────────────────────────────┐
+│                              │
+│      평균 매칭 시간 3초      │
+│                              │
+│                              │
+└─────────────────────────────┘
+→ 종이 쪽지 수준, 브랜드 없음
+
+✅ good (subtle gradient + accent line + glow A)
+┌─────────────────────────────┐
+│ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ │  ← subtle radial glow
+│ ▎AI 매칭                    │  ← accent bar (3px, brand color)
+│                              │
+│        3초                   │  ← Hero 120px, brand primary
+│                              │
+│  평균 매칭 시간             │  ← caption
+│                              │
+│                       토타로 │
+└─────────────────────────────┘
+→ 깊이감 + 브랜드 + 계층
+```
+
+**쌍 3 — weight·크기 균일 → weight 대비 + 크기 대비 분명**
+
+```
+❌ bad (모든 텍스트 24px regular)
+┌─────────────────────────────┐
+│ 지난주 부산점 오픈           │
+│ 6개월 기다리신 분들에게      │
+│ 한정 메뉴 준비               │
+│ 다음 주 목요일 혜화점        │
+└─────────────────────────────┘
+→ 시선 동선 없음, 무엇이 핵심인지 모름
+
+✅ good (대비 분명: hero 80px / eyebrow 18px / body 28px)
+┌─────────────────────────────┐
+│ ▎NEW LOCATION  ▎혜화점       │  ← eyebrow 18px 700
+│                              │
+│   다음 주                    │  ← supporting 28px 400
+│   목요일 오픈                │  ← supporting 28px 400
+│                              │
+│   부산점에서 6개월,          │  ← body 22px regular
+│   드디어 서울에서.           │
+│                              │
+│             그_카페 ▌        │
+└─────────────────────────────┘
+→ 시선 동선: eyebrow → 큰 메시지 → body → brand
+```
 
 ---
 
