@@ -14,6 +14,7 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 /sns-start "신제품 런칭" --channels=threads,linkedin --cadence=series-3
 /sns-start --dry-run                              # 발행 단계만 dry-run
 /sns-start --no-publish                           # approve 까지만, 발행 안 함
+/sns-start "신제품 런칭" --via=browser            # OAuth 토큰 없이 Chrome 자동화로 발행
 ```
 
 ---
@@ -538,8 +539,23 @@ draft 카피, 가디언 결과, 자산 경로를 채널별로 출력.
 ### 7단계 — 승인 + 발행 (publishMode=immediate 만)
 승인된 채널마다 순서대로:
 1. `node harness/bin/approve.mjs <slug> --channel=<ch>`
-2. `node harness/bin/publish.mjs <slug> --channel=<ch> [--dry-run]`
-   - `auth/<ch>.json` 없으면 자동 dry-run 강제 + "자격증명 추가: `/sns-doctor auth add <ch>`" 안내.
+2. **발행 라우팅** — 아래 규칙으로 `publish.mjs` (API) 또는 `browser-publish.mjs` (Chrome 자동화) 선택:
+   - **`--via=browser` 플래그 명시** → 무조건 `browser-publish.mjs` (단 미지원 채널은 안내 후 skip — 현재 지원: threads, linkedin)
+   - **`--via=api` 플래그 명시** → 무조건 `publish.mjs`
+   - **플래그 없음 (기본)**:
+     - `auth/<ch>.json` 존재 → `publish.mjs` (API)
+     - `auth/<ch>.json` 없음 + 채널이 browser-publish 지원 (threads/linkedin) → `browser-publish.mjs` 안내 후 사용자 확인:
+       ```
+       [<ch>] auth/<ch>.json 없음. Chrome 자동화로 발행할까요?
+         [Y]   browser-publish.mjs 실행 (브라우저 열림, 사용자가 게시 직전 확인)
+         [N]   publish.mjs --dry-run 으로 폴백
+         [A]   /sns-doctor auth add <ch> 안내 후 중단
+       ```
+     - `auth/<ch>.json` 없음 + browser-publish 미지원 → `publish.mjs --dry-run` 강제 + "자격증명 추가: `/sns-doctor auth add <ch>`" 안내.
+3. 실행:
+   - **API**: `node harness/bin/publish.mjs <slug> --channel=<ch> [--dry-run]`
+   - **Browser**: `node harness/bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run]`
+     - `--dry-run` 인 경우 컴포저까지만 채우고 게시 직전에 멈춤. 사용자가 시각적으로 확인 후 종료.
 
 ### 8단계 — 완료
 **칸반 자동 표시 (2차)**: `node harness/bin/board.mjs <slug>`
