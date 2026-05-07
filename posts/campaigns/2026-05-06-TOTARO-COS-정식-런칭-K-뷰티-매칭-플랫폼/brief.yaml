@@ -7,6 +7,7 @@ channels:
   - threads
   - instagram
   - naver-blog
+  - tistory
 cadence: series-5
 keyMessage: 조건을 말하면 3초 안에 검증된 K-뷰티 제조사를 매칭합니다
 contentPoints:
@@ -31,7 +32,8 @@ status:
   threads: approved
   instagram: drafting
   naver-blog: preview
+  tistory: preview
 meta:
   createdAt: 2026-05-06T22:28:27.011+09:00
-  updatedAt: 2026-05-07T17:51:04.475+09:00
+  updatedAt: 2026-05-07T20:27:40.157+09:00
   profileBrand: TOTARO
