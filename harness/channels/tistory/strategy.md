@@ -1,0 +1,75 @@
+# Tistory Strategy
+
+> ⚠️ **공통 정보성 블로그 가이드는 [`../blog/strategy.md`](../blog/strategy.md) 참조.**  
+> 본 문서는 티스토리 매체 특수 차이 + 발행 어댑터 안내만.
+
+## 한 줄 요약
+**다음 + 구글 SEO 친화. 티스토리는 네이버보다 구글 검색 비중 높음**.  
+공통 9대 패턴은 `../blog/strategy.md` 적용. **내부 링크가 가장 강력한 무기**.
+
+## 티스토리 매체 특수 차이
+
+| 항목 | 값 / 정책 |
+|------|----------|
+| 검색 알고리즘 | **다음 + 구글 SEO** (네이버 자체 알고리즘 영향 X) |
+| 본문 길이 권장 | **1,500~2,500자** (가이드형은 ~3,000자까지 OK) |
+| 제목 권장 | 25~60자 (구글 SERP 컷). long-tail 키워드 OK |
+| 태그 한도 | 10개 (5~10 권장) |
+| 카테고리 | 자체 카테고리 시스템 (URL 영향) |
+| 이미지 | 자체 업로드, ALT 지원, 헤더 + 본문 1~3장 |
+| 발행 빈도 | 매일 1회 권장 (구글 알고리즘 — 빈도 + 일관성) |
+| 상업성 톤 | 중간 — 정보 우선 + 자연스러운 광고 녹임 |
+| B2B 적합도 | ★★★ (구글 인덱싱 빠름) |
+| URL 구조 | URL과 콘텐츠 일치 필수 (잡블로그 인식 회피) |
+
+## 티스토리 SEO 추가 디테일
+
+### 가장 강력한 무기: 내부 링크
+- **글마다 2~4개 관련 글 내부 링크** — 다른 어떤 SEO 요소보다 임팩트 큼
+- 이유: **체류시간 증가 → 다음·구글 알고리즘 가중치 직접 상승**
+- "이전 글에서 정리했어요", "관련해서 ~글도 도움됩니다" 자연 삽입
+
+### 구조 우선
+- "**많이 쓰기 X / 구조적으로 쓰기 O**" — 다음·구글 알고리즘 평가 핵심
+- H2 4~6개, 각 섹션 첫 줄에 결론
+- 번호 매김 (1. 2. 3.) — 스캔 가독성 + 구조 신호
+
+### 도메인 권위
+- 신규 도메인은 즉시 노출 어려움 → **3~6개월 꾸준한 게시** 필요
+- 카테고리·블로그명·콘텐츠 일관성 (잡블로그 회피)
+- 외부 트래픽 (네이버·SNS·커뮤니티) → 다음 알고리즘 신뢰 신호
+
+### 카카오·다음 특수
+- **외부 트래픽이 다음 노출에 직접 영향** — 네이버 검색에서 들어온 클릭이 티스토리에 SEO 도움
+- 댓글·구독자 활성도 = 가중치
+- 광고 도배 → 페널티 (다음·구글 모두)
+
+## 발행 (Phase 4 — Tistory Open API)
+
+```
+POST tistory.com/apis/post/write
+- title, content, visibility (3=공개), category, tag
+- access_token: OAuth2
+- blogName
+```
+
+**자격증명** (`auth/tistory.json`):
+```json
+{
+  "accessToken": "...",
+  "blogName": "your_blog_name",
+  "categoryId": "0"
+}
+```
+
+어댑터 구현: [`harness/src/publisher/adapters/tistory.mjs`](../../src/publisher/adapters/tistory.mjs)  
+체크리스트: [`./checklist.md`](./checklist.md) (공통 + 티스토리 추가)  
+템플릿: 공통 [`../blog/templates/post.md`](../blog/templates/post.md) 사용
+
+## 참고 링크
+
+- Tistory Open API: https://www.tistory.com/guide/api/manage/post
+- Tistory 가입자 SEO 가이드: https://tistory.com/notice
+- 구글 검색 가이드: https://developers.google.com/search/docs
+
+> **마지막 검증: 2026-05-07**
