@@ -49,7 +49,29 @@ const profile = existsSync(PATHS.profile) ? readYaml(PATHS.profile) : {};
 
 const slot = findSlotForBrief(brief);
 const draftText = String(draft.text ?? '');
+const cardsList = Array.isArray(draft.cards) ? draft.cards : [];
+const cardsText = cardsList.map((c) => String(c?.text ?? '')).filter(Boolean).join('\n\n');
+// allText: 본문 + 카드 텍스트 통합 — banned/topic/key_message/content_points 검사 대상.
+// 카드뉴스에서 카드 안에만 들어간 banned word 가 빠져나가는 갭을 막는다.
+// length 만 draftText (본문) 기준 유지.
+const allText = cardsText ? `${draftText}\n\n${cardsText}` : draftText;
 const draftHashtags = Array.isArray(draft.hashtags) ? draft.hashtags : [];
+
+// 카드별 위반 위치를 사람이 읽기 좋게 라벨링: 본문 / 카드1(hook) / 카드2(body) ...
+function locateHits(needles) {
+  const sources = [{ label: '본문', text: draftText }];
+  cardsList.forEach((c, i) => {
+    const role = c?.role ? `(${c.role})` : '';
+    sources.push({ label: `카드${i + 1}${role}`, text: String(c?.text ?? '') });
+  });
+  const out = new Map();
+  for (const n of needles) {
+    if (!n) continue;
+    const where = sources.filter((s) => s.text.includes(n)).map((s) => s.label);
+    if (where.length) out.set(n, where);
+  }
+  return out;
+}
 
 const channelRules = (profile?.channels?.[channel]) ?? {};
 const maxLen = channelRules.maxLength ?? defaultMaxLen(channel);
@@ -64,7 +86,7 @@ const blocking = [];
   if (!tokens.length) {
     det.topic_keywords = { ok: true, skipped: true, detail: '주제 토큰 없음 — 검사 스킵' };
   } else {
-    const hit = tokens.filter((t) => draftText.includes(t));
+    const hit = tokens.filter((t) => allText.includes(t));
     const ok = hit.length > 0;
     det.topic_keywords = {
       ok,
@@ -82,7 +104,7 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
   if (!tokens.length) {
     det.key_message = { ok: true, skipped: true, detail: '토큰 없음 — 스킵' };
   } else {
-    const hit = tokens.filter((t) => draftText.includes(t));
+    const hit = tokens.filter((t) => allText.includes(t));
     const ratio = hit.length / tokens.length;
     const ok = ratio >= 0.5;
     det.key_message = {
@@ -104,7 +126,7 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
   } else {
     const covered = points.filter((p) => {
       const ts = tokenize(p).filter((t) => t.length >= 2);
-      return ts.some((t) => draftText.includes(t));
+      return ts.some((t) => allText.includes(t));
     });
     const ratio = covered.length / points.length;
     const ok = ratio >= 0.7;
@@ -123,13 +145,14 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
   if (!words.length) {
     det.banned_words = { ok: true, skipped: true, detail: '프로필 banned.words 미정의 — 스킵' };
   } else {
-    const hits = words.filter((w) => w && draftText.includes(w));
+    const located = locateHits(words);
+    const hits = [...located.entries()].map(([w, where]) => `${w} [${where.join('+')}]`);
     det.banned_words = {
-      ok: hits.length === 0,
+      ok: located.size === 0,
       skipped: false,
       detail: hits.length ? `금지어 발견: ${hits.join(', ')}` : '없음',
     };
-    if (hits.length) blocking.push('banned_words');
+    if (located.size) blocking.push('banned_words');
   }
 }
 
@@ -139,13 +162,14 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
   if (!claims.length) {
     det.banned_claims = { ok: true, skipped: true, detail: '프로필 banned.claims 미정의 — 스킵' };
   } else {
-    const hits = claims.filter((c) => c && draftText.includes(c));
+    const located = locateHits(claims);
+    const hits = [...located.entries()].map(([c, where]) => `${c} [${where.join('+')}]`);
     det.banned_claims = {
-      ok: hits.length === 0,
+      ok: located.size === 0,
       skipped: false,
       detail: hits.length ? `금지표현 발견: ${hits.join(', ')}` : '없음',
     };
-    if (hits.length) blocking.push('banned_claims');
+    if (located.size) blocking.push('banned_claims');
   }
 }
 
@@ -188,7 +212,7 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
     det.series_title = { ok: true, skipped: true, detail: '시리즈 미해당 — 스킵' };
   } else {
     const tokens = tokenize(seriesTitle).filter((t) => t.length >= 2);
-    const hit = tokens.filter((t) => draftText.includes(t));
+    const hit = tokens.filter((t) => allText.includes(t));
     const ok = tokens.length === 0 || hit.length > 0;
     det.series_title = {
       ok,
@@ -262,6 +286,8 @@ if (specOut) {
     ts: result.ts,
     draftPath,
     draftText,
+    cardsText,
+    cards: cardsList.map((c, i) => ({ idx: i + 1, role: c?.role ?? null, text: String(c?.text ?? '') })),
     briefTopic: brief.topic ?? null,
     briefKeyMessage: brief.keyMessage ?? null,
     briefContentPoints: brief.contentPoints ?? null,
