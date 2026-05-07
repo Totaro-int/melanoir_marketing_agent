@@ -732,6 +732,123 @@ HTML 경로: <spec.cards[0].htmlPath> 외 N개
 
 ---
 
+## Blog Mode (kind: blog 채널 — naver-blog / tistory / brunch)
+
+블로그 매체는 카드뉴스·HTML 슬라이드가 아니라 **본문 markdown에 이미지 URL 인라인 삽입** 방식.  
+spec.kind === "blog" 또는 channels.json의 채널이 `kind: "blog"` 면 **Blog Mode 분기**로 동작.
+
+### 입력
+- copywriter 가 작성한 `copy-output.json`
+- copy-output.json의 `cards[0].imageSlots` 배열 (copywriter가 N개 슬롯 정의)
+
+### Blog Mode 절차
+
+#### B1. copy-output.json 읽기
+
+```
+{
+  "cards": [{
+    "text": "---\ntitle: ...\n---\n\n본문 markdown (IMAGE_PLACEHOLDER_N 포함)",
+    "imageSlots": [
+      { "index": 1, "placeholder": "IMAGE_PLACEHOLDER_1", "position": "header", "prompt": "...", "alt": "..." },
+      { "index": 2, ... }
+    ]
+  }]
+}
+```
+
+#### B2. 이미지 슬롯 검증
+
+- `imageSlots.length` ≥ 1
+- 각 슬롯 `prompt`·`alt`·`placeholder` 모두 존재
+- 각 placeholder가 본문에 정확히 1번 등장 (없거나 중복이면 에러)
+
+#### B3. fal/openai 로 이미지 N장 생성
+
+- `imageContext.generateImages !== false` (false이면 skip)
+- 각 슬롯의 `prompt` 사용
+- **negative_prompt 강제**: `text, letters, words, faces, people, watermark, logo`
+  - 단, 매체가 `brunch`이면 인물 OK (에디토리얼 톤이라 — `imageStyle.allowPeople: true` 옵션 따라)
+- **이미지 크기**: 
+  - 헤더는 `landscape_4_3` (블로그 헤더 표준)
+  - 본문은 `portrait_4_3` 또는 `landscape_4_3` (slot.position에 따라)
+- **회사 visual.colors** 반영 — prompt 끝에 색상 hex 추가
+- **회사 imageStyle.aestheticDirection** 반영 — organic / minimalist / modern / editorial / bold / playful 중 1개 키워드 prompt 포함
+
+##### 이미지 생성 호출 패턴 (fal-ai/fast-sdxl 기준 — flux 권한 401 회피)
+
+```javascript
+POST https://queue.fal.run/fal-ai/fast-sdxl
+Headers: { Authorization: "Key <FAL_KEY>" }
+Body: {
+  prompt: "<slot.prompt> + visual.colors hex + aestheticDirection 키워드",
+  negative_prompt: "text, letters, words, faces, people, watermark, logo",
+  image_size: "portrait_4_3" | "landscape_4_3",
+  num_inference_steps: 30,
+  guidance_scale: 7.5,
+  num_images: 1
+}
+
+→ status_url poll until COMPLETED
+→ response_url → result.images[0].url
+```
+
+#### B4. 본문 placeholder 치환
+
+```
+text = card.text
+for slot in imageSlots:
+  if slot.url: 
+    text = text.replaceAll(slot.placeholder, slot.url)
+```
+
+#### B5. agent-output.json 저장
+
+```json
+{
+  "version": 1,
+  "slug": "...",
+  "channel": "naver-blog | tistory | brunch",
+  "ts": "...",
+  "cards": [{
+    "index": 1, "total": 1, "role": "single",
+    "text": "<수정된 본문 — placeholder가 fal URL로 치환됨>",
+    "hashtags": [...],
+    "imageSlots": [
+      { "index": 1, "placeholder": "IMAGE_PLACEHOLDER_1", "prompt": "...", "alt": "...", "url": "https://v3b.fal.media/..." },
+      ...
+    ]
+  }],
+  "meta": {
+    "provider": "claude-subagent",
+    "agent": "image-director",
+    "imageProvider": "fal-ai/fast-sdxl",
+    "imagesGeneratedAt": "<ISO>",
+    "generatedAt": "<ISO>"
+  }
+}
+```
+
+#### B6. HTML / Playwright 단계 skip
+
+블로그 모드는 카드 HTML 작성·Playwright 캡처·hook variants **모두 skip**.  
+agent-output.json 저장 후 즉시 종료. generate.mjs --finalize 가 본문을 그대로 markdown 발행 형태로 처리.
+
+### Blog Mode 안티패턴
+
+- ❌ 본문에 placeholder가 없는데 imageSlots에 슬롯 정의 (의미 없음)
+- ❌ imageSlots 빈 배열 (이미지 없는 블로그 글) — 헤더 이미지는 모든 글 종류에서 필수
+- ❌ prompt에 "text" 또는 "logo" 같은 단어 (negative_prompt 와 충돌)
+- ❌ 같은 컬러 팔레트로 N장 (다양성 X — 글 흐름 단조)
+- ❌ 모든 슬롯 같은 컴포지션 (헤더·본문·CTA 다 똑같이)
+- ❌ 인물 이미지 (naver-blog/tistory) — `imageStyle.allowPeople: true` 명시 없으면 강제 회피
+
+### 글 종류별 이미지 슬롯 권장
+
+자세한 글 종류별(B1~B5) 이미지 슬롯 위치는 `harness/channels/blog/strategy.md` 의 "이미지 슬롯 가이드" 섹션 참조.
+
+---
+
 ## 금지
 - 실제 인물 이름·얼굴·실재 로고 묘사
 - 텍스트 오버레이를 이미지 생성 모델에게 시키기

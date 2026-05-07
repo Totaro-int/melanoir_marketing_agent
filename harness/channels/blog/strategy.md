@@ -65,6 +65,76 @@
 
 ---
 
+## 🖼 이미지 슬롯 가이드 (글 종류별)
+
+블로그는 SNS와 달리 **본문에 인라인으로 이미지 삽입** (카드뉴스 X). 글 종류별로 필요한 이미지 슬롯이 다름.
+
+### 글 종류별 이미지 슬롯 권장
+
+| 템플릿 | 권장 이미지 수 | 슬롯 위치 (필수★ / 선택) |
+|--------|--------------|-----------------------|
+| **B1 가이드형** | **4~5장** | 헤더★ + H2-2 솔루션 일러스트★ + H2-3 차별점 + H2-4 사례 + H2-5 CTA 보조 |
+| **B2 케이스 스터디** | **3~4장** | 헤더★ + H2-1 Before★ + H2-2 변화 또는 H2-3 결과 차트★ + H2-4 CTA |
+| **B3 비교·리뷰** | **3~5장** | 헤더★ + H2-1 비교 기준 인포그래픽★ + H2-2·3 대상 A·B 시각 + H2-4 비교 표★ + H2-5 선택 가이드 |
+| **B4 인사이트·관점** | **2~3장** | 헤더★ + H2-1 관점 시각 + H2-2 근거·데이터 시각 |
+| **B5 제품 소개** | **4~5장** | 헤더★ + H2-1 문제 컨셉 + H2-2 제품 시각★ + H2-3 기능 인포그래픽★ + H2-4 사례 + H2-5 CTA |
+
+> **헤더 이미지는 모든 글 종류에서 필수** (썸네일·SEO·소셜 미리보기 동시 활용).  
+> 인사이트형(B4)은 글 자체가 핵심이라 이미지 보조 — 2-3장으로 충분.
+
+### 매체별 이미지 차이
+
+| 항목 | naver-blog | tistory | brunch |
+|------|-----------|---------|--------|
+| **권장 개수** | 1~3장 (3장+ 시 SEO 가중치) | 2~4장 | 1~2장 (에디토리얼) |
+| **선호 스타일** | 추상·인포그래픽·차트 | 미니멀 일러스트 | Unsplash 사진·에디토리얼 |
+| **비율** | landscape 16:9 또는 portrait 4:3 | landscape 우선 | landscape (Unsplash) |
+| **ALT 텍스트** | **필수** (네이버 SEO 가중치) | 필수 | 선택 |
+| **인물 사용** | 자제 | 자제 | OK (에디토리얼) |
+| **로고·텍스트 in image** | 절대 X | 절대 X | 절대 X |
+
+### 이미지 prompt 작성 원칙
+
+모든 블로그 본문 이미지는 다음 원칙 준수:
+
+1. **추상·미니멀·텍스트 없음** — 이미지 안에 글자·로고 절대 X (가독성 + 저작권 위험)
+2. **인물 자제** — naver/tistory는 "no people, no faces" prompt 강제. brunch는 에디토리얼이라 OK
+3. **회사 visual.colors 반영** — `imageContext.visual.colors.primary` 등을 prompt에 색상 hex로 명시
+4. **회사 imageStyle.aestheticDirection 반영** — organic / minimalist / modern / editorial / playful / bold 키워드를 prompt에 포함
+5. **negative prompt** 필수: `text, letters, words, faces, people, watermark, logo`
+6. **각 슬롯의 컨셉을 1줄로 명시** — "abstract data network visualization", "abstract dawn launch concept" 등
+7. **비율**: portrait_4_3 (블로그 본문 적합) 또는 landscape_4_3 (헤더 16:9 같은)
+8. **모델**: `fal-ai/fast-sdxl` (작동 확인) 또는 `fal-ai/sana` (개발 환경 권한 확인 후)
+
+### 이미지 안티패턴
+
+- ❌ 이미지 안에 글자/로고/UI 스크린샷
+- ❌ 같은 컬러 팔레트만 4장 (다양성 X — 글 흐름 단조)
+- ❌ 모든 이미지 같은 컴포지션 (헤더·본문·CTA가 다 똑같이 생김)
+- ❌ 인물 클로즈업 (인물 본문 적합 X — naver/tistory)
+- ❌ 광고 배너 스타일 (SEO 마이너스)
+- ❌ 너무 작은 해상도 (< 800px) — 모바일 가독성 ↓
+
+### copywriter ↔ image-director 협업 흐름 (Blog Mode)
+
+```
+1. copywriter: 본문 작성 시 이미지 자리에 placeholder 명시
+   ![{ALT 한글}](IMAGE_PLACEHOLDER_N "{영문 fal prompt}")
+   
+2. copywriter: copy-output.json 의 cards[0].imageSlots 배열에 N개 정의:
+   { index, placeholder, prompt, alt, position: "header"|"H2-1"|... }
+
+3. image-director (Blog Mode): imageSlots 순회 → fal/openai 호출 → URL 수집
+
+4. image-director: 본문 placeholder 자리에 URL 치환 → agent-output.json 저장
+
+5. generate.mjs --finalize: 본문 그대로 발행 (이미지 인라인 형태)
+```
+
+> 카드뉴스 모드(Instagram 같은 series)와 달리, 블로그 모드는 **본문 markdown 안에 이미지 URL 직접 삽입**. HTML 카드 X, Playwright 캡처 X.
+
+---
+
 ## 가장 중요한 3가지 (강조)
 
 > **"많이 쓰기 X / 구조적으로 쓰기 O"**
