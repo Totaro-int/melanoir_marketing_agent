@@ -56,8 +56,9 @@ properties:
       required: [ok, ts]
       properties:
         ok:             { type: boolean }
-        score:          { type: [integer, "null"] }
-        max:            { type: [integer, "null"] }
+        score:          { type: [integer, "null"], description: "검사된 항목 중 통과 수 (스킵 제외)" }
+        max:            { type: [integer, "null"], description: "검사된 항목 수 (스킵 제외)" }
+        skipped:        { type: integer, description: "정의 부족으로 스킵된 항목 수" }
         ts:             { type: string, format: date-time }
         blocking:       { type: array, items: { type: string } }
         needsLlmReview: { type: boolean }

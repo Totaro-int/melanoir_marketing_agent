@@ -52,7 +52,7 @@ sample이 있으면 그 문체를 1순위 기준으로 삼는다. 위반 시 `ok
 `deterministicResult` 를 베이스로:
 - `ambiguous` 배열을 위에서 판정한 결과로 채운다 (`code`, `ok`, `detail`)
 - 의미론 항목 중 하나라도 `ok: false` 면 전체 `ok: false`, `blocking` 배열에 해당 code 추가
-- `score` 는 deterministic 점수(`okCount`) 만 그대로 둔다 (의미론은 별도 표시)
+- `score`, `max`, `skipped` 는 `deterministicResult` 의 값을 그대로 둔다 (검사된 항목만 분모에 포함된 값. 의미론은 별도 표시)
 - `llmRanAt` 에 현재 ISO 8601 KST 시각
 
 ### 4. 저장
@@ -69,6 +69,7 @@ sample이 있으면 그 문체를 1순위 기준으로 삼는다. 위반 시 `ok
   "ok": false,
   "score": 7,
   "max": 8,
+  "skipped": 0,
   "blocking": ["voice_tone"],
   "deterministic": { /* spec.deterministicResult.deterministic 그대로 */ },
   "ambiguous": [

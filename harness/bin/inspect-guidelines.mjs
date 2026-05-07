@@ -27,7 +27,9 @@ const slug = argv.find((a) => !a.startsWith('--'));
 const channel = argv.find((a) => a.startsWith('--channel='))?.split('=')[1];
 const jsonOut = argv.includes('--json');
 const specOut = argv.includes('--spec');
-const mergeLlm = argv.includes('--merge-llm');
+const mergeFlag = argv.find((a) => a === '--merge-llm' || a.startsWith('--merge-llm='));
+const mergeLlm = !!mergeFlag;
+const mergePath = mergeFlag?.includes('=') ? mergeFlag.split('=')[1] : null;
 
 if (!slug || !channel) {
   ui.err('사용법: inspect-guidelines.mjs <slug> --channel=<ch> [--json|--spec|--merge-llm]');
@@ -60,12 +62,13 @@ const blocking = [];
 {
   const tokens = tokenize(brief.topic);
   if (!tokens.length) {
-    det.topic_keywords = { ok: true, detail: '주제 토큰 없음 — 검사 스킵' };
+    det.topic_keywords = { ok: true, skipped: true, detail: '주제 토큰 없음 — 검사 스킵' };
   } else {
     const hit = tokens.filter((t) => draftText.includes(t));
     const ok = hit.length > 0;
     det.topic_keywords = {
       ok,
+      skipped: false,
       detail: `${hit.length}/${tokens.length} 키워드 일치` + (ok ? '' : ` — [${tokens.join(', ')}] 중 0`),
     };
     if (!ok) blocking.push('topic_keywords');
@@ -77,26 +80,27 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
   const km = String(brief.keyMessage);
   const tokens = tokenize(km).filter((t) => t.length >= 2);
   if (!tokens.length) {
-    det.key_message = { ok: true, detail: '토큰 없음 — 스킵' };
+    det.key_message = { ok: true, skipped: true, detail: '토큰 없음 — 스킵' };
   } else {
     const hit = tokens.filter((t) => draftText.includes(t));
     const ratio = hit.length / tokens.length;
     const ok = ratio >= 0.5;
     det.key_message = {
       ok,
+      skipped: false,
       detail: `${hit.length}/${tokens.length} 토큰 일치 (${(ratio * 100).toFixed(0)}%)` + (ok ? '' : ` — keyMessage "${km.slice(0, 40)}..." 의 절반 이상이 draft에 없음`),
     };
     if (!ok) blocking.push('key_message');
   }
 } else {
-  det.key_message = { ok: true, detail: '정의 없음 — 스킵' };
+  det.key_message = { ok: true, skipped: true, detail: '정의 없음 — 스킵' };
 }
 
 // 3) content_points
 {
   const points = Array.isArray(brief.contentPoints) ? brief.contentPoints.filter(Boolean) : [];
   if (!points.length) {
-    det.content_points = { ok: true, detail: '정의 없음 — 스킵' };
+    det.content_points = { ok: true, skipped: true, detail: '정의 없음 — 스킵' };
   } else {
     const covered = points.filter((p) => {
       const ts = tokenize(p).filter((t) => t.length >= 2);
@@ -106,6 +110,7 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
     const ok = ratio >= 0.7;
     det.content_points = {
       ok,
+      skipped: false,
       detail: `${covered.length}/${points.length} 포인트 반영 (${(ratio * 100).toFixed(0)}%)`,
     };
     if (!ok) blocking.push('content_points');
@@ -115,45 +120,61 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
 // 4) banned_words
 {
   const words = profile?.banned?.words ?? [];
-  const hits = words.filter((w) => w && draftText.includes(w));
-  det.banned_words = {
-    ok: hits.length === 0,
-    detail: hits.length ? `금지어 발견: ${hits.join(', ')}` : '없음',
-  };
-  if (hits.length) blocking.push('banned_words');
+  if (!words.length) {
+    det.banned_words = { ok: true, skipped: true, detail: '프로필 banned.words 미정의 — 스킵' };
+  } else {
+    const hits = words.filter((w) => w && draftText.includes(w));
+    det.banned_words = {
+      ok: hits.length === 0,
+      skipped: false,
+      detail: hits.length ? `금지어 발견: ${hits.join(', ')}` : '없음',
+    };
+    if (hits.length) blocking.push('banned_words');
+  }
 }
 
 // 5) banned_claims
 {
   const claims = profile?.banned?.claims ?? [];
-  const hits = claims.filter((c) => c && draftText.includes(c));
-  det.banned_claims = {
-    ok: hits.length === 0,
-    detail: hits.length ? `금지표현 발견: ${hits.join(', ')}` : '없음',
-  };
-  if (hits.length) blocking.push('banned_claims');
+  if (!claims.length) {
+    det.banned_claims = { ok: true, skipped: true, detail: '프로필 banned.claims 미정의 — 스킵' };
+  } else {
+    const hits = claims.filter((c) => c && draftText.includes(c));
+    det.banned_claims = {
+      ok: hits.length === 0,
+      skipped: false,
+      detail: hits.length ? `금지표현 발견: ${hits.join(', ')}` : '없음',
+    };
+    if (hits.length) blocking.push('banned_claims');
+  }
 }
 
 // 6) length
 {
   const len = draftText.length;
-  const ok = !maxLen || len <= maxLen;
-  det.length = {
-    ok,
-    detail: `${len}/${maxLen ?? '∞'}자` + (ok ? '' : ' — 길이 초과'),
-  };
-  if (!ok) blocking.push('length');
+  if (!maxLen) {
+    det.length = { ok: true, skipped: true, detail: '채널 maxLength 미정의 — 스킵' };
+  } else {
+    const ok = len <= maxLen;
+    det.length = {
+      ok,
+      skipped: false,
+      detail: `${len}/${maxLen}자` + (ok ? '' : ' — 길이 초과'),
+    };
+    if (!ok) blocking.push('length');
+  }
 }
 
 // 7) hashtag_min
 {
   if (!hashtagMin) {
-    det.hashtag_min = { ok: true, detail: '최소값 정의 없음 — 스킵' };
+    det.hashtag_min = { ok: true, skipped: true, detail: '최소값 정의 없음 — 스킵' };
   } else {
     const count = countHashtags(draftText, draftHashtags);
     const ok = count >= hashtagMin;
     det.hashtag_min = {
       ok,
+      skipped: false,
       detail: `해시태그 ${count}개 (최소 ${hashtagMin})`,
     };
     if (!ok) blocking.push('hashtag_min');
@@ -164,24 +185,28 @@ if (brief.keyMessage && String(brief.keyMessage).trim()) {
 {
   const seriesTitle = pickSeriesTitle(slot, brief.topic);
   if (!seriesTitle) {
-    det.series_title = { ok: true, detail: '시리즈 미해당 — 스킵' };
+    det.series_title = { ok: true, skipped: true, detail: '시리즈 미해당 — 스킵' };
   } else {
     const tokens = tokenize(seriesTitle).filter((t) => t.length >= 2);
     const hit = tokens.filter((t) => draftText.includes(t));
     const ok = tokens.length === 0 || hit.length > 0;
     det.series_title = {
       ok,
+      skipped: false,
       detail: `시리즈 회차 "${seriesTitle}"` + (ok ? ` — ${hit.length}/${tokens.length} 토큰 반영` : ' — 토큰 0개 반영'),
     };
     if (!ok) blocking.push('series_title');
   }
 }
 
-// 점수
+// 점수: 스킵된 항목은 분모/분자 모두에서 제외
 const detKeys = Object.keys(det);
-const okCount = detKeys.filter((k) => det[k].ok).length;
+const checkedKeys = detKeys.filter((k) => !det[k].skipped);
+const skippedKeys = detKeys.filter((k) => det[k].skipped);
+const okCount = checkedKeys.filter((k) => det[k].ok).length;
 const score = okCount;
-const max = detKeys.length;
+const max = checkedKeys.length;
+const skippedCount = skippedKeys.length;
 
 // ambiguous (LLM 검토 후보)
 const ambiguous = [];
@@ -221,6 +246,7 @@ const result = {
   ok: blocking.length === 0,
   score,
   max,
+  skipped: skippedCount,
   blocking,
   deterministic: det,
   ambiguous,
@@ -267,10 +293,16 @@ if (specOut) {
 }
 
 if (mergeLlm) {
-  // 가장 최근의 guideline-check-*.json (LLM이 작성) 을 읽어 brief에 반영
-  const latest = findLatestCheck(resolve(dir, channel));
-  if (!latest) fail('guideline-check-*.json 없음 — LLM 단계 미완료');
-  const llmResult = JSON.parse(readFileSync(latest, 'utf8'));
+  // 명시 경로(--merge-llm=<path>) 우선. 없으면 가장 최근 guideline-check-*.json 으로 fallback.
+  let target = mergePath;
+  if (target && !existsSync(target)) {
+    fail(`--merge-llm 경로 없음: ${target}`);
+  }
+  if (!target) {
+    target = findLatestCheck(resolve(dir, channel));
+    if (!target) fail('guideline-check-*.json 없음 — LLM 단계 미완료');
+  }
+  const llmResult = JSON.parse(readFileSync(target, 'utf8'));
   patchBriefInspection(brief, channel, llmResult);
   writeYaml(briefPath, brief);
   if (jsonOut) console.log(JSON.stringify(llmResult));
@@ -365,6 +397,7 @@ function patchBriefInspection(brief, ch, result) {
     ok: result.ok,
     score: result.score ?? null,
     max: result.max ?? null,
+    skipped: result.skipped ?? 0,
     ts: result.ts ?? nowKstIso(),
     blocking: result.blocking ?? [],
     needsLlmReview: result.needsLlmReview ?? false,
@@ -391,10 +424,11 @@ function fail(msg) {
 function printResult(r) {
   console.log();
   console.log(`📋 가이드라인 재검수 — ${slug} [${channel}]`);
-  console.log(`   ${r.ok ? '✅ 통과' : '❌ 미준수'}  ${r.score}/${r.max}`);
+  const skipNote = r.skipped ? `  (${r.skipped} skipped)` : '';
+  console.log(`   ${r.ok ? '✅ 통과' : '❌ 미준수'}  ${r.score}/${r.max}${skipNote}`);
   console.log();
   for (const [k, v] of Object.entries(r.deterministic ?? {})) {
-    const mark = v.ok ? '✅' : '❌';
+    const mark = v.skipped ? '⏭' : (v.ok ? '✅' : '❌');
     console.log(`   ${mark} ${k.padEnd(18)} ${v.detail ?? ''}`);
   }
   if (r.ambiguous?.length) {

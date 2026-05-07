@@ -111,14 +111,21 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 
 자동 발행할까요? (Y=자동발행 / N=알림만, 기본: Y):
 > 
+
+지금 모든 회차의 카피를 미리 생성하고 가이드라인까지 검수할까요?
+  [Y, 권장]  N건 × 채널수 만큼 카피 일괄 생성 + 검수 (수 분 소요, LLM 비용 발생)
+  [N]        예약만. 발행 시각에 워커가 직접 카피 생성 후 검수
+> 
 ```
 
 수집한 값으로 시리즈 캠페인 일괄 생성:
 ```
 node harness/bin/schedule-plan.mjs --topic="<주제>" --channels=<...> \
   --period=<week|month> --frequency=<N> --time=<HH:MM> [--start=<YYYY-MM-DD>] \
-  --cadence=<...> --goal=<...> [--titles="t1|t2|..."] [--no-auto-publish]
+  --cadence=<...> --goal=<...> [--titles="t1|t2|..."] [--no-auto-publish] [--no-generate]
 ```
+
+> `pre-generate` 질문에서 **N** 을 골랐다면 `--no-generate` 를 붙인다. **Y** (기본) 면 schedule-plan 이 자체적으로 채널마다 generate 까지 수행하고 status=scheduled 로 복원한다.
 
 - 출력에서 생성된 slug 목록을 파싱한다 (예: `[1/3] 예약됨: 2026-05-08-...`).
 - 시리즈 슬롯 한 줄로 저장:
@@ -131,7 +138,9 @@ node harness/bin/schedule-plan.mjs --topic="<주제>" --channels=<...> \
 
 #### 3-S.1단계 — 가이드라인 재검수 (deterministic + 의미론)
 
-`--no-generate` 가 아니어서 pre-generate 가 됐을 때만 실행. draft 가 없으면 이 단계는 건너뛴다.
+**pre-generate 게이트에서 Y 를 고른 경우에만 실행.** N 을 골랐다면 draft 가 아직 없으므로 이 단계 전체를 건너뛰고 바로 3-S.2 로 간다 (워커가 발행 시각에 검수).
+
+draft 가 일부 채널만 만들어졌으면 그 채널만 검수하고 나머지는 경고 후 스킵.
 
 각 (slug × channel) 조합마다:
 
@@ -145,10 +154,10 @@ node harness/bin/schedule-plan.mjs --topic="<주제>" --channels=<...> \
    ```
    node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --spec
    ```
-   → `guideline-spec-<ts>.json` 생성됨.
+   → `guideline-spec-<ts>.json` 생성됨. spec 의 `outputPath` 값을 기억해 둔다.
    `harness/agents/guideline-reviewer.md` 서브에이전트를 호출해 spec 을 처리하게 한 뒤,
    ```
-   node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --merge-llm --json
+   node harness/bin/inspect-guidelines.mjs <slug> --channel=<ch> --merge-llm=<spec.outputPath> --json
    ```
    로 결과를 brief 에 머지한다.
 
@@ -184,13 +193,26 @@ node harness/bin/schedule-plan.mjs --topic="<주제>" --channels=<...> \
 #### 3-S.2단계 — 워커 안내
 
 - 칸반 1회 표시: `node harness/bin/board.mjs` (전체 캠페인 보드).
-- 워커 안내 출력:
-  ```
-  ✅ 시리즈 N건 예약 완료
-    · 발행 시각 도달 시 자동 처리됩니다 (워커가 한 번 더 가이드라인 재검수 후 발행)
-    · 자동 워커 설치: node harness/bin/install-cron.mjs install
-    · 수정/취소:    /sns-edit
-  ```
+- pre-generate 분기에 따라 안내가 다르다.
+
+**Y (pre-generate + 검수 통과/사용자 [C] 선택) 의 경우:**
+```
+✅ 시리즈 N건 예약 완료 (카피 미리 생성됨, 가이드라인 검수 완료)
+  · 발행 시각 도달 시 자동 발행 (워커가 한 번 더 가이드라인 재검수 후 발행)
+  · 자동 워커 설치: node harness/bin/install-cron.mjs install
+  · 수정/취소:     /sns-edit
+```
+
+**N (예약만 — draft 미생성) 의 경우:**
+```
+✅ 시리즈 N건 예약 완료 (카피 미생성)
+  ⚠ 워커는 카피를 자동 생성하지 않습니다. 발행 시각 전에 사람이 직접 generate 해야 합니다.
+  · 카피 생성:    node harness/bin/generate.mjs <slug>  (각 slug 마다)
+  · 또는:         /sns-edit 에서 캠페인 선택 → 1번(피드백 재생성) 흐름
+  · 발행 시각 도달 시 draft 가 없으면 워커가 needs_attention 으로 차단합니다.
+  · 자동 워커 설치: node harness/bin/install-cron.mjs install
+```
+
 - **이 명령은 여기서 종료한다.** 4~7단계는 실행하지 않는다 (각 캠페인은 워커가 알아서 처리).
 
 ### 소재 수집 (선택)

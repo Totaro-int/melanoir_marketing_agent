@@ -47,7 +47,8 @@ for (const ch of channels) {
   if (insp) {
     const ic = insp.ok ? pc.green : pc.red;
     const llm = insp.llmRanAt ? ' +LLM' : '';
-    console.log(ic(`guidelines: ${insp.ok ? 'pass' : 'fail'}  ·  ${insp.score}/${insp.max}${llm}`));
+    const skipNote = insp.skipped ? ` (${insp.skipped} skipped)` : '';
+    console.log(ic(`guidelines: ${insp.ok ? 'pass' : 'fail'}  ·  ${insp.score}/${insp.max}${skipNote}${llm}`));
     if (insp.blocking?.length) {
       console.log('  ' + pc.red(`blocking: ${insp.blocking.join(', ')}`));
     }
