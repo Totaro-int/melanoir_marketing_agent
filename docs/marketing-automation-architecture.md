@@ -359,9 +359,11 @@
 │   ├─ preview.mjs                   ← 미리보기
 │   ├─ approve.mjs                   ← 승인
 │   ├─ publish.mjs                   ← API 발행 (OAuth)
-│   ├─ browser-publish.mjs           ← 🆕 내일 만들 것 (Chrome 자동화)
+│   ├─ browser-publish.mjs           ← Chrome 자동화 (threads, linkedin)
 │   ├─ board.mjs                     ← 칸반
-│   └─ slots.mjs                     ← 슬롯 관리 (반복용)
+│   ├─ slots.mjs                     ← 슬롯 관리 (반복용)
+│   ├─ inspect-guidelines.mjs        ← 가이드라인 재검수 (본문+카드 통합)
+│   └─ source-collect.mjs            ← 마케팅 소스 자동수집 (RSS 등)
 │
 ├── 🗂 harness/channels/<ch>/strategy.md  ← 채널별 가이드
 │
@@ -463,27 +465,26 @@ T+8m          완료 — 칸반 표시 + 슬롯 저장
 
 | 화이트보드 항목 | 현재 상태 | 갭 |
 |----------------|----------|-----|
-| 마케팅 소스 (input) | 🟡 사용자 수동 입력 | 🔜 RSS / analytics / news 자동 수집 |
-| 마케팅 스케줄 | 🟡 cadence 값만 있음 | 🔜 /loop 또는 /schedule cron |
+| 마케팅 소스 (input) | 🟡 사용자 수동 + RSS 자동수집 | 🔜 PostHog / 경쟁사 PR / 뉴스 어댑터 추가 |
+| 마케팅 스케줄 | ✅ schedule-plan + queue-tick + install-cron | — |
 | Brand DNA / 레퍼런스 | ✅ 100% | — |
-| 광고 가이드라인 검수 | ✅ brand-guardian | 🟡 "결과물 재검수" 한 번 더 (강화 가능) |
-| 채널별 게시물 | ✅ 9 채널 (인스타 데스크톱 ❌) | 🟡 사용자 비전은 3개 (linkedin, threads, instagram) |
-| 가이드 재검수 loop | 🟡 card-evaluator (1회) | 🟡 결과물 통합 검수 step 추가 |
-| 클로드 크롬 업로드 대기 | ❌ 미구현 | ✅ 내일 만들 핵심 |
+| 광고 가이드라인 검수 | ✅ brand-guardian | — |
+| 채널별 게시물 | ✅ 3 채널 (linkedin, threads, instagram) | — (다른 채널은 disabled, --channels 명시 시 작동) |
+| 가이드 재검수 loop | ✅ inspect-guidelines (본문+카드 통합) + LLM 의미론 | 🟡 PNG OCR vision 모드 (edge case) |
+| 클로드 크롬 업로드 대기 | ✅ browser-publish.mjs (threads, linkedin) | 🟡 instagram browser 플로우 |
 
 ---
 
 ## 📅 다음 우선순위
 
 ```
-내일 (이어서):
-  1. browser-publish.mjs 작성 (30분)         ← 미싱 핵심
-  2. 채널 좁히기: linkedin + threads          ← 사용자 비전 align
-  3. 첫 실제 발행 (오늘 만든 캠페인)          ← end-to-end 검증
-  4. 시간 되면: instagram OAuth 토큰 발급     ← 3 채널 완성
+이번 주 마무리:
+  1. browser-publish 첫 dry-run 실주행          ← 셀렉터 검증 (사용자 직접)
+  2. instagram OAuth 토큰 발급                   ← 3 채널 완성
+  3. RSS 소스 어댑터 외 PostHog/뉴스 추가        ← 자동 input 다양화
 
 다음 주:
-  5. 마케팅 소스 자동 수집 정의
-  6. /loop 또는 /schedule로 매일 cron
-  7. 가이드 재검수 step 보강 (brand-guardian 강화)
+  4. PNG OCR vision 모드 (가이드 재검수 강화)
+  5. instagram browser-publish 플로우 추가
+  6. 첫 실 캠페인 end-to-end (auto-collect → publish)
 ```

@@ -97,6 +97,14 @@ add('publisher', 'auth/browser-profile/', hasBrowserProfile ? 'ok' : 'warn',
     ? '존재 (browser-publish 시 SNS 쿠키 재사용)'
     : '없음 — browser-publish 첫 실행 시 자동 생성, SNS 1회 로그인 필요');
 
+// marketing-sources.yaml — RSS 등 자동수집 소스 (선택, 없으면 사용자 수동 입력만)
+const sourcesPath = resolve(ROOT, 'marketing-sources.yaml');
+const hasSources = existsSync(sourcesPath);
+add('sources', 'marketing-sources.yaml', hasSources ? 'ok' : 'warn',
+  hasSources
+    ? '존재 (source-collect.mjs 로 후보 수집 가능)'
+    : '없음 — 예시: cp harness/examples/marketing-sources.example.yaml marketing-sources.yaml');
+
 // 5) Plugin link (best-effort hint, since the link lives outside this repo)
 add('plugin', 'plugin.json', existsSync(PATHS.pluginManifest));
 

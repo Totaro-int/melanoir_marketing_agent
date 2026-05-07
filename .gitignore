@@ -1,6 +1,7 @@
 # 회사 프로필·자격증명 — 절대 커밋 금지
 company-profile.yaml
 company-profile.local.yaml
+marketing-sources.yaml
 *.local.yaml
 .env
 .env.*
