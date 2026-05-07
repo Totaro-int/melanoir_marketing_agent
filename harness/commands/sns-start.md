@@ -52,7 +52,7 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 주제 (한 줄):
 > 
 
-채널 (기본값 사용 시 Enter, 또는 콤마 구분 입력 — threads, linkedin, instagram, x):
+채널 (기본값 사용 시 Enter, 또는 콤마 구분 입력 — threads, linkedin, instagram):
 > 
 
 목표 (런칭/인지도/참여/전환/교육 중 하나, 기본: 인지도):

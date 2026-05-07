@@ -2,12 +2,12 @@
   { "id": "threads",   "status": "reference", "path": "harness/channels/threads" },
   { "id": "linkedin",  "status": "reference", "path": "harness/channels/linkedin" },
   { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
-  { "id": "facebook",  "status": "active",    "path": "harness/channels/facebook" },
-  { "id": "x",         "status": "active",    "path": "harness/channels/x" },
-  { "id": "reddit",    "status": "active",    "path": "harness/channels/reddit" },
-  { "id": "bluesky",   "status": "active",    "path": "harness/channels/bluesky" },
-  { "id": "mastodon",  "status": "active",    "path": "harness/channels/mastodon" },
-  { "id": "pinterest", "status": "active",    "path": "harness/channels/pinterest" },
-  { "id": "tiktok",    "status": "active",    "path": "harness/channels/tiktok" },
-  { "id": "youtube",   "status": "active",    "path": "harness/channels/youtube" }
+  { "id": "facebook",  "status": "disabled",  "path": "harness/channels/facebook" },
+  { "id": "x",         "status": "disabled",  "path": "harness/channels/x" },
+  { "id": "reddit",    "status": "disabled",  "path": "harness/channels/reddit" },
+  { "id": "bluesky",   "status": "disabled",  "path": "harness/channels/bluesky" },
+  { "id": "mastodon",  "status": "disabled",  "path": "harness/channels/mastodon" },
+  { "id": "pinterest", "status": "disabled",  "path": "harness/channels/pinterest" },
+  { "id": "tiktok",    "status": "disabled",  "path": "harness/channels/tiktok" },
+  { "id": "youtube",   "status": "disabled",  "path": "harness/channels/youtube" }
 ]
