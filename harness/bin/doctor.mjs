@@ -89,6 +89,14 @@ if (!enabled.length) {
   }
 }
 
+// browser-publish (Chrome 자동화) — playwright + persistent profile 디렉터리.
+const browserProfile = resolve(ROOT, 'auth/browser-profile');
+const hasBrowserProfile = existsSync(browserProfile);
+add('publisher', 'auth/browser-profile/', hasBrowserProfile ? 'ok' : 'warn',
+  hasBrowserProfile
+    ? '존재 (browser-publish 시 SNS 쿠키 재사용)'
+    : '없음 — browser-publish 첫 실행 시 자동 생성, SNS 1회 로그인 필요');
+
 // 5) Plugin link (best-effort hint, since the link lives outside this repo)
 add('plugin', 'plugin.json', existsSync(PATHS.pluginManifest));
 
