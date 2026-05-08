@@ -1,7 +1,7 @@
 {
   "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
   "channel": "brunch",
-  "ts": "20260508-121358",
+  "ts": "20260508-130220",
   "aspect": "portrait",
   "dimensions": {
     "width": 1080,
@@ -12,7 +12,7 @@
       "index": 1,
       "total": 1,
       "role": "single",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-brunch-card1-20260508-121358.html",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-brunch-card1-20260508-130220.html",
       "hookVariants": 3
     }
   ],
@@ -30,7 +30,30 @@
       "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
     ],
     "angle": null,
-    "suggestedKeywords": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "K-뷰티 산업",
+        "OEM 여정",
+        "한국 화장품 제조"
+      ],
+      "hashtags": [
+        "#K뷰티의안쪽",
+        "#한국화장품제조사",
+        "#소싱이라는여정",
+        "#OEM에세이",
+        "#바이어의시간"
+      ],
+      "angle": "에디토리얼 매거진 톤 — 시적·1인칭·관찰. SEO 키워드 X, '방법' '정리' 회피. 광고 외양 절대 X. 매거진 일관성 우선.",
+      "watchOut": [
+        "최고의",
+        "1위",
+        "유일한",
+        "100% 검증",
+        "지금",
+        "한정",
+        "신청"
+      ]
+    },
     "profile": {
       "brand": {
         "name": "TOTARO",
@@ -189,13 +212,13 @@
         "vercel"
       ]
     },
-    "generateImages": false,
+    "generateImages": true,
     "sourceMaterials": {
       "images": []
     },
     "designRef": {
-      "brand": "cal",
-      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\cal\\DESIGN.md"
+      "brand": "notion",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\notion\\DESIGN.md"
     }
   },
   "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\brunch"

@@ -1,7 +1,7 @@
 {
   "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
   "channel": "tistory",
-  "ts": "20260507-202403",
+  "ts": "20260508-130220",
   "aspect": "portrait",
   "dimensions": {
     "width": 1080,
@@ -10,40 +10,16 @@
   "cards": [
     {
       "index": 1,
-      "total": 5,
-      "role": "hook",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card1-20260507-202403.html",
+      "total": 1,
+      "role": "single",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card1-20260508-130220.html",
       "hookVariants": 3
-    },
-    {
-      "index": 2,
-      "total": 5,
-      "role": "body",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card2-20260507-202403.html"
-    },
-    {
-      "index": 3,
-      "total": 5,
-      "role": "body",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card3-20260507-202403.html"
-    },
-    {
-      "index": 4,
-      "total": 5,
-      "role": "body",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card4-20260507-202403.html"
-    },
-    {
-      "index": 5,
-      "total": 5,
-      "role": "cta",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-tistory-card5-20260507-202403.html"
     }
   ],
   "copyContext": {
     "topic": "TOTARO COS 정식 런칭 — K-뷰티 매칭 플랫폼",
     "goal": "launch",
-    "cadence": "series-5",
+    "cadence": "single",
     "keyMessage": "조건을 말하면 3초 안에 검증된 K-뷰티 제조사를 매칭합니다",
     "contentPoints": [
       "1만 5천여 한국 화장품 제조사 DB",
@@ -54,7 +30,34 @@
       "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
     ],
     "angle": null,
-    "suggestedKeywords": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "한국 화장품 OEM 매칭",
+        "K뷰티 OEM",
+        "화장품 ODM 매칭",
+        "OEM 소싱 가이드"
+      ],
+      "hashtags": [
+        "#한국화장품OEM",
+        "#K뷰티매칭",
+        "#화장품ODM",
+        "#TOTARO",
+        "#토타로",
+        "#OEM가이드",
+        "#B2B소싱",
+        "#KoreanCosmetics"
+      ],
+      "angle": "다음·구글 SEO + 내부 링크 2~4개 — 체류시간이 가장 강력한 시그널. 정보형 친근 톤. 카테고리 일관성으로 도메인 권위 빌드.",
+      "watchOut": [
+        "최고의",
+        "1위",
+        "유일한",
+        "100% 검증",
+        "베스트",
+        "완벽한",
+        "효과 만점"
+      ]
+    },
     "profile": {
       "brand": {
         "name": "TOTARO",
@@ -213,13 +216,13 @@
         "vercel"
       ]
     },
-    "generateImages": false,
+    "generateImages": true,
     "sourceMaterials": {
       "images": []
     },
     "designRef": {
-      "brand": "supabase",
-      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\supabase\\DESIGN.md"
+      "brand": "notion",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\notion\\DESIGN.md"
     }
   },
   "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\tistory"

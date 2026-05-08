@@ -1,7 +1,7 @@
 {
   "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
   "channel": "reddit",
-  "ts": "20260508-115411",
+  "ts": "20260508-130220",
   "aspect": "portrait",
   "dimensions": {
     "width": 1080,
@@ -12,7 +12,7 @@
       "index": 1,
       "total": 1,
       "role": "single",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-reddit-card1-20260508-115411.html",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-reddit-card1-20260508-130220.html",
       "hookVariants": 3
     }
   ],
@@ -30,7 +30,24 @@
       "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
     ],
     "angle": null,
-    "suggestedKeywords": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "Korean cosmetics OEM",
+        "K-beauty manufacturer sourcing",
+        "OEM matching"
+      ],
+      "hashtags": [],
+      "angle": "영문 진솔 경험담 (r/Entrepreneur 또는 r/cosmeticchemistry). 회사명·URL 본문 첫 단락 X, 마지막 1줄에만 disclaimer. AI 정형 패턴 회피.",
+      "watchOut": [
+        "best",
+        "#1",
+        "guaranteed",
+        "100% verified",
+        "amazing",
+        "revolutionary",
+        "cure"
+      ]
+    },
     "profile": {
       "brand": {
         "name": "TOTARO",
@@ -189,13 +206,13 @@
         "vercel"
       ]
     },
-    "generateImages": false,
+    "generateImages": true,
     "sourceMaterials": {
       "images": []
     },
     "designRef": {
-      "brand": "supabase",
-      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\supabase\\DESIGN.md"
+      "brand": "notion",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\notion\\DESIGN.md"
     }
   },
   "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\reddit"

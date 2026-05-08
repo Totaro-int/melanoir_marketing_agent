@@ -1,7 +1,7 @@
 {
   "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
   "channel": "x",
-  "ts": "20260508-115409",
+  "ts": "20260508-130220",
   "aspect": "portrait",
   "dimensions": {
     "width": 1080,
@@ -12,7 +12,7 @@
       "index": 1,
       "total": 1,
       "role": "single",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-x-card1-20260508-115409.html",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-x-card1-20260508-130220.html",
       "hookVariants": 3
     }
   ],
@@ -30,7 +30,26 @@
       "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
     ],
     "angle": null,
-    "suggestedKeywords": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "K-뷰티",
+        "3초",
+        "OEM"
+      ],
+      "hashtags": [
+        "#TOTARO",
+        "#토타로"
+      ],
+      "angle": "극도 punchy — 1문장 단정 + 짧은 보조 1줄. 형용사 모두 제거, 수치 1개. 280자 한도 권장 200자 안.",
+      "watchOut": [
+        "최고의",
+        "1위",
+        "유일한",
+        "지금",
+        "한정",
+        "특가"
+      ]
+    },
     "profile": {
       "brand": {
         "name": "TOTARO",
@@ -189,13 +208,13 @@
         "vercel"
       ]
     },
-    "generateImages": false,
+    "generateImages": true,
     "sourceMaterials": {
       "images": []
     },
     "designRef": {
-      "brand": "linear.app",
-      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\linear.app\\DESIGN.md"
+      "brand": "notion",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\notion\\DESIGN.md"
     }
   },
   "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\x"

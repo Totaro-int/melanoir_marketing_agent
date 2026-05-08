@@ -1,7 +1,7 @@
 {
   "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
   "channel": "facebook",
-  "ts": "20260508-115408",
+  "ts": "20260508-130220",
   "aspect": "portrait",
   "dimensions": {
     "width": 1080,
@@ -12,7 +12,7 @@
       "index": 1,
       "total": 1,
       "role": "single",
-      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-facebook-card1-20260508-115408.html",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-facebook-card1-20260508-130220.html",
       "hookVariants": 3
     }
   ],
@@ -30,7 +30,27 @@
       "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
     ],
     "angle": null,
-    "suggestedKeywords": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "K-뷰티 OEM",
+        "3초 매칭",
+        "한국 화장품 제조사"
+      ],
+      "hashtags": [
+        "#TOTARO",
+        "#토타로",
+        "#화장품OEM",
+        "#B2B소싱"
+      ],
+      "angle": "친근·정보 전달형 + 마지막 댓글 유도 질문. 첫 250자(미리보기 컷)에 핵심. 광고 톤 X (알고리즘 가라앉힘).",
+      "watchOut": [
+        "최고의",
+        "1위",
+        "유일한",
+        "지금 클릭",
+        "한정 특가"
+      ]
+    },
     "profile": {
       "brand": {
         "name": "TOTARO",
@@ -189,13 +209,13 @@
         "vercel"
       ]
     },
-    "generateImages": false,
+    "generateImages": true,
     "sourceMaterials": {
       "images": []
     },
     "designRef": {
-      "brand": "stripe",
-      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\stripe\\DESIGN.md"
+      "brand": "notion",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\notion\\DESIGN.md"
     }
   },
   "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\facebook"
