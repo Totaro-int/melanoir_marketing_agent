@@ -262,8 +262,8 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
   const designRef   = loadDesignRef(brief, profile);
   const prefs       = loadPrefs();
 
-  for (const channel of channels) {
-    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
+  await Promise.all(channels.map(async (channel) => {
+    ui.info(`[${channel}] slide-spec 작성 중...`);
 
     const channelDocs = loadChannelDocs(channel);
     const cardCount   = imagesFor(brief.cadence, flags.images) || 1;
@@ -339,7 +339,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
     brief.status[channel] = 'drafting';
     ui.ok(`[${channel}] slide-spec.json 저장 완료 → ${resolve(channelDir, 'slide-spec.json')}`);
-  }
+  }));
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -363,8 +363,8 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
   const designRef   = loadDesignRef(brief, profile);
   const prefs       = loadPrefs();
 
-  for (const channel of channels) {
-    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
+  await Promise.all(channels.map(async (channel) => {
+    ui.info(`[${channel}] copy-spec 작성 중...`);
 
     const channelDocs = loadChannelDocs(channel);
     const cardCount   = imagesFor(brief.cadence, flags.images) || 1;
@@ -429,7 +429,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
     writeFileSync(resolve(channelDir, 'copy-spec.json'), JSON.stringify(spec, null, 2), 'utf8');
     brief.status[channel] = 'drafting';
     ui.ok(`[${channel}] copy-spec.json → ${resolve(channelDir, 'copy-spec.json')}`);
-  }
+  }));
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -444,8 +444,8 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
 async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels, provider, flags }) {
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
 
-  for (const channel of channels) {
-    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] finalize...`);
+  await Promise.all(channels.map(async (channel) => {
+    ui.info(`[${channel}] finalize 중...`);
 
     const channelDir = resolve(dir, channel);
     const specPath   = resolve(channelDir, 'copy-spec.json');
@@ -453,11 +453,11 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 
     if (!existsSync(specPath)) {
       ui.err(`[${channel}] copy-spec.json 없음 — 먼저 generate.mjs 를 (--finalize 없이) 실행하세요.`);
-      continue;
+      return;
     }
     if (!existsSync(outputPath)) {
       ui.err(`[${channel}] copy-output.json 없음 — copywriter 에이전트가 아직 처리하지 않았습니다.`);
-      continue;
+      return;
     }
 
     const spec   = JSON.parse(readFileSync(specPath, 'utf8'));
@@ -470,7 +470,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
       const latestPath = latestDraftYaml(channelDir);
       if (!latestPath) {
         ui.err(`[${channel}] partial finalize 인데 기존 draft 없음.`);
-        continue;
+        return;
       }
       const existing  = readYaml(latestPath);
       const { cardIndex: cIdx, cardTotal, role } = spec.partial;
@@ -522,7 +522,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 
       if (report.ok) ui.ok(`[${channel}] 카드 ${cIdx} 재생성 완료`);
       else           ui.err(`[${channel}] 가디언 차단`);
-      continue;
+      return;
     }
 
     // ── FULL: 처음부터 draft 조립 ─────────────────────────────────────────
@@ -579,7 +579,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 
     if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary?.warns ?? 0})`);
     else           ui.err(`[${channel}] 가디언 차단 (${report.summary?.blocks ?? '?'}건)`);
-  }
+  }));
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -590,8 +590,8 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels }) {
   const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
 
-  for (const channel of channels) {
-    ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] 슬라이드 완성...`);
+  await Promise.all(channels.map(async (channel) => {
+    ui.info(`[${channel}] 슬라이드 완성 중...`);
 
     const channelDir  = resolve(dir, channel);
     const specPath    = resolve(channelDir, 'slide-spec.json');
@@ -599,11 +599,11 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
 
     if (!existsSync(specPath)) {
       ui.err(`[${channel}] slide-spec.json 없음 — 먼저 generate.mjs (--finalize 없이) 실행하세요.`);
-      continue;
+      return;
     }
     if (!existsSync(outputPath)) {
       ui.err(`[${channel}] agent-output.json 없음 — image-director 에이전트가 아직 처리하지 않았습니다.`);
-      continue;
+      return;
     }
 
     const spec        = JSON.parse(readFileSync(specPath, 'utf8'));
@@ -796,7 +796,7 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     if (thumbPath) {
       ui.dim(`  🖼 피드 썸네일: ${thumbPath}`);
     }
-  }
+  }));
 
   writeYaml(briefPath, brief);
   console.log();
