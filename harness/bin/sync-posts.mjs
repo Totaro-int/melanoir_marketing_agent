@@ -43,16 +43,16 @@ for (const ch of safeReaddir(PATHS.postsByChannelDir)) {
   if (!safeIsDir(chDir)) continue;
   for (const a of safeReaddir(chDir)) {
     const aPath = resolve(chDir, a);
-    if (isSymlink(aPath)) { try { unlinkSync(aPath); wiped++; } catch {} continue; }
+    if (isSymlink(aPath)) { try { unlinkSync(aPath); wiped++; } catch (e) { ui.warn(`symlink 삭제 실패 [${ch}/${a}]: ${e.message}`); } continue; }
     if (!safeIsDir(aPath)) continue;
     for (const b of safeReaddir(aPath)) {
       const bPath = resolve(aPath, b);
-      if (isSymlink(bPath)) { try { unlinkSync(bPath); wiped++; } catch {} }
+      if (isSymlink(bPath)) { try { unlinkSync(bPath); wiped++; } catch (e) { ui.warn(`symlink 삭제 실패 [${ch}/${a}/${b}]: ${e.message}`); } }
     }
   }
 }
 
-let added = 0, kept = 0;
+let added = 0;
 for (const { slug, dir } of campaigns) {
   const brief = safeReadBrief(dir);
   const groupSlug = resolveGroup(brief, slotIndex);
@@ -71,7 +71,7 @@ for (const { slug, dir } of campaigns) {
     if (existsSync(linkPath) || isSymlink(linkPath)) {
       try {
         const cur = readlinkSync(linkPath);
-        if (cur === relTarget) { kept++; continue; }
+        if (cur === relTarget) { continue; }
         unlinkSync(linkPath);
       } catch {
         try { unlinkSync(linkPath); } catch {}

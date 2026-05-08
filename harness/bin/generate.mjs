@@ -225,7 +225,7 @@ function buildLearnedPrefsForCopy(prefs, channel) {
     guide: renderGuide(prefs, { channel }),
     sampleCount: prefs.sampleCount,
     confidence: prefs.sampleCount < 5 ? 'initial' : prefs.sampleCount < 10 ? 'building' : 'strong',
-    targets: ch ? {
+    targets: (ch && ch.sampleCount >= 3) ? {
       avgLength: Math.round(ch.avgLength),
       avgEmojis: round1(ch.avgEmojis),
       avgHashtags: round1(ch.avgHashtags),

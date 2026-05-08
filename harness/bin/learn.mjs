@@ -80,6 +80,7 @@ async function rebuild() {
     const status = brief?.status ?? {};
     for (const [channel, st] of Object.entries(status)) {
       if (st !== 'approved' && st !== 'published') continue;
+      if (!isSafeChannelKey(channel)) continue;
       const text = readChannelText(resolve(dir, channel));
       if (!text) continue;
       applyApproval(fresh, channel, extractSignals(text), brief);
@@ -88,6 +89,7 @@ async function rebuild() {
     // 거절 이력
     for (const [channel, list] of Object.entries(brief?.feedback ?? {})) {
       if (!Array.isArray(list)) continue;
+      if (!isSafeChannelKey(channel)) continue;
       for (const r of list) applyRejection(fresh, channel, r?.reason ?? null);
     }
   }
@@ -96,7 +98,10 @@ async function rebuild() {
 }
 
 function resetPrefs() {
-  if (existsSync(PREFS_PATH)) { try { unlinkSync(PREFS_PATH); } catch {} }
+  if (existsSync(PREFS_PATH)) {
+    try { unlinkSync(PREFS_PATH); }
+    catch (e) { ui.warn(`[learn] 초기화 실패: ${e.message}`); return; }
+  }
   ui.ok('[learn] 학습 데이터 초기화됨');
 }
 
@@ -111,6 +116,8 @@ function parseSlugChannel(args) {
 }
 
 function safeIsDir(p) { try { return statSync(p).isDirectory(); } catch { return false; } }
+const _UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+function isSafeChannelKey(k) { return typeof k === 'string' && /^[a-zA-Z0-9_-]{1,64}$/.test(k) && !_UNSAFE_KEYS.has(k); }
 
 function usage() {
   console.log('사용법:');

@@ -8,9 +8,9 @@
 //   - 누적 업데이트 (approve = positive, reject = negative)
 //   - 자연어 가이드 직렬화 (에이전트 system prompt 주입용)
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, renameSync, copyFileSync, unlinkSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { PATHS, readYaml, writeYaml } from '../bin/_lib.mjs';
+import { PATHS, readYaml, writeYaml, ui } from '../bin/_lib.mjs';
 
 export const PREFS_PATH = resolve(PATHS.campaignsDir, '..', 'preferences.yaml');
 
@@ -40,19 +40,36 @@ export function loadPrefs() {
   if (!existsSync(PREFS_PATH)) return emptyPrefs();
   try {
     const data = readYaml(PREFS_PATH);
-    return { ...emptyPrefs(), ...data };
-  } catch {
+    const base = emptyPrefs();
+    // deep merge: top-level primitives + global object (so new nested keys survive schema evolution)
+    return {
+      ...base,
+      ...data,
+      global: { ...base.global, ...(data?.global ?? {}) },
+    };
+  } catch (e) {
+    ui.warn(`preferences.yaml 파싱 실패, 빈 선호도로 시작합니다: ${e.message}`);
     return emptyPrefs();
   }
 }
 
 export function savePrefs(prefs) {
-  writeYaml(PREFS_PATH, { ...prefs, updatedAt: new Date().toISOString() });
+  const tmp = `${PREFS_PATH}.tmp`;
+  writeYaml(tmp, { ...prefs, updatedAt: new Date().toISOString() });
+  try {
+    renameSync(tmp, PREFS_PATH);
+  } catch (e) {
+    if (e.code !== 'EXDEV') throw e;
+    copyFileSync(tmp, PREFS_PATH);
+    unlinkSync(tmp);
+  }
 }
+
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 // 채널 결과물 폴더에서 본문 텍스트 모으기.
 //   - copy-output.json 의 cards[].text 우선
-//   - 없으면 draft.md fallback
+//   - 없으면 draft.md fallback (mtime 최신 순)
 export function readChannelText(channelDir) {
   const candidates = ['copy-output.json', 'agent-output.json'];
   for (const name of candidates) {
@@ -65,11 +82,15 @@ export function readChannelText(channelDir) {
       if (text) return text;
     } catch {}
   }
-  // draft.md 패턴 (channel/<TS>.md 또는 draft.md)
-  for (const f of safeReaddir(channelDir)) {
-    if (f.endsWith('.md') && !/README/i.test(f)) {
-      try { return readFileSync(resolve(channelDir, f), 'utf8'); } catch {}
-    }
+  // draft.md 패턴 (channel/<TS>.md 또는 draft.md) — mtime 최신 순
+  const mdFiles = safeReaddir(channelDir)
+    .filter((f) => f.endsWith('.md') && !/README/i.test(f))
+    .sort((a, b) => {
+      try { return statSync(resolve(channelDir, b)).mtimeMs - statSync(resolve(channelDir, a)).mtimeMs; }
+      catch { return 0; }
+    });
+  for (const f of mdFiles) {
+    try { return readFileSync(resolve(channelDir, f), 'utf8'); } catch {}
   }
   return '';
 }
@@ -112,11 +133,11 @@ export function applyApproval(prefs, channel, signals, brief) {
 
   // designRef / goal 빈도
   const designRef = brief?.sourceMaterials?.designRef;
-  if (designRef) {
+  if (designRef && !FORBIDDEN_KEYS.has(designRef)) {
     prefs.designRefs[designRef] = (prefs.designRefs[designRef] ?? 0) + 1;
   }
   const goal = brief?.goal;
-  if (goal) {
+  if (goal && !FORBIDDEN_KEYS.has(goal)) {
     prefs.goals[goal] = (prefs.goals[goal] ?? 0) + 1;
   }
 }
@@ -128,7 +149,9 @@ export function applyRejection(prefs, channel, reason) {
   });
   ch.rejected = (ch.rejected ?? 0) + 1;
   if (reason) {
-    ch.recentRejectReasons = (ch.recentRejectReasons ?? []).concat([reason]).slice(-5);
+    // strip control chars + newlines, cap at 200 chars to prevent prompt injection
+    const safe = String(reason).replace(/[\r\n\x00-\x1f\x7f]/g, ' ').trim().slice(0, 200);
+    if (safe) ch.recentRejectReasons = (ch.recentRejectReasons ?? []).concat([safe]).slice(-5);
   }
 }
 
@@ -182,10 +205,7 @@ function ema(prev, next, n) {
 }
 
 function countCodepoints(s) {
-  let c = 0;
-  // eslint-disable-next-line no-unused-vars
-  for (const _ of s) c++;
-  return c;
+  return [...s].length;
 }
 
 function safeReaddir(p) { try { return readdirSync(p); } catch { return []; } }
