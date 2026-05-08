@@ -6,7 +6,7 @@
 
 import { resolve } from 'node:path';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import {
   PATHS, HARNESS_ROOT, readYaml, writeYaml, loadChannelDocs, findCampaignDir, nowKstIso, nowKstFilename, ui, latestDraftYaml, Spinner,
@@ -581,11 +581,13 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 
     if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary?.warns ?? 0})`);
     else           ui.err(`[${channel}] 가디언 차단 (${report.summary?.blocks ?? '?'}건)`);
+    return image.paths ?? [];
   }));
   logSettledErrors(_s3, channels);
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
+  openInChrome(_s3.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value));
   console.log();
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
 }
@@ -799,10 +801,12 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
     if (thumbPath) {
       ui.dim(`  🖼 피드 썸네일: ${thumbPath}`);
     }
+    return pngPaths;
   }));
   logSettledErrors(_s4, channels);
 
   writeYaml(briefPath, brief);
+  openInChrome(_s4.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value));
   console.log();
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
 }
@@ -1082,6 +1086,22 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
     'QUALITY: Sharp edges, high contrast, print-ready. No lens blur. No gradients unless intentional.',
     `AVOID: ${avoidDesc}`,
   ].filter(Boolean).join('\n');
+}
+
+function openInChrome(paths) {
+  const local = (paths ?? []).filter((p) => p && existsSync(p));
+  if (!local.length) return;
+  try {
+    const { platform } = process;
+    if (platform === 'darwin') {
+      spawnSync('open', ['-a', 'Google Chrome', ...local], { stdio: 'ignore' });
+    } else if (platform === 'linux') {
+      for (const p of local) spawnSync('xdg-open', [p], { stdio: 'ignore' });
+    } else if (platform === 'win32') {
+      spawnSync('cmd', ['/c', 'start', '', ...local], { stdio: 'ignore' });
+    }
+    ui.dim(`  브라우저 오픈: ${local.length}개 파일`);
+  } catch {}
 }
 
 function renderDraftMd(d) {
