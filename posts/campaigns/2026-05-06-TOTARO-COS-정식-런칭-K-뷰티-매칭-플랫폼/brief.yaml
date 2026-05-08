@@ -8,7 +8,12 @@ channels:
   - instagram
   - naver-blog
   - tistory
-cadence: series-5
+  - bluesky
+  - facebook
+  - x
+  - reddit
+  - brunch
+cadence: single
 keyMessage: 조건을 말하면 3초 안에 검증된 K-뷰티 제조사를 매칭합니다
 contentPoints:
   - 1만 5천여 한국 화장품 제조사 DB
@@ -33,7 +38,12 @@ status:
   instagram: drafting
   naver-blog: preview
   tistory: preview
+  bluesky: preview
+  facebook: preview
+  x: preview
+  reddit: preview
+  brunch: preview
 meta:
   createdAt: 2026-05-06T22:28:27.011+09:00
-  updatedAt: 2026-05-07T20:27:40.157+09:00
+  updatedAt: 2026-05-08T12:20:38.353+09:00
   profileBrand: TOTARO

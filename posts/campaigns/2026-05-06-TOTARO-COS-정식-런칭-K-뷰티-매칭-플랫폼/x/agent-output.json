@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
+  "channel": "x",
+  "ts": "20260508-115409",
+  "cards": [
+    {
+      "index": 1,
+      "total": 1,
+      "role": "single",
+      "text": "출장 며칠이 3초로 줄어든다.\n\nK-뷰티 제조사 1만 5천여 곳, 인증·MOQ 조건 매칭.\n\n#TOTARO #토타로",
+      "hashtags": [
+        "#TOTARO",
+        "#토타로"
+      ],
+      "assetUrls": [
+        "https://v3b.fal.media/files/b/0a9954f6/s3tCKgbdMvAZ83rrws0qb.jpg"
+      ],
+      "imagePrompt": "extreme minimalism for X feed, single hero stat composition for K-beauty matching, raw sans-serif typography accent (no actual text), plenty of white space on warm beige hex f5f4ef canvas, single forest green hex 3d6b2e divider line, no decoration, 1920x1080 landscape feel, no faces, no people, no actual letters, no logos, no glow"
+    }
+  ],
+  "meta": {
+    "provider": "claude-subagent",
+    "agent": "copywriter",
+    "generatedAt": "2026-05-08T11:54:09+09:00",
+    "imageProvider": "fal-ai/fast-sdxl",
+    "imagesGeneratedAt": "2026-05-08T02:59:46.934Z"
+  }
+}

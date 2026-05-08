@@ -1,0 +1,202 @@
+{
+  "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
+  "channel": "x",
+  "ts": "20260508-115409",
+  "aspect": "portrait",
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "cards": [
+    {
+      "index": 1,
+      "total": 1,
+      "role": "single",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼-x-card1-20260508-115409.html",
+      "hookVariants": 3
+    }
+  ],
+  "copyContext": {
+    "topic": "TOTARO COS 정식 런칭 — K-뷰티 매칭 플랫폼",
+    "goal": "launch",
+    "cadence": "single",
+    "keyMessage": "조건을 말하면 3초 안에 검증된 K-뷰티 제조사를 매칭합니다",
+    "contentPoints": [
+      "1만 5천여 한국 화장품 제조사 DB",
+      "HACCP·ISO·CGMP 인증 자동 검증",
+      "평균 매칭 시간 3초",
+      "한국어·영어·일본어 3개 언어 지원",
+      "MOQ·리드타임·인증 조건 필터링",
+      "AI 자연어 검색 (Claude·ChatGPT MCP 호환)"
+    ],
+    "angle": null,
+    "suggestedKeywords": null,
+    "profile": {
+      "brand": {
+        "name": "TOTARO",
+        "legalName": "주식회사 토타로 인터내셔널",
+        "websites": [
+          "https://cos.totaro.co.kr",
+          "https://www.totaro.co.kr"
+        ]
+      },
+      "tone": {
+        "preset": "calm",
+        "voiceNotes": "- 광고처럼 외치지 않고 정보를 정제해서 전달.\n- \"~합니다\" 체 기본. 차분하고 단정적인 종결.\n- 이모지 사용 안 함 (none).\n- 형용사 남발 금지. 숫자·사실·인증·검증 위주로 말함.\n- B2B 바이어가 출장 비행기에서 읽기 좋은 톤.\n",
+        "sampleSentences": [
+          "어떤 피부든, 어느 나라든. K-뷰티를 찾아드립니다.",
+          "1만 5천여 개 한국 화장품 제조사 데이터를 AI로 매칭합니다."
+        ]
+      },
+      "writing": {
+        "formats": [
+          "data_driven",
+          "listicle"
+        ],
+        "sentenceLength": "medium",
+        "ctaStyle": "implicit",
+        "emojiUsage": "none",
+        "referencePosts": [
+          "왜 AI 회사가 '도토리 공장'에서 시작했을까?\n\n아랜딩(Aranding)을 시작했습니다. 처음부터 거창한 AI 담론을 꺼내지는 않으려 합니다.\n\n아랜딩의 출발점은 의외로 유통, 그리고 도토리 산업과 연결된 제조업체와의 협업입니다. 이유는 단순합니다.\n\n\"기술이 붙기 전, 브랜드가 실제로 작동하는 구조가 먼저여야 하기 때문입니다.\"\n\n공장, 제품, 유통, 거래, 고객. 이 기본적인 흐름이 정리되지 않은 상태에서의 AI 도입은 사상누각에 불과하다고 봤습니다. 보여지는 기술보다, 버텨낼 수 있는 구조가 먼저라고 판단했습니다.\n\n그래서 아랜딩은 \"AI로 무엇을 만들어 드립니다\"라는 접근 대신, 다음과 같은 방식을 선택했습니다.\n\n브랜딩: 기존 브랜드의 정체성과 신뢰 구조를 먼저 정리합니다.\n구조화: AI가 데이터를 이해하고 추천할 수 있는 최적의 형태로 확장합니다.\nAI 확장: 검색·추천·요약의 흐름 속에서 AI에게도 '신뢰할 수 있는 브랜드'로 인식되는 구조를 만듭니다.\n\n사람에게만 잘 보이는 브랜딩을 넘어, AI 엔진이 기꺼이 추천하는 브랜드를 만드는 것. 그것이 아랜딩이 정의하는 진정한 AI 활용입니다.\n"
+        ]
+      },
+      "targetAudience": [
+        {
+          "persona": "K-뷰티 브랜드 창업자 (해외)",
+          "painPoints": [
+            "한국 화장품 제조사·브랜드 소싱 과정(구글링·웹서칭)이 너무 번거롭고 오래 걸림",
+            "현지 에이전시 비용이 비싸고 검증되지 않은 곳이 많음",
+            "MOQ·인증·리드타임 조건에 맞는 OEM을 찾기 어려움"
+          ],
+          "channelsTheyUse": [
+            "linkedin",
+            "x",
+            "reddit",
+            "instagram"
+          ]
+        },
+        {
+          "persona": "한국 OEM 소싱 매니저",
+          "painPoints": [
+            "자신에게 딱 맞는 제품 OEM 가능 제조사 컨택에 너무 많은 시간이 소요됨",
+            "글로벌 바이어와의 첫 컨택 채널이 산만함"
+          ],
+          "channelsTheyUse": [
+            "linkedin",
+            "threads",
+            "instagram",
+            "facebook"
+          ]
+        }
+      ],
+      "banned": {
+        "words": [
+          "최고의",
+          "최고",
+          "1위",
+          "1등",
+          "유일한",
+          "유일",
+          "완벽한",
+          "절대",
+          "베스트"
+        ],
+        "topics": [
+          "경쟁사 직접 비방",
+          "의약품 효능·효과 표방",
+          "피부에 대한 의학적 작용 표현",
+          "정치·종교"
+        ],
+        "claims": [
+          "100% 보장",
+          "100% 검증",
+          "효과 만점",
+          "확실한 효과",
+          "효과 보장",
+          "안전 보장",
+          "의학적으로 입증",
+          "임상적으로 증명",
+          "치료",
+          "완치"
+        ]
+      },
+      "hashtags": {
+        "always": [
+          "#TOTARO",
+          "#토타로"
+        ],
+        "pool": [
+          "#K뷰티",
+          "#한국화장품",
+          "#화장품OEM",
+          "#ODM",
+          "#뷰티수출",
+          "#B2B소싱",
+          "#검증제조사",
+          "#글로벌바이어",
+          "#코스메틱",
+          "#KBeauty",
+          "#KoreanCosmetics",
+          "#B2BSourcing",
+          "#CosmeticsOEM",
+          "#SourcingKorea",
+          "#BeautyManufacturers",
+          "#KoreanSkincare",
+          "#PrivateLabel",
+          "#CosmeticsExport",
+          "#韓国コスメ",
+          "#Kビューティー",
+          "#化粧品OEM",
+          "#韓国製造"
+        ]
+      }
+    },
+    "channelStrategy": "# X (Twitter) Strategy\n\nX(@x) 채널 전략. **짧고 punchy + 실시간 도달**이 핵심. 280자 한도가 모든 것을 결정.\n\n## 한 줄 요약\n**1문장 단정 + 수치 1개 + 이미지 옵션**. 280자 한도 안에 핵심만. 광고 톤·과장은 즉시 외면. 짧을수록 잘 받음.\n\n## 채널 특성\n\n| 항목 | 내용 |\n|------|------|\n| 글자 수 | **280자 한도** (한국어 ~140자) |\n| 한국어 한도 | ~140자 — 한 문장 + 짧은 보조 |\n| 미디어 | 이미지 4장 OR 영상 2분 20초 |\n| Aspect | 16:9 권장 / 1:1 OK |\n| 첫 줄 | 첫 줄이 전부 — 단정·수치·짧은 통찰 |\n| 해시태그 | **1~2개** (도배 시 외면) |\n| 링크 | OK 단, 이미지·영상이 도달 ↑ |\n| 시리즈 | thread 1~10편 (`cadence: thread`) |\n| API | X API v2 (Bearer 또는 OAuth1, 이미지는 OAuth1 필수) |\n\n## 콘텐츠 원칙\n\n1. **1문장에 결판**\n   - 280자 안 한 문장 + 짧은 보조 1문장\n2. **수치 1개**\n   - \"5.2일 → 1.8일\" 같은 짧은 수치가 가장 잘 도달\n3. **이미지가 도달 2배+**\n   - 같은 카피여도 이미지 첨부 시 노출 큰 차이\n4. **광고 톤 X**\n   - \"지금\" \"한정\" \"특가\" 등 → 알고리즘이 노출 깎음\n5. **thread는 1편이 단독으로도**\n   - 1편이 retweet 안 되면 2편도 안 봄\n\n## 금기\n\n- 280자 꽉 채우기 (보통 200자 안이 최적)\n- 해시태그 3개+ 도배\n- 외부 링크 첫 트윗에 (영상·이미지가 노출 ↑)\n- 회사 프로필 `banned.words / topics / claims` 위반\n- 줄바꿈 도배 (X는 줄바꿈 적게 — 한 호흡)\n\n## 콘텐츠 타입별 권장 형식\n\n| 타입 | 길이 | 미디어 | cadence |\n|------|------|--------|---------|\n| 짧은 단정 | ~100자 | 없음 또는 1장 | `single` |\n| 수치 + 이미지 | ~150자 + 1장 | Stat 카드 1장 | `single` |\n| Thread (스토리) | 각 ~150자 × 5~10편 | 첫 편 카드 | `thread` |\n| 제품 업데이트 | ~200자 + 스크린샷 | 1~2장 | `single` |\n| 인용·발견 | ~150자 + 스크린샷 | 1장 | `single` |\n\n## 🎨 이미지 가이드 (X)\n\n> 공통 6-component 공식은 `harness/agents/image-director.md` 참조.\n\n### X 특수 (극도 미니멀)\n\n| 항목 | Instagram | **X** |\n|------|----------|------|\n| 배경 | 어두운 풀-블리드 | **밝은 #F8FAFC 또는 단색 1색** |\n| Aspect | 4:5 portrait | **16:9 landscape** (피드 노출 컷 최적) |\n| Hero 크기 | 120px+ | **150~200px** (수치 하나가 전부) |\n| 톤 | 임팩트·glow | **극도 미니멀** |\n| 필수 요소 | pill + brand mark | **Hero stat + 작은 eyebrow + divider 1개만** |\n| 인물 | 자제 | 자제 |\n\n### 이미지 prompt 핵심 키워드\n\n```\n\"extreme minimalism for X feed, single hero stat composition,\nraw sans-serif typography, plenty of white space,\nno decoration except 1 divider line, 16:9 landscape,\nbrand accent only on the hero number, no glow\"\n```\n\n### 카드 사용 권장도\n\n- **수치 1개**: Stat Card 가 X에서 가장 강력\n- **인용**: Quote Block 적합\n- **다단계 정보**: 캐러셀 X (X는 단일 이미지가 강함)\n\n## 발행 시간 권장\n\n- 평일 오전 8~10시, 점심 12~13시, 저녁 19~21시\n- 한국어 트윗은 한국 시간대 우선\n\n## 회사 프로필 매핑\n\n`copywriter`:\n- `tone.preset` → punchy 톤으로 변환 (긴 문장 → 짧은 한 줄)\n- `keyMessage` → 첫 문장에 그대로 (수정 최소)\n- `hashtags.always` 만 (1~2개)\n- 형용사 모두 제거, 사실·수치만\n\n`image-director`:\n- 6-component 공식 적용\n- 채널 = x → 극도 미니멀 + 16:9 + Hero stat 거대화\n- `imageStyle.aestheticDirection` \"minimalist\" 강제 (다른 톤이어도 X용으론 절제)\n\n## 업로드 (Phase 4 — X API v2)\n\n```\nPOST /2/tweets\n- text, media: { media_ids }\n- Bearer token (텍스트만)\n- OAuth1 (이미지 첨부 필요)\n\n이미지 첨부:\nPOST /1.1/media/upload (OAuth1)\n→ media_id 받아서 /2/tweets 에 첨부\n```\n\n자세한 어댑터: `harness/src/publisher/adapters/x.mjs`\n\n## 참고\n\n- X API v2: https://developer.x.com/en/docs/x-api/v2\n- Media Upload: https://developer.x.com/en/docs/x-api/v1/media\n\n> **마지막 검증: 2026-05-07**\n",
+    "channelTemplates": "# X (Twitter) Post Templates\n\n`copywriter` + `image-director`가 사용. **280자 안에 결판 + 짧을수록 강함**.\n\n---\n\n## X1. 짧은 단정 (~100자, 이미지 없음)\n\n```\n{단정 또는 의외의 짧은 통찰. 한 문장.}\n\n{선택: 짧은 보조 1줄.}\n```\n\n**예시 (cos.totaro 톤)**:\n```\n출장 4시간이 검색 3초로 줄어든다.\n\nK-뷰티 OEM 매칭, 데이터 정규화의 결과.\n```\n\n---\n\n## X2. 수치 + 이미지 (~150자 + 1장)\n\n**이미지**: Stat Card — Hero stat 150~200px + 작은 caption\n\n**텍스트**:\n```\n{수치 1개 + 맥락 1줄.}\n\n{선택: 링크 1개 또는 #태그 1~2개}\n```\n\n**예시**:\n```\n5.2일 → 1.8일.\n\n이 차이가 정산 인프라가 만들어낸 결과입니다.\n```\n\n---\n\n## X3. Thread 시리즈 (각 ~150자 × 5~10편)\n\n**1편 (단독으로도 가치 있어야)**:\n```\n{충분히 흥미로운 단정 또는 결과 한 줄.}\n\n{thread 시작 표시 — \"🧵\" 또는 \"1/\" 권장 X. 자연스럽게 다음으로}\n```\n\n**2~N편 (각 짧게)**:\n```\n{단계·근거·맥락 한 줄씩.}\n```\n\n**마지막 편 (CTA)**:\n```\n{정리 + 행동 유도 1줄.}\n\n{링크 1개}\n```\n\n---\n\n## X4. 제품 업데이트 (~200자 + 스크린샷)\n\n```\n{기능 한 줄: 무엇이 새로 가능한가}\n\n{왜 필요했는지 1줄}\n\n{도큐먼트 또는 사용 링크}\n```\n\n---\n\n## 채우기 규칙\n\n1. **280자 한도 절대 준수** (한국어 140자 권장)\n2. 형용사 모두 제거 — 수치·사실만\n3. 줄바꿈 1~2개 이하\n4. 해시태그 1~2개만\n5. 첫 트윗에 외부 링크 자제 (영상·이미지가 도달 ↑)\n6. `image-director`: 채널 = x → 16:9 + 극도 미니멀 + Hero 거대화\n"
+  },
+  "imageContext": {
+    "topic": "TOTARO COS 정식 런칭 — K-뷰티 매칭 플랫폼",
+    "brandName": "TOTARO",
+    "visual": {
+      "colors": {
+        "primary": "#3d6b2e",
+        "accent": "#3d6b2e",
+        "background": "#f5f4ef",
+        "foreground": "#2b2d2d",
+        "secondary": "#edece7"
+      },
+      "fonts": {
+        "heading": "Noto Serif KR",
+        "body": "Geist Sans",
+        "data": "Geist Mono"
+      },
+      "aestheticDirection": "Organic/Natural — 자연주의 + 전문성. Premium yet approachable.",
+      "fontFamily": "Noto Serif KR / Geist Sans"
+    },
+    "imageStyle": {
+      "aesthetic": "minimal_editorial",
+      "colorMood": "neutral",
+      "preferAbstract": true,
+      "avoidElements": [
+        "스톡포토 느낌",
+        "그라디언트 남용",
+        "인물 클로즈업",
+        "AI 슬롭 (불필요한 광택·반사)"
+      ],
+      "referencesBrands": [
+        "linear.app",
+        "stripe",
+        "vercel"
+      ]
+    },
+    "generateImages": false,
+    "sourceMaterials": {
+      "images": []
+    },
+    "designRef": {
+      "brand": "linear.app",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\linear.app\\DESIGN.md"
+    }
+  },
+  "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼\\x"
+}

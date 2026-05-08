@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "slug": "2026-05-06-TOTARO-COS-정식-런칭-K-뷰티-매칭-플랫폼",
+  "channel": "bluesky",
+  "ts": "20260508-115407",
+  "cards": [
+    {
+      "index": 1,
+      "total": 1,
+      "role": "single",
+      "text": "한국 화장품 OEM 찾는 데 한 달씩 쓰는 게 당연한 일은 아니더라고요.\n\nTOTARO COS, 오늘 정식으로 열었어요. 조건을 말하면 1만 5천여 곳 중에서 평균 3초 안에 매칭이 돼요. MOQ·인증·리드타임까지 한 번에요.\n\n출장 한 번으로 다 보긴 어려운 시장이잖아요.\n\n#TOTARO",
+      "hashtags": [
+        "#TOTARO"
+      ],
+      "assetUrls": [
+        "https://v3b.fal.media/files/b/0a9954f5/hN8fJQ1KZbpg5QzUcWmZP.jpg"
+      ],
+      "imagePrompt": "casual social aesthetic, friendly approachable composition for K-beauty cosmetics OEM matching, soft natural light, hand-drawn or illustrative botanical feel, forest green hex 3d6b2e accent on warm beige hex f5f4ef canvas, premium yet relaxed B2B mood, no aggressive marketing visual, soft brand presence, no faces, no people, no text, no logos"
+    }
+  ],
+  "meta": {
+    "provider": "claude-subagent",
+    "agent": "copywriter",
+    "generatedAt": "2026-05-08T11:54:07+09:00",
+    "imageProvider": "fal-ai/fast-sdxl",
+    "imagesGeneratedAt": "2026-05-08T02:59:36.690Z"
+  }
+}
