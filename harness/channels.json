@@ -4,6 +4,7 @@
   { "id": "instagram", "status": "active",    "path": "harness/channels/instagram" },
   { "id": "naver-blog","status": "active",    "path": "harness/channels/naver-blog", "kind": "blog", "commonGuide": "harness/channels/blog", "imageMode": "blog-inline" },
   { "id": "tistory",   "status": "active",    "path": "harness/channels/tistory",    "kind": "blog", "commonGuide": "harness/channels/blog", "imageMode": "blog-inline" },
+  { "id": "brunch",    "status": "active",    "path": "harness/channels/brunch",     "kind": "blog", "commonGuide": "harness/channels/blog", "imageMode": "blog-inline", "allowPeople": true, "publishMode": "browser" },
   { "id": "facebook",  "status": "disabled",  "path": "harness/channels/facebook" },
   { "id": "x",         "status": "disabled",  "path": "harness/channels/x" },
   { "id": "reddit",    "status": "disabled",  "path": "harness/channels/reddit" },

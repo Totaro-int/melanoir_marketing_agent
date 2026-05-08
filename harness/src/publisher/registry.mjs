@@ -14,12 +14,14 @@ import { adapter as tiktok } from './adapters/tiktok.mjs';
 import { adapter as youtube } from './adapters/youtube.mjs';
 import { adapter as naverBlog } from './adapters/naver-blog.mjs';
 import { adapter as tistory } from './adapters/tistory.mjs';
+import { adapter as brunch } from './adapters/brunch.mjs';
 
 const ADAPTERS = {
   threads, linkedin, instagram, facebook, x,
   reddit, bluesky, mastodon, pinterest, tiktok, youtube,
   'naver-blog': naverBlog,
   tistory,
+  brunch,
 };
 
 // 채널별 메타: onboard / doctor 가 사용자에게 보여주는 라벨, 미디어 요구.
@@ -37,6 +39,7 @@ export const CHANNEL_META = {
   youtube:   { label: 'YouTube',     media: '영상 전용 (.mp4 등)', auth: 'OAuth2 (accessToken)' },
   'naver-blog': { label: 'Naver Blog', media: 'text(blog post) — 이미지 선택, 카드뉴스 X', auth: 'OAuth2 (accessToken + blogId)' },
   tistory:   { label: 'Tistory',     media: 'text(blog post) — 이미지 선택, 카드뉴스 X', auth: 'OAuth2 (accessToken + blogName)' },
+  brunch:    { label: 'Brunch',      media: 'text(editorial post) — 사진 풍부, 인물 OK',   auth: 'Kakao SSO (browser-publish 권장 — 공식 API 없음)' },
 };
 
 export function knownChannels() {
