@@ -587,7 +587,11 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
-  openInChrome(_s3.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value));
+  const succeededChannels3 = channels.filter((_, i) => _s3[i]?.status === 'fulfilled');
+  openInChrome([
+    ..._s3.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value),
+    ...succeededChannels3.map((ch) => CHANNEL_URLS[ch]).filter(Boolean),
+  ]);
   console.log();
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
 }
@@ -806,7 +810,11 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
   logSettledErrors(_s4, channels);
 
   writeYaml(briefPath, brief);
-  openInChrome(_s4.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value));
+  const succeededChannels4 = channels.filter((_, i) => _s4[i]?.status === 'fulfilled');
+  openInChrome([
+    ..._s4.filter((r) => r.status === 'fulfilled' && Array.isArray(r.value)).flatMap((r) => r.value),
+    ...succeededChannels4.map((ch) => CHANNEL_URLS[ch]).filter(Boolean),
+  ]);
   console.log();
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
 }
@@ -1088,19 +1096,37 @@ function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total =
   ].filter(Boolean).join('\n');
 }
 
-function openInChrome(paths) {
-  const local = (paths ?? []).filter((p) => p && existsSync(p));
-  if (!local.length) return;
+const CHANNEL_URLS = {
+  threads:      'https://www.threads.net/',
+  linkedin:     'https://www.linkedin.com/',
+  instagram:    'https://www.instagram.com/',
+  'naver-blog': 'https://blog.naver.com/',
+  tistory:      'https://www.tistory.com/',
+  brunch:       'https://brunch.co.kr/',
+  facebook:     'https://www.facebook.com/',
+  x:            'https://x.com/',
+  reddit:       'https://www.reddit.com/',
+  bluesky:      'https://bsky.app/',
+  mastodon:     'https://mastodon.social/',
+  pinterest:    'https://www.pinterest.com/',
+};
+
+function openInChrome(targets) {
+  const items = (targets ?? []).filter((p) => {
+    if (!p) return false;
+    return p.startsWith('http') || existsSync(p);
+  });
+  if (!items.length) return;
   try {
     const { platform } = process;
     if (platform === 'darwin') {
-      spawnSync('open', ['-a', 'Google Chrome', ...local], { stdio: 'ignore' });
+      spawnSync('open', ['-a', 'Google Chrome', ...items], { stdio: 'ignore' });
     } else if (platform === 'linux') {
-      for (const p of local) spawnSync('xdg-open', [p], { stdio: 'ignore' });
+      for (const p of items) spawnSync('xdg-open', [p], { stdio: 'ignore' });
     } else if (platform === 'win32') {
-      spawnSync('cmd', ['/c', 'start', '', ...local], { stdio: 'ignore' });
+      spawnSync('cmd', ['/c', 'start', '', ...items], { stdio: 'ignore' });
     }
-    ui.dim(`  브라우저 오픈: ${local.length}개 파일`);
+    ui.dim(`  브라우저 오픈: ${items.length}개`);
   } catch {}
 }
 
