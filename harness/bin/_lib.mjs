@@ -11,9 +11,11 @@ import pc from 'picocolors';
 //   <PROJECT_ROOT>/
 //     ├── harness/                ← 코드·스키마·예시·문서  (이 파일: harness/bin/_lib.mjs)
 //     │   ├── bin/  src/  schemas/  examples/  channels/  commands/  skills/  agents/ ...
-//     ├── posts/                  ← 사람이 보는 결과물
-//     │   ├── campaigns/<slug>/   ← 캠페인 원본 (brief.yaml + per-channel drafts/assets)
-//     │   └── by-channel/<ch>/    ← 채널별 한눈에 보기 (campaigns 로 향한 symlink)
+//     ├── posts/                                   ← 사람이 보는 결과물
+//     │   ├── slots.yaml                           ← 반복용 캠페인 슬롯 (최대 5개)
+//     │   ├── campaigns/<slug>/                    ← 캠페인 원본 (brief.yaml + per-channel drafts/assets)
+//     │   └── by-channel/<ch>/<슬롯-slug>/<slug>/  ← 채널별·슬롯별 한눈에 보기 (campaigns 로 향한 symlink)
+//     │                                              매칭 안 된 캠페인은 by-channel/<ch>/_ungrouped/ 로
 //     ├── auth/                   ← 자격증명 (gitignored)
 //     ├── out/                    ← 런타임 로그·이미지 (gitignored)
 //     └── package.json, plugin.json, .env.local, company-profile.yaml, README.md ...

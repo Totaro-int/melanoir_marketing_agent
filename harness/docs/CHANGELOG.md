@@ -2,6 +2,28 @@
 
 All notable changes to this project. Format: Phase / version → highlights.
 
+## Unreleased — by-channel 슬롯 그루핑 + 선호도 학습
+
+### by-channel 2단 구조
+- `posts/by-channel/<채널>/<슬롯-topic-슬러그>/<캠페인-slug>` 2단 구조로 변경 — 채널·슬롯별 결과물 한눈 보기
+- 슬롯과 매칭 안 된 캠페인은 `posts/by-channel/<채널>/_ungrouped/` 로
+- 매칭 우선순위: ① brief.slotTopic ② brief.topic ↔ slot.topic 정규화 매칭 ③ _ungrouped
+- `bin/campaign-new.mjs`: `--slot-topic="<topic>"` 플래그 추가
+- `bin/slots.mjs save`: 캠페인 brief 에 slotTopic 역기록 (소급 매칭 보강)
+- `bin/sync-posts.mjs`: 매 실행마다 wipe-and-rebuild (슬롯 추가/삭제·이름변경 자동 반영)
+
+### 사용자 선호도 점진 학습 (end-to-end 루프 완성)
+- `posts/preferences.yaml` (gitignored): approve/reject 시 자동 누적되는 사용자 선호 통계
+- 신호: 본문 길이, 이모지 수, 해시태그 수, 톤(격식/캐주얼), designRef·goal 빈도
+- 학습 알고리즘: 1/n 가중 산술평균 (간단한 EMA 변종, 3/5/10건 게이트로 신뢰도 표시)
+- `bin/learn.mjs`: approve/reject/show/rebuild/reset 5개 서브커맨드
+- `bin/approve.mjs` / `bin/reject.mjs`: 종료 시 자동 학습 hook (실패 시 본 작업은 통과)
+- `src/preferences.mjs`: `loadPrefs()` / `renderGuide({ channel })` 헬퍼
+- **에이전트 통합**: `bin/generate.mjs` 가 copy-spec.json / slide-spec.json 에 `learnedPreferences` 필드 주입 (sampleCount ≥ 3 일 때)
+  - copywriter: `targets.{avgLength, avgEmojis, avgHashtags}` ± 30% 범위 + tone 분포 + 최근 거절 사유 회피
+  - image-director: `preferredDesignRefs[]` — designRef 미지정 시 자주 승인된 브랜드 우선 후보로
+- 두 에이전트 .md 에 적용 규칙 명시 (회사 profile 충돌 시 profile 우선, confidence 별 가중치 차등)
+
 ## 0.9.1 — 루트 폴더 정리 (posts/ + harness/)
 
 - 루트가 폴더 11개 → 2개 (`posts/`, `harness/`) + 표준 파일 + gitignored 런타임으로 정리

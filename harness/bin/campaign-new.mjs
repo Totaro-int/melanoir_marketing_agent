@@ -2,6 +2,7 @@
 // Create a new campaign skeleton: campaigns/<date>-<slug>/{brief.yaml, <channel>/}.
 // Usage:
 //   node bin/campaign-new.mjs "<topic>" [--channels=threads,linkedin] [--goal=awareness] [--cadence=single]
+//                                       [--slot-topic="<원본 슬롯 topic>"]   # by-channel 그루핑 키
 
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -75,10 +76,15 @@ if (existsSync(dir)) {
 }
 
 // 3) Build brief.
+const slotTopic = flags['slot-topic']
+  ? String(flags['slot-topic']).trim() || null
+  : null;
+
 const brief = {
   version: 1,
   slug,
   topic,
+  slotTopic,
   goal,
   channels,
   cadence,

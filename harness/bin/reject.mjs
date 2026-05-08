@@ -24,3 +24,11 @@ writeYaml(briefPath, brief);
 
 ui.ok(`[${channel}] rejected. 피드백 기록됨.`);
 ui.dim(`재생성: node bin/generate.mjs ${slug} --channel=${channel}`);
+
+// 학습 hook — 거절 사유를 negative 신호로 누적. 실패해도 reject 자체는 통과.
+try {
+  const { loadPrefs, applyRejection, savePrefs } = await import('../src/preferences.mjs');
+  const prefs = loadPrefs();
+  applyRejection(prefs, channel, reason || null);
+  savePrefs(prefs);
+} catch (e) { ui.warn(`[learn] 학습 skip: ${e.message}`); }

@@ -33,3 +33,16 @@ brief.status[channel] = 'approved';
 brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
 writeYaml(briefPath, brief);
 ui.ok(`[${channel}] approved.  다음: /sns-publish ${slug} --channel=${channel}  (Phase 4)`);
+
+// 학습 hook — 실패해도 승인 자체는 통과.
+try {
+  const { readChannelText, extractSignals, loadPrefs, applyApproval, savePrefs } =
+    await import('../src/preferences.mjs');
+  const text = readChannelText(resolve(dir, channel));
+  if (text) {
+    const prefs = loadPrefs();
+    applyApproval(prefs, channel, extractSignals(text), brief);
+    savePrefs(prefs);
+    ui.dim(`  ↳ 선호도 학습 누적: ${prefs.sampleCount}건`);
+  }
+} catch (e) { ui.warn(`[learn] 학습 skip: ${e.message}`); }

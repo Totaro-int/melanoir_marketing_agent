@@ -30,6 +30,9 @@ posts/by-channel/
 # 반복 실행 슬롯 (개인 데이터)
 posts/slots.yaml
 
+# 학습된 사용자 선호도 (개인 데이터, approve/reject 시 자동 누적)
+posts/preferences.yaml
+
 # 노드/툴링
 node_modules/
 .pnpm-store/

@@ -47,10 +47,11 @@ switch (cmd) {
   }
   case 'save': {
     if (!arg) { ui.err('slug 필요'); process.exit(2); }
-    let brief;
+    let brief, briefPath;
     try {
       const { findCampaignDir } = await import('./_lib.mjs');
-      brief = readYaml(resolve(findCampaignDir(arg), 'brief.yaml'));
+      briefPath = resolve(findCampaignDir(arg), 'brief.yaml');
+      brief = readYaml(briefPath);
     } catch (e) {
       ui.err(`brief 로드 실패: ${e.message}`);
       process.exit(1);
@@ -70,6 +71,13 @@ switch (cmd) {
     };
     upsertByTopic(slots, entry);
     saveSlots(slots);
+    // brief 에 slotTopic 역기록 — 향후 sync-posts 그루핑용
+    if (brief.slotTopic !== brief.topic) {
+      try {
+        const { writeYaml } = await import('./_lib.mjs');
+        writeYaml(briefPath, { ...brief, slotTopic: brief.topic });
+      } catch (e) { ui.warn(`brief.slotTopic 기록 실패 (무시): ${e.message}`); }
+    }
     ui.ok(`슬롯 저장: "${brief.topic}"`);
     break;
   }

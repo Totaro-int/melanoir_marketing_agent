@@ -22,7 +22,7 @@ node bin/setup.mjs --link=/path/to/your/working/project
 - `npm install`
 - `.env.local` 생성 (`.env.example` 복사)
 - `auth/`, `out/`, `campaigns/` 디렉터리 생성
-- `bin/*.mjs` + `statusline/statusline.sh` 실행 권한
+- `harness/bin/*.mjs` + `harness/statusline/statusline.sh` 실행 권한
 - (선택) `<link>/.claude/plugins/marketing_agent` 심볼릭 링크
 
 ## 3. .env.local 채우기
@@ -45,23 +45,33 @@ node bin/doctor.mjs
 
 ## 5. 첫 캠페인 사이클 (Claude Code 안에서)
 
+**사용자가 직접 호출하는 슬래시 명령은 4개뿐**입니다. 모든 단계(온보딩·생성·검수·승인·발행)는 `/sns-start` 안에서 자동으로 진행됩니다.
+
 ```
-/sns-onboard                         # 회사 프로필 인터뷰
-/sns-campaign-new "신제품 런칭"      # brief.yaml + 채널 디렉터리
-/sns-generate <slug>                 # provider 호출 + brand-guardian
-/sns-preview <slug>                  # 콘솔 렌더링
-/sns-approve <slug> --channel=threads
-/sns-auth add threads                # JSON stdin
-/sns-publish <slug> --channel=threads --dry-run   # 페이로드만
-/sns-publish <slug> --channel=threads             # 실 발행
-/sns-status --watch                  # 칸반 보드 실시간
+/sns-start                # 처음 사용 또는 새 캠페인 — 0~7단계 자동
+/sns-repeat               # 슬롯에서 재실행 (반복·예약)
+/sns-edit                 # 진행 중 캠페인 수정·재생성
+/sns-doctor               # 환경 진단·자격증명·프로필 업데이트
 ```
 
-CLI 직접 사용:
+내부 단계는 4개 스킬이 `harness/commands/_sns-*.md` 가이드를 참조하며 자동 진행:
+| 내부 단계 | 가이드 | 실제 실행 |
+|---|---|---|
+| 환경 점검 | `_sns-init.md` | `bin/doctor.mjs --quick` |
+| 회사 프로필 | `_sns-onboard-company.md` | `bin/profile-validate.mjs` |
+| 캠페인 생성 | `_sns-campaign-new.md` | `bin/campaign-new.mjs` |
+| 카피·이미지 | `_sns-generate.md` | `bin/generate.mjs` + 에이전트 |
+| 검수 | `_sns-preview.md` | `bin/preview.mjs`, `bin/inspect-guidelines.mjs` |
+| 승인/거절 | `_sns-approve.md` / `_sns-reject.md` | `bin/approve.mjs` / `bin/reject.mjs` (학습 hook 자동) |
+| 발행 | `_sns-publish.md` | `bin/publish.mjs` 또는 `bin/browser-publish.mjs` |
+| 자격증명 | `_sns-auth.md` | `bin/auth.mjs` (대화형) |
+
+bin 스크립트 직접 호출(고급/디버깅용):
 ```bash
-node bin/campaign-new.mjs "..."
-node bin/generate.mjs <slug> --all
-node bin/board.mjs --watch
+node harness/bin/campaign-new.mjs "..."
+node harness/bin/generate.mjs <slug> --all
+node harness/bin/board.mjs --watch
+node harness/bin/learn.mjs show           # 누적 학습 상태 확인
 ```
 
 ## 6. 안전 모드

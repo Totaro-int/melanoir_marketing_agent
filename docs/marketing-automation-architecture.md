@@ -31,7 +31,7 @@
 │                                                                  │
 │   👤 USER                                                        │
 │    │                                                             │
-│    │ /sns-onboard  (대화형 인터뷰 9단계)                         │
+│    │ /sns-start  (프로필 없으면 자동 인터뷰 9단계)               │
 │    ▼                                                             │
 │   ┌──────────────────────────────────────────────┐               │
 │   │  Claude 질문 (한 번에 1개)                   │               │
@@ -429,11 +429,11 @@
 ## ⏰ 타임라인 (실제 흐름)
 
 ```
-T+0 (월 1회)  사용자 → /sns-onboard → company-profile.yaml
-                                          ▼
-                                          (영구 저장)
+T+0 (월 1회)  사용자 → /sns-start (프로필 없음 분기) → company-profile.yaml
+                                                          ▼
+                                                          (영구 저장)
 
-T+0 (매일)    /loop 09:00 → /sns-start
+T+0 (매일)    /loop 09:00 → /sns-start  또는  /sns-repeat (슬롯 재사용)
               또는 사용자 수동
                 ▼
 T+0:30s       Phase 1: 키워드 분석 (3.5단계)

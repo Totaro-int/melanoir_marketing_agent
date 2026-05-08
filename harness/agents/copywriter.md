@@ -151,6 +151,16 @@ PG마다 정산일이 달라서 현금흐름을 예측하기 어렵다는 얘기
 - `outputPath` (절대 경로 — 결과 파일 저장 위치)
 - `partial` — `null`이면 전체 생성, 값이 있으면 해당 카드 1장만
 
+**선택 필드 — `learnedPreferences` (있을 때만)**:
+이 필드가 존재하면 사용자가 과거 승인한 캠페인들에서 추출된 선호 패턴이다. 강제 규칙은 아니지만 다음을 따른다:
+- `targets.avgLength` ± 30% 범위로 분량 조정 (사용자가 선호하는 길이)
+- `targets.avgEmojis` ± 1 범위로 이모지 사용
+- `targets.avgHashtags` ± 1 범위로 해시태그 개수
+- `tone.formal > 0.6` 이면 격식체, `tone.casual > 0.6` 이면 캐주얼 우선
+- `recentRejectReasons` 가 있으면 그 사유를 피한다 (예: "너무 길음", "이모지 과다")
+- `confidence` 가 `initial` 이면 약한 가중치(참고만), `building`이면 중간, `strong`이면 강하게 따른다
+- 회사 프로필(`copyContext.profile.tone`)과 충돌하면 회사 프로필이 우선
+
 ### 2. 카피 작성 전 체크리스트
 
 글을 쓰기 전에 다음을 머릿속에 정리한다:

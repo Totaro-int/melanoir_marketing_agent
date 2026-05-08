@@ -5,19 +5,24 @@
 ## 캠페인 라이프사이클
 
 ```
-draft  →  preview  →  approved  →  published / failed
-                       ↑
-                   guardian.ok 강제
+drafting  →  preview  →  approved  →  scheduled / published / failed
+                          ↑
+                     guardian.ok 강제 + 학습 hook 발동
 ```
 
-| 단계 | 명령 | 결과물 |
+**사용자 진입점은 `/sns-start`, `/sns-repeat`, `/sns-edit`, `/sns-doctor` 4개 스킬뿐**입니다. 아래 표는 그 4개 안에서 자동 진행되는 내부 단계와 실제 bin 스크립트입니다.
+
+| 내부 단계 | bin 스크립트 (4개 스킬이 자동 호출) | 결과물 |
 |------|------|--------|
-| 브리프 | `/sns-campaign-new "<주제>" [--cadence=...]` | `campaigns/<slug>/brief.yaml` |
-| 생성 | `/sns-generate <slug> [--channel=... --images=N]` | `<channel>/draft.yaml`, `<channel>/draft.md`, `out/<provider>-images/*` |
-| 검토 | `/sns-preview <slug>` | 콘솔 렌더링 (가디언 색상) |
-| 승인 | `/sns-approve <slug> --channel=<ch>` | `status: approved` |
-| 거절 | `/sns-reject <slug> --channel=<ch> --reason="..."` | `status: drafting`, `feedback[<ch>]` 누적 |
-| 발행 | `/sns-publish <slug> --channel=<ch> [--dry-run]` | `<channel>/result.json`, `status: published \| failed` |
+| 브리프 | `bin/campaign-new.mjs "<주제>" [--cadence=...] [--slot-topic=...]` | `posts/campaigns/<slug>/brief.yaml` |
+| 생성 | `bin/generate.mjs <slug> [--channel=... --images=N]` | `<채널>/copy-spec.json`, `slide-spec.json` (학습 가이드 주입됨) |
+| 에이전트 처리 | `copywriter` / `image-director` 서브에이전트 | `<채널>/copy-output.json`, `agent-output.json`, `card*.png` |
+| 최종 통합 | `bin/generate.mjs <slug> --finalize` | `<채널>/<TS>.md` 합본 + `agent-output.json` |
+| 검토 | `bin/preview.mjs <slug>` / `bin/inspect-guidelines.mjs <slug>` | 콘솔 렌더링 (가디언 색상) + 가이드라인 정합성 리포트 |
+| 승인 | `bin/approve.mjs <slug> --channel=<ch>` | `status: approved` + **`posts/preferences.yaml` 학습 누적** |
+| 거절 | `bin/reject.mjs <slug> --channel=<ch> --reason="..."` | `status: drafting`, `feedback[<ch>]` 누적 + 거절 사유 학습 |
+| 발행 | `bin/publish.mjs <slug> --channel=<ch> [--dry-run]` 또는 `bin/browser-publish.mjs ...` | `<채널>/result.json`, `status: published \| failed` |
+| 동기화 | `bin/sync-posts.mjs [--prune]` (자동 호출) | `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` symlink 갱신 |
 
 ## cadence → 카드 수
 
@@ -55,31 +60,47 @@ node bin/auth.mjs list
 
 ## 발행 안전 모드
 
-세 단계의 안전장치가 겹쳐 있음:
+네 단계의 안전장치가 겹쳐 있음:
 
-1. **`PUBLISHER_DRY_RUN=true`** (env) — 모든 `/sns-publish` 가 페이로드만 출력
+1. **`PUBLISHER_DRY_RUN=true`** (env) — 모든 발행이 페이로드만 출력
 2. **`--dry-run`** (플래그) — 명령별 일회 dry-run
-3. **`status === "approved"` 강제** — `/sns-approve` 통과 안 한 채널은 거부
-4. **가디언 차단된 draft 는 `/sns-approve` 거부** (`guardian.ok=false`)
+3. **`status === "approved"` 강제** — 승인 통과 안 한 채널은 거부
+4. **가디언 차단된 draft 는 승인 거부** (`guardian.ok=false`)
 
 운영 권장: 평상시 `.env.local` 에 `PUBLISHER_DRY_RUN=true` 켜두고, 실 발행 직전에만 임시로 끄기.
 
+## 사용자 선호도 학습
+
+`bin/approve.mjs` / `bin/reject.mjs` 종료 시 자동으로 `posts/preferences.yaml` 갱신:
+
+| 명령 | 용도 |
+|---|---|
+| `node harness/bin/learn.mjs show [--channel=<ch>]` | 누적 학습 상태 확인 |
+| `node harness/bin/learn.mjs rebuild` | 모든 approved 캠페인 재학습 (기존 통계 폐기 후 재구성) |
+| `node harness/bin/learn.mjs reset` | 학습 데이터 초기화 |
+
+신뢰도 게이트: 3건 미만 → spec 주입 안 함 / 3-5건 → `initial` / 5-10건 → `building` / 10건+ → `strong`.
+`copywriter` / `image-director` 에이전트가 spec 의 `learnedPreferences` 를 자동 참조 (회사 profile 충돌 시 profile 우선).
+
 ## 트러블슈팅
 
-### `/sns-generate` 가 mock 으로 떨어짐
+### 카피·이미지가 mock 으로 떨어짐
 - `.env.local` 에 `CONTENT_ENGINE_PROVIDER=fal` 인지 확인
-- `node bin/doctor.mjs` 의 content-engine 행에서 fal 빨강이면 키/모델 확인
+- `node harness/bin/doctor.mjs` 의 content-engine 행에서 fal 빨강이면 키/모델 확인
 
 ### 발행 실패 (HTTP 401/403)
-- 토큰 만료 또는 scope 부족. `node bin/auth.mjs check <channel>` 후 새 토큰
-- 결과: `campaigns/<slug>/<ch>/result.json` 에 응답 body 저장됨
+- 토큰 만료 또는 scope 부족. `node harness/bin/auth.mjs check <channel>` 후 새 토큰
+- 결과: `posts/campaigns/<slug>/<ch>/result.json` 에 응답 body 저장됨
 
 ### Threads `media_type=IMAGE` 거부
 - `assetUrls` 가 https public URL 인지 확인 (fal CDN 은 자동으로 OK, mock SVG 는 안 됨)
 
 ### 칸반이 갱신 안 됨
-- `/sns-status --watch` 가 `campaigns/` 의 fs.watch 의존. macOS 외 플랫폼은 1s 폴링 폴백
-- 그래도 안 되면 다시 `/sns-status` 1회 호출
+- `bin/board.mjs --watch` 가 `posts/campaigns/` 의 fs.watch 의존. macOS 외 플랫폼은 1s 폴링 폴백
+- 그래도 안 되면 다시 `bin/board.mjs` 1회 호출
+
+### by-channel 폴더가 어긋남
+- 슬롯 추가/삭제·이름변경 시 `node harness/bin/sync-posts.mjs --prune` 으로 강제 재빌드
 
 ## 비용·미터링
 

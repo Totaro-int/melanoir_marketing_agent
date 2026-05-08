@@ -14,6 +14,7 @@ import {
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { inspect, inspectVisualText } from '../src/content-engine/brand-guardian.mjs';
 import { validateChannels } from '../src/publisher/registry.mjs';
+import { loadPrefs, renderGuide } from '../src/preferences.mjs';
 
 // B2B/SaaS 카테고리별 디자인 레퍼런스 풀 — 함수보다 먼저 선언해야 TDZ 오류 없음
 const DESIGN_REF_POOLS = {
@@ -213,6 +214,44 @@ function loadDesignRef(brief, profile) {
   return null;
 }
 
+// ── 학습된 사용자 선호 → spec 주입용 ────────────────────────────────────
+// approve/reject 시 누적된 posts/preferences.yaml 을 카피/이미지 spec 에 형태별로 부착.
+// 신뢰도 낮으면 (sampleCount < 3) 빈 객체를 반환해 spec 을 깨끗하게 유지.
+
+function buildLearnedPrefsForCopy(prefs, channel) {
+  if (!prefs?.sampleCount || prefs.sampleCount < 3) return null;
+  const ch = prefs.channels?.[channel];
+  return {
+    guide: renderGuide(prefs, { channel }),
+    sampleCount: prefs.sampleCount,
+    confidence: prefs.sampleCount < 5 ? 'initial' : prefs.sampleCount < 10 ? 'building' : 'strong',
+    targets: ch ? {
+      avgLength: Math.round(ch.avgLength),
+      avgEmojis: round1(ch.avgEmojis),
+      avgHashtags: round1(ch.avgHashtags),
+    } : null,
+    tone: prefs.global?.tone ?? null,
+    recentRejectReasons: ch?.recentRejectReasons?.slice(-3) ?? [],
+  };
+}
+
+function buildLearnedPrefsForImage(prefs, channel) {
+  if (!prefs?.sampleCount || prefs.sampleCount < 3) return null;
+  // designRef 빈도 상위 3개만 — image-director 가 시각 톤 결정에 활용
+  const topRefs = Object.entries(prefs.designRefs ?? {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([brand, count]) => ({ brand, count }));
+  if (!topRefs.length) return null;
+  return {
+    sampleCount: prefs.sampleCount,
+    preferredDesignRefs: topRefs,
+    guide: `[학습된 시각 선호] 자주 승인된 designRef: ${topRefs.map((r) => `${r.brand}(${r.count})`).join(', ')} — 새 designRef 미지정 시 우선 후보.`,
+  };
+}
+
+function round1(n) { return Math.round((n ?? 0) * 10) / 10; }
+
 // ── inhouse-slides 전용 헬퍼 ────────────────────────────────────────────
 
 async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages = false }) {
@@ -221,6 +260,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
 
   const keywordsMap = loadKeywordsMap(dir, slug);
   const designRef   = loadDesignRef(brief, profile);
+  const prefs       = loadPrefs();
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] slide-spec 작성...`);
@@ -287,7 +327,9 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
           images: (brief.sourceMaterials?.images ?? []).filter(existsSync),
         },
         designRef: designRef ?? null,
+        learnedPreferences: buildLearnedPrefsForImage(prefs, channel),
       },
+      learnedPreferences: buildLearnedPrefsForCopy(prefs, channel),
       outputDir: resolve(dir, channel),
     };
 
@@ -319,6 +361,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
   const keywordsMap = loadKeywordsMap(dir, slug);
   const designRef   = loadDesignRef(brief, profile);
+  const prefs       = loadPrefs();
 
   for (const channel of channels) {
     ui.step(channels.indexOf(channel) + 1, channels.length, `[${channel}] copy-spec 작성...`);
@@ -375,6 +418,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
         channelTemplates: channelDocs?.templates ?? '',
       },
       designRef: designRef ?? null,
+      learnedPreferences: buildLearnedPrefsForCopy(prefs, channel),
       outputDir:  channelDir,
       outputPath,
       partial: cardN !== null
@@ -1057,3 +1101,4 @@ function renderDraftMd(d) {
     ``,
   ].join('\n');
 }
+

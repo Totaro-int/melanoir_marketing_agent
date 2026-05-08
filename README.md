@@ -190,23 +190,30 @@ Claude 안에서 딱 한 줄:
 
 1. **채널별 스펙 생성** (`generate.mjs`)
    - 회사 프로필 + 캠페인 주제 → 채널별 `copy-spec.json` + `slide-spec.json` 생성
+   - **학습된 사용자 선호** (`posts/preferences.yaml`, sampleCount ≥ 3) → `learnedPreferences` 필드 자동 주입
 
 2. **카피 작성** (copywriter 에이전트)
    - 채널별 `copy-spec.json` 읽기 → 카피라이팅 → `copy-output.json` 저장
-   - 톤·금기어 자동 적용
+   - 톤·금기어 자동 적용 + 학습된 길이/이모지/해시태그 타겟 반영
 
 3. **이미지 생성** (image-director 에이전트)
    - **기본값: inhouse-slides** — Claude Vision으로 HTML 슬라이드 생성 → Playwright 스크린샷 → PNG
    - **선택형: fal/openai** — 외부 API 호출로 AI 이미지 생성
+   - 학습된 designRef 선호가 있으면 designRef 미지정 시 우선 적용
 
 4. **최종 통합** (`generate.mjs --finalize`)
    - `copy-output.json` + 이미지 파일 → `agent-output.json`
 
 5. **검수 + 승인**
    - brand-guardian 에이전트 검사 (금기어·톤) → 사용자 확인 → approve/reject
+   - 🎯 **승인 시점에 학습 hook 자동 발동** — 본문에서 길이·이모지·해시태그·톤·designRef 추출 → `posts/preferences.yaml` 누적
+   - 거절 시 사유도 negative 신호로 저장
 
 6. **발행** (publisher)
-   - 채널별 공식 API 호출 → SNS에 업로드
+   - 채널별 공식 API 호출 또는 브라우저 자동화 → SNS에 업로드
+   - 자동으로 `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` symlink 갱신
+
+> 캠페인을 한 사이클 돌릴 때마다 하네스가 사용자 선호를 점진적으로 학습합니다. 3건 이상 누적되면 다음 캠페인부터 카피·이미지에 자동 반영. 누적 학습 상태 확인: `node harness/bin/learn.mjs show`.
 
 ---
 
@@ -280,12 +287,18 @@ OPENAI_API_KEY=sk-...
 
 ## 폴더 구조
 
-| 폴더 | 무엇 |
+| 폴더 / 파일 | 무엇 |
 |------|------|
-| `posts/` | **결과물** — `campaigns/<slug>/` 원본 + `by-channel/<채널>/` 채널별 한눈 보기 |
-| `harness/` | **하네스 본체** — bin/src/schemas/commands/skills/agents/channels/examples/docs |
-| `auth/` | 자격증명 (gitignored, 본인만 보임) |
+| `posts/campaigns/<날짜>-<주제>/` | **캠페인 원본** (단일 진실의 출처) — `brief.yaml` + 채널별 산출물 |
+| `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` | **채널·슬롯별 한눈 보기** (campaigns 로 향한 symlink, 자동 생성) |
+| `posts/slots.yaml` | 반복 실행용 캠페인 슬롯 (최대 5개, gitignored) |
+| `posts/preferences.yaml` | **학습된 사용자 선호** — approve/reject 시 자동 누적 (gitignored) |
+| `harness/` | **하네스 본체** — bin/src/schemas/commands/agents/channels/examples/docs |
+| `company-profile.yaml` | 회사 브랜드 프로필 (단일 진실의 출처) |
+| `auth/` | 자격증명 (gitignored, 본인만 0600) |
 | `.claude-plugin/` | Claude Code 플러그인 매니페스트 |
+
+> `harness/skills/` 는 비어있음 — 모든 사용자 진입점은 `harness/commands/` 의 4개 스킬(`sns-start/repeat/edit/doctor`)로 구현. 나머지 14개 `_sns-*.md` 는 4개 스킬이 내부 참조하는 가이드 (사용자 노출 X).
 
 ---
 
