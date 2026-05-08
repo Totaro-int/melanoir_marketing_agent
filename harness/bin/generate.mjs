@@ -262,7 +262,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
   const designRef   = loadDesignRef(brief, profile);
   const prefs       = loadPrefs();
 
-  await Promise.all(channels.map(async (channel) => {
+  const _s1 = await Promise.allSettled(channels.map(async (channel) => {
     ui.info(`[${channel}] slide-spec 작성 중...`);
 
     const channelDocs = loadChannelDocs(channel);
@@ -340,6 +340,7 @@ async function writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channel
     brief.status[channel] = 'drafting';
     ui.ok(`[${channel}] slide-spec.json 저장 완료 → ${resolve(channelDir, 'slide-spec.json')}`);
   }));
+  logSettledErrors(_s1, channels);
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -363,7 +364,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
   const designRef   = loadDesignRef(brief, profile);
   const prefs       = loadPrefs();
 
-  await Promise.all(channels.map(async (channel) => {
+  const _s2 = await Promise.allSettled(channels.map(async (channel) => {
     ui.info(`[${channel}] copy-spec 작성 중...`);
 
     const channelDocs = loadChannelDocs(channel);
@@ -430,6 +431,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
     brief.status[channel] = 'drafting';
     ui.ok(`[${channel}] copy-spec.json → ${resolve(channelDir, 'copy-spec.json')}`);
   }));
+  logSettledErrors(_s2, channels);
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -444,7 +446,7 @@ async function writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, 
 async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels, provider, flags }) {
   const cardN = flags.card ? parseInt(flags.card, 10) : null;
 
-  await Promise.all(channels.map(async (channel) => {
+  const _s3 = await Promise.allSettled(channels.map(async (channel) => {
     ui.info(`[${channel}] finalize 중...`);
 
     const channelDir = resolve(dir, channel);
@@ -580,6 +582,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
     if (report.ok) ui.ok(`[${channel}] preview 준비됨 (warns: ${report.summary?.warns ?? 0})`);
     else           ui.err(`[${channel}] 가디언 차단 (${report.summary?.blocks ?? '?'}건)`);
   }));
+  logSettledErrors(_s3, channels);
 
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);
@@ -590,7 +593,7 @@ async function finalizeRegularChannels({ slug, dir, briefPath, brief, profile, c
 async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels }) {
   const screenshotBin = resolve(process.cwd(), 'harness/bin/screenshot.mjs');
 
-  await Promise.all(channels.map(async (channel) => {
+  const _s4 = await Promise.allSettled(channels.map(async (channel) => {
     ui.info(`[${channel}] 슬라이드 완성 중...`);
 
     const channelDir  = resolve(dir, channel);
@@ -797,10 +800,21 @@ async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, cha
       ui.dim(`  🖼 피드 썸네일: ${thumbPath}`);
     }
   }));
+  logSettledErrors(_s4, channels);
 
   writeYaml(briefPath, brief);
   console.log();
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
+}
+
+// Promise.allSettled 결과에서 rejected 항목만 ui.warn 으로 출력.
+// 개별 채널 실패가 다른 채널 결과와 writeYaml 을 막지 않도록 allSettled 를 사용.
+function logSettledErrors(results, channels) {
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      ui.warn(`[${channels[i]}] 예기치 않은 오류: ${r.reason?.message ?? r.reason}`);
+    }
+  });
 }
 
 function extractHashtags(text) {
