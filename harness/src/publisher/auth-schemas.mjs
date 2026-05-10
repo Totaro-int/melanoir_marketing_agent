@@ -82,6 +82,15 @@ export const AUTH_SCHEMAS = {
       { key: 'accessToken', label: 'Access Token', secret: true, hint: 'Google Cloud > YouTube Data API v3 > OAuth2. scope: youtube.upload' },
     ],
   },
+  'naver-blog': {
+    note: '네이버 OpenAPI 블로그 글쓰기 — developers.naver.com 에서 앱 등록 후 OAuth2 access_token 발급. helper: node harness/bin/_temp-naver-oauth.mjs',
+    fields: [
+      { key: 'accessToken', label: 'Access Token', secret: true, hint: '네이버 로그인 OpenAPI access_token' },
+      { key: 'refreshToken', label: 'Refresh Token', secret: true, optional: true, hint: '갱신용' },
+      { key: 'blogId', label: 'Blog ID', hint: '본인 블로그 URL의 ID (예: supperted)' },
+      { key: 'categoryNo', label: 'Category No', optional: true, hint: '카테고리 번호 (기본 0)' },
+    ],
+  },
 };
 
 // dot-path key 로 중첩 객체에 값을 설정 (예: 'oauth1.consumerKey' → obj.oauth1.consumerKey)

@@ -1,0 +1,254 @@
+{
+  "slug": "2026-05-10-melanoir-embo-론칭-안전한-블랙",
+  "channel": "naver-blog",
+  "ts": "20260510-151242",
+  "aspect": "portrait",
+  "dimensions": {
+    "width": 1080,
+    "height": 1350
+  },
+  "cards": [
+    {
+      "index": 1,
+      "total": 1,
+      "role": "single",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-10-melanoir-embo-론칭-안전한-블랙-naver-blog-card1-20260510-151242.html",
+      "hookVariants": 3
+    }
+  ],
+  "copyContext": {
+    "topic": "멜라누아 엠보 — 지구에서 가장 안전한 Black",
+    "goal": "launch",
+    "cadence": "single",
+    "keyMessage": "28-FREE 유해물질 불검출 · 무균 적합 · 자극 51% 감소 — 데이터로 증명한 안전한 Black",
+    "contentPoints": [
+      "28-FREE 유해물질 불검출 (공인기관 테스트)",
+      "무균 시험 (Sterility) 적합 — Negative",
+      "외부 자극 유발 인자 51% 감소 (대조군 14.32 → 6.90, NO assay)",
+      "중금속·보존제 불검출 (N.D.)",
+      "순수 멜라닌만 — 다른 색소 X",
+      "일회용 멸균팩 — 단 한 명을 위한 시스템",
+      "-20°C ~ 80°C 안정 (1년 가속 노화 시험)",
+      "정품 인증 — 보증서 등록 번호로 이력 추적",
+      "Professionals Only (반영구 시술 아티스트 전용)"
+    ],
+    "angle": null,
+    "suggestedKeywords": {
+      "keywords": [
+        "반영구 색소",
+        "PMU 색소",
+        "안전 색소",
+        "멜라누아 엠보",
+        "무균 색소",
+        "순수 멜라닌"
+      ],
+      "hashtags": [
+        "#반영구화장",
+        "#반영구색소",
+        "#PMU",
+        "#멜라누아",
+        "#멜라누아엠보",
+        "#안전색소",
+        "#무균색소",
+        "#일회용색소",
+        "#엠보색소",
+        "#permanentmakeup"
+      ],
+      "angle": "정보형 SEO 격식 — '반영구 색소 안전 기준' 검색 의도 충족. H2 5~6개 + 키워드 4-6회. 시술 아티스트가 정품·안전 검증 자료 찾는 흐름.",
+      "watchOut": [
+        "치료",
+        "효과 보장",
+        "의학적",
+        "100%",
+        "최고의",
+        "1위",
+        "유일한",
+        "완벽한",
+        "부작용 없음"
+      ]
+    },
+    "profile": {
+      "brand": {
+        "name": "Melanoir",
+        "korName": "멜라누아",
+        "legalName": "멜라누아",
+        "websites": [
+          "https://melanoir.co.kr"
+        ]
+      },
+      "tone": {
+        "preset": "premium-clinical",
+        "voiceNotes": "- 의료·과학 데이터 우선 — \"안전하다\"보다 \"검출되지 않았다\"는 팩트 톤.\n- \"~합니다\"체 + 단정적·정확함. 형용사 절제.\n- \"압도적인 안정성\", \"최고의\" 같은 형용사 광고톤 회피 — 데이터로 대체.\n- \"Professionals Only\" 강조 — 일반 소비자 대상 X.\n- 의료기기·의약품 효능 표방 절대 금지 (위생용품 관리법 준수).\n- 한자·외래어 적절 활용 (B2B 시술 전문가 대상).\n",
+        "sampleSentences": [
+          "지구에서 가장 안전한 Black을 추구하다.",
+          "다른 색소는 넣지 않았습니다.",
+          "안전하다는 말보다, 검출되지 않았다는 팩트를 믿으세요.",
+          "흔들 필요 없이 균일합니다.",
+          "오직 당신만을 위해 — 단 한 명의 고객을 위해 준비되는 시스템."
+        ]
+      },
+      "writing": {
+        "formats": [
+          "data_driven",
+          "technical_premium"
+        ],
+        "sentenceLength": "medium",
+        "ctaStyle": "implicit",
+        "emojiUsage": "none",
+        "referencePosts": [
+          "안전하다는 말보다, 검출되지 않았다는 팩트를 믿으세요.\n\n28-FREE 유해물질 불검출. 무균 시험 적합. 자극 유발 인자 51% 감소\n(대조군 14.32 → 멜라누아 6.90, NO assay).\n\n안전 기준은 수치로 증명되어야 합니다. 멜라누아 엠보의 모든 데이터는\n공인기관 시험 결과를 따릅니다.\n"
+        ]
+      },
+      "targetAudience": [
+        {
+          "persona": "반영구 시술 아티스트 (PMU artist)",
+          "painPoints": [
+            "기존 색소의 안전성·무균 우려 — 클레임 책임",
+            "시술 후 자극·트러블 — 고객 신뢰 손상",
+            "정품 보증·이력 추적이 어려운 시장",
+            "점도 불균일·번짐 — 시술 정밀도 저하",
+            "유해물질·중금속 검출 사고 우려"
+          ],
+          "channelsTheyUse": [
+            "instagram",
+            "naver-blog",
+            "youtube",
+            "blog"
+          ]
+        },
+        {
+          "persona": "PMU 시술 학원·교육기관 운영자",
+          "painPoints": [
+            "수강생에게 추천할 안전 표준 색소 부족",
+            "교육 단계부터 무균 시스템 도입의 어려움"
+          ],
+          "channelsTheyUse": [
+            "naver-blog",
+            "instagram",
+            "brunch"
+          ]
+        }
+      ],
+      "banned": {
+        "words": [
+          "최고의",
+          "최고",
+          "1위",
+          "1등",
+          "유일한",
+          "유일",
+          "완벽한",
+          "절대",
+          "베스트"
+        ],
+        "topics": [
+          "의약품·의료기기 효능 표방",
+          "치료·완치·예방 주장",
+          "의학적 작용 표현 (피부 재생·항노화 등)",
+          "경쟁사 직접 비방",
+          "정치·종교"
+        ],
+        "claims": [
+          "100% 안전",
+          "100% 무균",
+          "효과 보장",
+          "영구 효과",
+          "치료",
+          "완치",
+          "의학적으로 입증",
+          "임상적으로 증명",
+          "부작용 없음"
+        ]
+      },
+      "hashtags": {
+        "always": [
+          "#Melanoir",
+          "#멜라누아",
+          "#멜라누아엠보"
+        ],
+        "pool": [
+          "#반영구화장",
+          "#반영구색소",
+          "#엠보색소",
+          "#눈썹문신",
+          "#SMP시술",
+          "#두피문신",
+          "#안전색소",
+          "#순수멜라닌",
+          "#무균색소",
+          "#일회용색소",
+          "#멸균포장",
+          "#반영구시술",
+          "#PMU",
+          "#피그먼트",
+          "#색소",
+          "#permanentmakeup",
+          "#PMUartist",
+          "#cosmetictattoo",
+          "#micropigmentation",
+          "#scalpmicropigmentation",
+          "#tattoopigment",
+          "#sterilepigment"
+        ]
+      }
+    },
+    "channelStrategy": "# Naver Blog Strategy\n\n> ⚠️ **공통 정보성 블로그 가이드는 [`../blog/strategy.md`](../blog/strategy.md) 참조.**  \n> 본 문서는 네이버 블로그 매체 특수 차이 + 발행 어댑터 안내만.\n\n## 한 줄 요약\n**네이버 D.I.A. + C-Rank 알고리즘 친화 + 검색 의도 충족**.  \n공통 9대 패턴은 `../blog/strategy.md` 적용.\n\n## 네이버 매체 특수 차이\n\n| 항목 | 값 / 정책 |\n|------|----------|\n| 검색 알고리즘 | D.I.A. + C-Rank (네이버 자체) |\n| 본문 길이 권장 | **1,500~2,000자** (블로그 공통 1,500~2,500보다 약간 짧게도 OK) |\n| 제목 권장 | **25자 권장** (검색 결과 미리보기 최적). 한도 60자 |\n| 태그 한도 | 30개 (10~15 권장 — long-tail 위주) |\n| 이미지 | 자체 업로드, ALT 지원, 본문 중간 1~3장 권장 |\n| 카테고리 | 네이버 자체 카테고리 (categoryNo 옵션) |\n| 발행 빈도 | **7일에 2회** (네이버 권장 — 정기성이 알고리즘 가중치) |\n| 상업성 톤 | 강함 — 직접 키워드 매칭 OK (\"화장품 OEM 추천\" 류) |\n| B2B 적합도 | ★★★ (가장 검색 트래픽 많음) |\n\n## 네이버 SEO 추가 디테일\n\n- **타겟 키워드**: 변형하지 않고 똑같이 입력하거나 **앞단에 배치**\n- **메인 키워드 사용**: 3~5회 (구글보다 약간 보수적)\n- **이미지 ALT**: 메인 키워드 + 설명 → SEO 가중치\n- **이웃 댓글·서로이웃**: 알고리즘 신호 (커뮤니티 활성도)\n- **광고 분류 시**: 본문 시작에 `본 포스팅은 광고임을 알립니다` 또는 `legal.adHashtag` 표시 (한국 공정위)\n\n## 발행 (Phase 4 — Naver OpenAPI)\n\n```\nPOST openapi.naver.com/blog/writePost.json\n- title, contents (HTML/markdown), tags, categoryNo\n- Authorization: Bearer <accessToken>\n```\n\n**자격증명** (`auth/naver-blog.json`):\n```json\n{\n  \"accessToken\": \"...\",\n  \"blogId\": \"your_blog_id\",\n  \"categoryNo\": 0\n}\n```\n\n어댑터 구현: [`harness/src/publisher/adapters/naver-blog.mjs`](../../src/publisher/adapters/naver-blog.mjs)  \n체크리스트: [`./checklist.md`](./checklist.md) (공통 + 네이버 추가)  \n템플릿: 공통 [`../blog/templates/post.md`](../blog/templates/post.md) 사용\n\n## 참고 링크\n\n- 네이버 블로그 API: https://developers.naver.com/docs/blog/api/\n- 네이버 SEO 가이드: https://searchadvisor.naver.com/guide\n- 한국 광고 표시: 공정거래위원회 추천·보증심사지침\n\n> **마지막 검증: 2026-05-07**\n",
+    "channelTemplates": "# Naver Blog Post Templates\r\n\r\n`copywriter` 서브에이전트가 사용할 블로그 글 템플릿. 각 템플릿은 **구조 가이드**일 뿐, 그대로 채워 넣지 말 것 — 회사 프로필의 톤·SEO 키워드로 재해석한다.\r\n\r\n> 네이버 블로그는 검색 매체. **SEO 친화 + 정보 밀도 + 1500자 이상**이 핵심.\r\n\r\n---\r\n\r\n## N1. 가이드형 (2,000~2,500자, H2 5~6개)\r\n\r\n**제목 패턴**: \"{핵심 키워드}, {결과 약속} — {차별점}\"\r\n\r\n**구조**:\r\n```\r\n[제목]\r\n{핵심 키워드를 앞 25자 안에 배치한 명확한 제목}\r\n\r\n[도입 단락 — 약 200자]\r\n{문제 환기 + 핵심 키워드 1회 자연 삽입}\r\n{해결 방향 한 줄 미리 제시 (검색 의도 충족)}\r\n\r\n[H2-1: 문제 정의 — 약 400자]\r\n{왜 그게 문제인가, 누가 겪는가}\r\n\r\n[H2-2: 핵심 솔루션 — 약 500자]\r\n{제품·방법·접근 — 가장 구체적 정보}\r\n\r\n[H2-3: 차별점 또는 기능 상세 — 약 400자]\r\n{경쟁 방식과 어떻게 다른가}\r\n\r\n[H2-4: 사용 사례 또는 적용 단계 — 약 400자]\r\n{실제 어떤 단계에서 가장 유용한가}\r\n\r\n[H2-5: 마무리·CTA — 약 200자]\r\n{N (대상 좁히기) + A (행동 유도, soft)}\r\n\r\n[태그 10~15개]\r\n{핵심 키워드 + long-tail 변형}\r\n```\r\n\r\n**예시 도입 단락 (cos.totaro 톤)**:\r\n```\r\n해외 바이어가 K뷰티 OEM 후보를 좁히는 데 평균 4시간 이상이 걸린다는 얘기를 자주\r\n듣습니다. 인증 서류는 제조사마다 양식이 다르고, MOQ와 리드타임은 표로 정리하다 보면\r\n한나절이 갑니다. 한 라인 검토에 출장 한 번이 더 붙으면 출시 일정이 그대로 밀리고요.\r\n```\r\n\r\n→ 첫 단락에 \"K뷰티 OEM\" 키워드 + 문제 환기 + 검색 의도 (이 시간 줄이는 방법) 미리 시사\r\n\r\n---\r\n\r\n## N2. 케이스 스터디형 (1,500~2,000자, H2 4개)\r\n\r\n**제목 패턴**: \"{고객·사례} — {달성 결과}\"\r\n\r\n**구조**:\r\n```\r\n[제목]\r\n{사례 + 결과 수치를 제목에 노출}\r\n\r\n[도입 — 약 200자]\r\n{어떤 회사·어떤 상황 + 결과 한 줄 스포일러}\r\n\r\n[H2-1: 시작 시점의 상황 — 약 400자]\r\n{Before — 무엇이 문제였는지}\r\n\r\n[H2-2: 어떤 변화를 시도했는가 — 약 400자]\r\n{무엇을 도입·바꿨는지}\r\n\r\n[H2-3: 결과·수치 — 약 400자]\r\n{After — 구체 수치, 변화 양상}\r\n\r\n[H2-4: 적용 가이드·CTA — 약 200자]\r\n{읽는 사람이 어떻게 동일 가치 얻을 수 있는지 + 링크}\r\n\r\n[태그 10~15개]\r\n```\r\n\r\n---\r\n\r\n## N3. 비교·리뷰형 (2,000~2,500자, H2 5~6개)\r\n\r\n**제목 패턴**: \"{대상 A} vs {대상 B} — {기준 키워드}\"\r\n\r\n**구조**:\r\n```\r\n[도입 — 약 200자]\r\n{비교 배경 + 누가 이 결정을 고민하는가}\r\n\r\n[H2-1: 비교 기준 — 약 300자]\r\n{어떤 항목으로 비교하는가}\r\n\r\n[H2-2: 대상 A 상세 — 약 500자]\r\n\r\n[H2-3: 대상 B 상세 — 약 500자]\r\n\r\n[H2-4: 항목별 비교 표 — 약 300자]\r\n{한 화면 요약}\r\n\r\n[H2-5: 어떤 경우에 어떤 선택 — 약 300자]\r\n{추천 가이드}\r\n\r\n[H2-6: 결론·CTA — 약 200자]\r\n\r\n[태그 10~15개]\r\n```\r\n\r\n---\r\n\r\n## N4. 인사이트·관점형 (1,500~2,000자, H2 3~4개)\r\n\r\n**제목 패턴**: \"{단정·반전 메시지} — {근거 키워드}\"\r\n\r\n**구조**:\r\n```\r\n[도입 — 약 250자]\r\n{관점 단정 + 왜 그렇게 보는지 미리}\r\n\r\n[H2-1: 통념 vs 우리의 관점 — 약 500자]\r\n{대비 구조로 차별 메시지}\r\n\r\n[H2-2: 근거·데이터·경험 — 약 600자]\r\n{관점을 뒷받침하는 사실들}\r\n\r\n[H2-3: 그래서 무엇을 의미하는가 — 약 400자]\r\n{독자가 가져갈 implication}\r\n\r\n[H2-4: 마무리·관련 콘텐츠 — 약 200자]\r\n\r\n[태그 10~15개]\r\n```\r\n\r\n---\r\n\r\n## N5. 제품 소개형 (1,500~2,000자, H2 4~5개)\r\n\r\n**제목 패턴**: \"{제품·서비스명} {기능 핵심} — {차별점·성과}\"\r\n\r\n**구조**:\r\n```\r\n[도입 — 약 200자]\r\n{문제 환기 + 제품 한 줄 소개}\r\n\r\n[H2-1: 어떤 문제를 푸는가 — 약 400자]\r\n{P 단계 — 페르소나의 일상 문제}\r\n\r\n[H2-2: 제품 핵심 — 약 400자]\r\n{S 단계 — 어떻게 푸는지}\r\n\r\n[H2-3: 핵심 기능 상세 — 약 500자]\r\n{O 단계 — 구체 수치·기능}\r\n\r\n[H2-4: 어떤 단계에서 유용한가 — 약 400자]\r\n{사용 시나리오}\r\n\r\n[H2-5: 시작하는 방법 — 약 200자]\r\n{N+A — 대상 좁히기 + soft CTA}\r\n\r\n[태그 10~15개]\r\n```\r\n\r\n---\r\n\r\n## 채우기 규칙 (copywriter용)\r\n\r\n1. `{...}` 자리는 회사 프로필의 톤으로 재작성. 템플릿 문장을 그대로 두지 말 것.\r\n2. **제목**: 핵심 키워드를 앞 25자 안에 배치. 60자 이내. 광고문구형 어휘 X.\r\n3. **첫 단락**: 핵심 키워드 1회 + 검색 의도 미리 시사.\r\n4. **본문 키워드 분포**: 4~6회 자연스럽게 (stuffing 금지).\r\n5. **H2 4~6개**: 각 H2 첫 줄에 결론·요약 (스캔 읽기 최적화).\r\n6. **외부 링크**: 본문 첫 단락 X. 마지막 또는 자연스러운 위치만.\r\n7. **태그 10~15개**: long-tail 키워드 위주 (단순 1단어 X).\r\n8. **회사 톤은 유지하되 정보형으로 약간 객관화**: SNS보다 설명적.\r\n\r\n## image-director 호출 안 함\r\n\r\n네이버 블로그는 카드뉴스·이미지가 핵심이 아니므로 `image-director` 호출 skip. 본문 안에 이미지가 필요하면 사용자가 직접 첨부 (또는 후속 작업).\r\n"
+  },
+  "imageContext": {
+    "topic": "멜라누아 엠보 — 지구에서 가장 안전한 Black",
+    "brandName": "Melanoir",
+    "visual": {
+      "colors": {
+        "primary": "#000000",
+        "accent": "#FFFFFF",
+        "background": "#FFFFFF",
+        "foreground": "#000000",
+        "secondary": "#1a1a1a"
+      },
+      "fonts": {
+        "heading": "Inter, Helvetica Neue, sans-serif",
+        "body": "Inter, Pretendard, sans-serif",
+        "data": "JetBrains Mono"
+      },
+      "aestheticDirection": "Premium Clinical Minimalism — 검정 모노톤 + 의료 사이언스 시각. Lab-grade precision. 광고형 컬러풀 X."
+    },
+    "imageStyle": {
+      "aesthetic": "premium_clinical",
+      "colorMood": "monochrome",
+      "preferAbstract": true,
+      "moodWords": [
+        "precise",
+        "sterile",
+        "professional",
+        "premium",
+        "scientific",
+        "monochrome"
+      ],
+      "avoidElements": [
+        "캐주얼·라이프스타일 사진",
+        "인물 클로즈업 (B2B 매체이므로)",
+        "광고 배너 외양",
+        "컬러풀·플레이풀 톤",
+        "AI 슬롭 (광택·반사 과다)"
+      ],
+      "referencesBrands": [
+        "byredo",
+        "aesop",
+        "linear.app",
+        "vercel"
+      ]
+    },
+    "generateImages": false,
+    "sourceMaterials": {
+      "images": []
+    },
+    "designRef": {
+      "brand": "vercel",
+      "path": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\harness\\design-refs\\vercel\\DESIGN.md"
+    },
+    "learnedPreferences": null
+  },
+  "learnedPreferences": null,
+  "outputDir": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-10-melanoir-embo-론칭-안전한-블랙\\naver-blog"
+}

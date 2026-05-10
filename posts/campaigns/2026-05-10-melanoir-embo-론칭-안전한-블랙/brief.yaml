@@ -1,0 +1,45 @@
+version: 1
+slug: 2026-05-10-melanoir-embo-론칭-안전한-블랙
+topic: 멜라누아 엠보 — 지구에서 가장 안전한 Black
+goal: launch
+channels:
+  - naver-blog
+  - tistory
+  - brunch
+  - instagram
+cadence: single
+blogMode: default
+keyMessage: 28-FREE 유해물질 불검출 · 무균 적합 · 자극 51% 감소 — 데이터로 증명한 안전한 Black
+contentPoints:
+  - 28-FREE 유해물질 불검출 (공인기관 테스트)
+  - 무균 시험 (Sterility) 적합 — Negative
+  - 외부 자극 유발 인자 51% 감소 (대조군 14.32 → 6.90, NO assay)
+  - 중금속·보존제 불검출 (N.D.)
+  - 순수 멜라닌만 — 다른 색소 X
+  - 일회용 멸균팩 — 단 한 명을 위한 시스템
+  - -20°C ~ 80°C 안정 (1년 가속 노화 시험)
+  - 정품 인증 — 보증서 등록 번호로 이력 추적
+  - Professionals Only (반영구 시술 아티스트 전용)
+angle: null
+notes: null
+sourceMaterials:
+  images: []
+  texts: []
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - 위생용품 관리법에 따른 위생용품
+  mustExclude:
+    - 치료
+    - 효과 보장
+    - 의학적
+status:
+  naver-blog: published
+  tistory: approved
+  brunch: approved
+  instagram: pending
+meta:
+  createdAt: 2026-05-10T15:15:00+09:00
+  updatedAt: 2026-05-10T15:25:10.304Z
+  profileBrand: Melanoir

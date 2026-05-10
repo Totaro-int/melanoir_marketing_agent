@@ -1,0 +1,45 @@
+version: 1
+slug: 2026-05-08-insight-kbeauty-trends-2026
+topic: K-뷰티 트렌드 2026 — 폴 + 24시간 후 결과 reveal
+goal: engagement
+channels:
+  - linkedin
+cadence: series-5
+keyMessage: 2026 K-뷰티 트렌드 중 가장 큰 흐름은 — 투표 후 24시간 뒤 데이터 공개
+contentPoints:
+  - Step 1 폴 (Day 0) — 4지선다 옵션&#x3a; Skinification, Masstige, J-Beauty 크로스오버, 슬로우뷰티
+  - Step 2 carousel (Day 1) — 폴 결과 + 우리 데이터 + 각 트렌드 1슬라이드 분석
+  - 데이터 소스 — Trade Korea 검색 트렌드, Google Trends, KOFOTI 수출 통계
+  - Skinification — 컬러코스메틱이 스킨케어 성분 적용 (예&#x3a; SPF 파운데이션, 비타민C 립밤)
+  - Masstige — 마스 + 프레스티지 가격대 (10~30 USD), 한국 인디브랜드 핵심 구간
+  - J-Beauty 크로스오버 — 한국·일본 R&D 협업, 글로벌 시장 차세대 동력
+  - 본 인사이트 카드 풀버전 → cos.totaro.co.kr/insights/kbeauty-trends-2026
+angle: LinkedIn poll = 알고리즘 engagement 부스트 2~5×. 두 단계 캠페인 = 같은 토픽 노출 2번 → recall 강화. 결과 reveal 슬라이드는
+  saved-post 비율 평균 8% 이상.
+notes: |
+  Cadence two-step — Day 0 폴, Day 1+24h 결과 carousel.
+  폴 옵션은 4개로 고정 (LinkedIn 한도). 4번째 옵션 '슬로우뷰티' 는 데이터상 실제 4위가 될 가능성이 높아 자연 reveal 효과.
+  결과 carousel 7장 — hook + 폴결과 + 4 트렌드 + CTA.
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/insights/kbeauty-trends-2026 (작성 예정)
+  designRef: 트렌드 4종 비교 인포그래픽 — 가격대 × 채택 속도 매트릭스
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/insights/kbeauty-trends-2026
+  mustExclude:
+    - 최고의
+    - 1위
+    - 유일한
+    - 100%
+status:
+  linkedin: preview
+meta:
+  createdAt: 2026-05-08T15:00:00.000+09:00
+  updatedAt: 2026-05-08T23:52:16.577+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: kbeauty-trends-2026
+  contentFormat: poll-then-reveal

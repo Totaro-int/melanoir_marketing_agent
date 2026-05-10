@@ -1,0 +1,44 @@
+version: 1
+slug: 2026-05-08-insight-mocra-cpnp-iso22716
+topic: K-뷰티 수출 인증 — MoCRA · CPNP · ISO 22716 한 장 정리
+goal: education
+channels:
+  - linkedin
+  - threads
+cadence: series-5
+keyMessage: 한국 MFDS CGMP 만으로는 미국·EU 진열대에 들어갈 수 없습니다. 3개 인증의 차이를 한 장으로 정리했습니다
+contentPoints:
+  - 미국 MoCRA 2023.12 발효 — 시설 등록 + 제품 리스팅 + Responsible Person 필수
+  - EU CPNP — Responsible Person 이 EU 내 위임 + CPSR(안전성 평가서) 동봉
+  - ISO 22716 글로벌 GMP — 대형 리테일(Whole Foods·Sephora·Target) 사실상 필수
+  - 한국 MFDS CGMP ↔ ISO 22716 거의 동등 — 인증서가 없으면 reject 빈번
+  - MoCRA 등록비 $0 / 잘못 입력 시 통관 후 Recall 명령 — 함정
+  - 본 인사이트 카드 풀버전 → cos.totaro.co.kr/insights/korea-cosmetics-mocra-cpnp-iso22716
+angle: 팩트·법령번호·수치 중심. 인증 헷갈림은 제조사·바이어 둘 다의 페인. carousel = 슬라이드 1 hook → 2-4 인증별 핵심 → 5 비교표 → 6 CTA.
+notes: |
+  배포 후 공식 사이트 인사이트 페이지로 트래픽 유도가 1차 목표.
+  카드뉴스(LinkedIn carousel) 6장 + Threads 단일 thread 양립.
+  TOTARO 매칭 시스템과 자연스럽게 연결: 인증 검증 자동 = `/market` 가치 강화.
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/insights/korea-cosmetics-mocra-cpnp-iso22716 (KR/EN/JA 풀버전)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/insights/korea-cosmetics-mocra-cpnp-iso22716
+  mustExclude:
+    - 100% 검증
+    - 최고의
+    - 1위
+    - 유일한
+status:
+  linkedin: preview
+  threads: drafting
+meta:
+  createdAt: 2026-05-08T15:00:00.000+09:00
+  updatedAt: 2026-05-08T23:35:14.188+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: korea-cosmetics-mocra-cpnp-iso22716

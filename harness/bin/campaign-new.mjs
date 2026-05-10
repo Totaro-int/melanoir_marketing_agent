@@ -14,7 +14,9 @@ import { validateChannels } from '../src/publisher/registry.mjs';
 
 const argv = process.argv.slice(2);
 if (!argv.length || argv[0].startsWith('--')) {
-  ui.err('사용법: campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...]');
+  ui.err('사용법: campaign-new.mjs "<주제>" [--channels=...] [--goal=...] [--cadence=...] [--blogMode=...] [--stealth]');
+  ui.err('  blog 채널 포함 시 blogMode (default/rcon/ai-briefing/home-plate/insight-edge)');
+  ui.err('  미지정 시 goal → mode 자동 매핑 (launch→ai-briefing, awareness→home-plate, traffic→rcon, lead→insight-edge, education→default)');
   process.exit(2);
 }
 
@@ -67,6 +69,31 @@ if (notEnabled.length) {
 const goal = flags.goal ?? (profile.campaigns?.defaultGoals?.[0] ?? 'awareness');
 const cadence = flags.cadence ?? 'single';
 
+// blog 채널이 포함된 경우 — blogMode 결정 (CLI flag 우선, 없으면 goal → 자동 매핑)
+//   기존 SEO  → default (C-Rank/D.I.A.+)        : goal=education
+//   최신 SEO  → rcon (네이버 DAN25)              : goal=traffic
+//   AI 검색   → ai-briefing (AEO/Cue:)           : goal=launch
+//   홈피드 추천 → home-plate                    : goal=awareness
+//   결핍 공략 → insight-edge                    : goal=lead
+const VALID_BLOG_MODES = new Set(['default', 'rcon', 'ai-briefing', 'home-plate', 'insight-edge']);
+const GOAL_TO_BLOG_MODE = {
+  launch: 'ai-briefing',
+  awareness: 'home-plate',
+  traffic: 'rcon',
+  lead: 'insight-edge',
+  education: 'default',
+};
+const hasBlogChannel = channels.some((c) => ['naver-blog', 'tistory', 'brunch'].includes(c));
+let blogMode = null;
+if (hasBlogChannel) {
+  blogMode = flags.blogMode ?? GOAL_TO_BLOG_MODE[goal] ?? 'default';
+  if (!VALID_BLOG_MODES.has(blogMode)) {
+    ui.err(`잘못된 blogMode: ${blogMode} (가능: ${[...VALID_BLOG_MODES].join(', ')})`);
+    process.exit(2);
+  }
+}
+const stealthMode = flags.stealth === true || flags.stealth === 'true';
+
 const slug = `${todayKst()}-${slugify(topic)}`;
 const dir = resolve(PATHS.campaignsDir, slug);
 
@@ -88,6 +115,8 @@ const brief = {
   goal,
   channels,
   cadence,
+  ...(blogMode ? { blogMode } : {}),       // 5 모드 (default/rcon/ai-briefing/home-plate/insight-edge)
+  ...(stealthMode ? { stealthMode: true } : {}), // AI 탐지 회피 옵션
   keyMessage: flags.keyMessage ?? null,
   contentPoints: flags.contentPoints
     ? String(flags.contentPoints).split('|').map(s => s.trim()).filter(Boolean)

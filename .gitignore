@@ -33,6 +33,25 @@ posts/slots.yaml
 # 학습된 사용자 선호도 (개인 데이터, approve/reject 시 자동 누적)
 posts/preferences.yaml
 
+# 개발 중 디버깅 probe 스크립트 (커밋 X)
+harness/bin/_temp-*
+
+# 리버스 엔지니어링 분석 자료 (큰 파일 + 외부 코드)
+_research/
+
+# 회사 자체 자산 (제품 사진 등)
+assets/
+
+# 백업 파일 (회사 프로필, draft 인라인 편집 백업, original 보존본)
+*.bak.yaml
+*.bak.json
+*.yaml.bak
+*.json.bak
+*.original.yaml
+
+# 발행 진행 로그 (휘발성)
+posts/campaigns/**/publish.log
+
 # 노드/툴링
 node_modules/
 .pnpm-store/

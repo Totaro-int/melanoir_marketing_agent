@@ -2,11 +2,28 @@
 
 > **이 문서는 블로그 매체(naver-blog / tistory / brunch 등) 공통 가이드.**
 > 각 매체별 특수 차이는 §매체별 차이 섹션 + 매체별 channel 폴더 참조.
-> 분석 기반: 네이버·다음·구글 SEO 알고리즘 메타 자료 4종 (2026-05-07).
+> 분석 기반: 네이버·다음·구글 SEO 알고리즘 메타 자료 4종 (2026-05-07) + 5 모드 통합 (`modes.md`).
 
 ## 한 줄 요약
 **검색 의도 충족 + 구조적 글쓰기 + 키워드 자연 분포 + 1500자+ 정보 밀도**.  
 "많이 쓰기"가 아니라 **"구조적으로 쓰기"**가 상위 노출의 핵심.
+
+## ⚡ 5 최적화 모드 (필수 — 글마다 1개 선택)
+
+상세 가이드: [`modes.md`](./modes.md)
+
+| 모드 | 풀네임 | 타겟 | 분량 | 핵심 |
+|---|---|---|---|---|
+| **default** | C-Rank / D.I.A.+ | 네이버 검색 (기존) | 2,000+ | 진정성·신뢰성·표 |
+| **rcon** | RCON (Reranking with Context) | 네이버 DAN25 (최신) | 2,000+ | 다중 인텐트·시의성 |
+| **ai-briefing** | AEO (AI Engine Optimization) | Cue: / Google AI Overviews | 2,500+ | 비교표·FAQ·구조화 |
+| **home-plate** | 네이버 홈판 | 홈피드 추천 | 1,500~2,000 | 감성 제목·1인칭·CTA |
+| **insight-edge** | 인사이트 엣지 | 차별화·결핍 | 2,000~2,500 | Pain Point·반골·인사이트 |
+
+### 모드 선택 (campaign brief.goal 별)
+- `launch` → **ai-briefing** / `awareness` → **home-plate** / `traffic` → **rcon** / `lead` → **insight-edge** / `education` → **default**
+- brief 의 `blogMode` 필드로 명시적 override 가능
+- 한 글에 모드 섞지 말 것 — 1 글 1 모드
 
 ## SEO 9대 핵심 패턴
 

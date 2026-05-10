@@ -1,0 +1,47 @@
+version: 1
+slug: 2026-05-08-insight-kbeauty-moq-1000pcs
+topic: K-뷰티 MOQ 1,000개 장벽 — 인디 브랜드가 거절당하는 진짜 이유
+goal: engagement
+channels:
+  - threads
+  - reddit
+cadence: series-5
+keyMessage: Korean OEM 한테 MOQ 500 보냈을 때 답장 안 오는 진짜 이유 — 그리고 1,000pcs 미만으로 뚫는 3가지 길
+contentPoints:
+  - 한국 OEM 평균 MOQ = 1,000~3,000pcs (line setup 비용 분산 한계)
+  - 500pcs 견적은 line stop time 손실 → 답장 대신 무시가 합리적
+  - 우회 1 — 충진 위탁(filling-only) 라인 보유 OEM 찾기 (200~500pcs 가능)
+  - 우회 2 — Pre-stock formula 카탈로그(Stock formula + custom label)
+  - 우회 3 — Co-purchase / 공동 OEM (다른 인디 브랜드와 같은 라인 분할)
+  - 본 인사이트 카드 풀버전 → cos.totaro.co.kr/insights/kbeauty-moq-1000pcs-barrier
+angle: Threads = 호기심 hook → 단답형 thread (5~7 post). Reddit = r/AsianBeauty 또는 r/Entrepreneur — 1인칭
+  경험담 톤, 회사 URL 마지막 disclaimer 1줄에만, AI 정형 패턴 회피.
+notes: |
+  founder 페인 포인트 정조준. 실제 한국 OEM 가격구조에서 MOQ 1,000 의 합리성을 설명 → 거절을 개인화하지 않게 도와줌.
+  TOTARO `/market` 의 MOQ 필터 기능이 자연 연결점.
+  Reddit 은 self-promotion rule 엄격 — 첫 단락 광고 금지, 가치 전달 후 마지막에만 도구 언급.
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/insights/kbeauty-moq-1000pcs-barrier (작성 예정)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude: []
+  mustExclude:
+    - 최고의
+    - 1위
+    - 유일한
+    - guaranteed
+    - "#1"
+    - revolutionary
+status:
+  threads: drafting
+  reddit: drafting
+  linkedin: preview
+meta:
+  createdAt: 2026-05-08T15:00:00.000+09:00
+  updatedAt: 2026-05-08T23:51:19.983+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: kbeauty-moq-1000pcs-barrier
