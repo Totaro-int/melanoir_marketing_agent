@@ -21,5 +21,9 @@
     "./harness/agents/brand-guardian.md",
     "./harness/agents/publisher.md"
   ],
-  "skills": []
+  "skills": [
+    "./skills/sns-campaign-flow",
+    "./skills/sns-copy-generation",
+    "./skills/sns-brand-review"
+  ]
 }

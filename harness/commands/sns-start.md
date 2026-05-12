@@ -384,6 +384,9 @@ node harness/bin/generate.mjs <slug> --with-images
 
 ### 4단계 — 카피 + 이미지 생성
 
+> **스킬 위임**: 이 단계 전체는 `sns-copy-generation` 스킬을 invoke해 진행한다.
+> 상세 흐름(spec 작성 → 에이전트 실행 → finalize → watchOut 검사)은 해당 스킬을 따른다.
+
 모든 provider 가 동일한 3단계 흐름을 따른다:
 
 1. spec 작성:
@@ -509,6 +512,9 @@ card-evaluator 완료 후 결과를 아래 형식으로 출력한다:
 > 재생성 루프는 최대 1회만 수행한다. 재시도 후에도 기준 미달이면 경고만 표시하고 계속 진행한다.
 
 ### 5단계 — 미리보기
+
+> **스킬 위임**: brand-guardian 검사 및 가이드라인 검수는 `sns-brand-review` 스킬을 invoke해 진행한다.
+
 `node harness/bin/preview.mjs <slug>`
 
 draft 카피, 가디언 결과, 자산 경로를 채널별로 출력.

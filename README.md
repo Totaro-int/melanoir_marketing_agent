@@ -184,9 +184,41 @@ Claude 안에서 딱 한 줄:
 
 ---
 
-## 콘텐츠 생성 흐름 (오케스트레이션)
+## 하네스 구조
 
-`/sns-start` 실행 시 내부 흐름:
+이 플러그인은 **커맨드 → 스킬 → 에이전트 → bin 스크립트** 4계층으로 동작합니다.
+
+```
+사용자
+  │  /sns-start
+  ▼
+커맨드 (4개)          sns-start / sns-repeat / sns-edit / sns-doctor
+  │  invoke
+  ▼
+스킬 (3개)            sns-campaign-flow / sns-copy-generation / sns-brand-review
+  │  실행
+  ▼
+에이전트 (4개)        copywriter / image-director / brand-guardian / publisher
+  │  호출
+  ▼
+bin 스크립트 (25개)   generate.mjs / publish.mjs / board.mjs ...
+```
+
+### 커맨드와 스킬의 관계
+
+| 커맨드 | 위임하는 스킬 | 단계 |
+|--------|-------------|------|
+| `/sns-start`, `/sns-repeat` | `sns-copy-generation` | 카피·이미지 생성 |
+| `/sns-start`, `/sns-repeat` | `sns-brand-review` | 브랜드 검수 |
+| (전체 플로우 참조) | `sns-campaign-flow` | 8단계 오케스트레이션 |
+
+플러그인을 설치하면 `/help` 에 커맨드 4개가, system prompt에 스킬 3개가 자동으로 등록됩니다.
+
+---
+
+## 콘텐츠 생성 흐름
+
+`/sns-start` 실행 시 내부 흐름 (`sns-copy-generation` 스킬 기준):
 
 1. **채널별 스펙 생성** (`generate.mjs`)
    - 회사 프로필 + 캠페인 주제 → 채널별 `copy-spec.json` + `slide-spec.json` 생성
@@ -204,12 +236,12 @@ Claude 안에서 딱 한 줄:
 4. **최종 통합** (`generate.mjs --finalize`)
    - `copy-output.json` + 이미지 파일 → `agent-output.json`
 
-5. **검수 + 승인**
+5. **브랜드 검수** (`sns-brand-review` 스킬)
    - brand-guardian 에이전트 검사 (금기어·톤) → 사용자 확인 → approve/reject
    - 🎯 **승인 시점에 학습 hook 자동 발동** — 본문에서 길이·이모지·해시태그·톤·designRef 추출 → `posts/preferences.yaml` 누적
    - 거절 시 사유도 negative 신호로 저장
 
-6. **발행** (publisher)
+6. **발행** (publisher 에이전트)
    - 채널별 공식 API 호출 또는 브라우저 자동화 → SNS에 업로드
    - 자동으로 `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` symlink 갱신
 
@@ -298,7 +330,7 @@ OPENAI_API_KEY=sk-...
 | `auth/` | 자격증명 (gitignored, 본인만 0600) |
 | `.claude-plugin/` | Claude Code 플러그인 매니페스트 |
 
-> `harness/skills/` 는 비어있음 — 모든 사용자 진입점은 `harness/commands/` 의 4개 스킬(`sns-start/repeat/edit/doctor`)로 구현. 나머지 14개 `_sns-*.md` 는 4개 스킬이 내부 참조하는 가이드 (사용자 노출 X).
+> `skills/` 에 스킬 3개(`sns-campaign-flow`, `sns-copy-generation`, `sns-brand-review`) — 커맨드가 invoke해서 사용, Claude Code가 자동 인식. `harness/commands/_sns-*.md` 14개는 커맨드가 내부 참조하는 가이드 (사용자 노출 X).
 
 ---
 
