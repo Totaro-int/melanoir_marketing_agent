@@ -10,7 +10,7 @@
 /plugin marketplace add /path/to/marketing_agent
 
 # 2. 설치
-/plugin install marketing-agent@marketing_agent
+/plugin install marketing_agent@marketing_agent
 
 # 3. 재로드
 /plugin reload
