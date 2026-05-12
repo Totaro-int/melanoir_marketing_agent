@@ -1,6 +1,6 @@
 {
-  "name": "marketing-agent",
-  "id": "marketing-agent",
+  "name": "marketing_agent",
+  "id": "marketing_agent",
   "owner": {
     "name": "Totaro Inc."
   },
@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "marketing-agent",
+      "name": "marketing_agent",
       "source": "./",
       "description": "11개 SNS 채널 (Threads/LinkedIn/Instagram/Facebook/X/Reddit/Bluesky/Mastodon/Pinterest/TikTok/YouTube) 자동 발행, 휴먼 승인 게이트, /sns- prefix 13개 명령.",
       "version": "0.9.1",
