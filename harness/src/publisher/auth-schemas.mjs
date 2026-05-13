@@ -13,7 +13,7 @@ export const AUTH_SCHEMAS = {
   },
   linkedin: {
     fields: [
-      { key: 'accessToken', label: 'Access Token', secret: true, hint: 'LinkedIn Developers > OAuth2 3-legged > scope: w_member_social' },
+      { key: 'accessToken', label: 'Access Token', secret: true, hint: 'LinkedIn Developers > OAuth2 3-legged > scope: w_member_social (REST Posts API)' },
       { key: 'authorUrn', label: 'Author URN', hint: '예: urn:li:person:<id> 또는 urn:li:organization:<id>' },
     ],
   },

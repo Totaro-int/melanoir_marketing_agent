@@ -1,32 +1,36 @@
-// LinkedIn UGC Posts adapter.
-// Text + single image (via register-upload + IMAGE share). Carousels/PDFs in Phase 4.2.
-// Docs: https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/ugc-post-api
+// LinkedIn Community Management API adapter (REST Posts).
+// Migrated from deprecated v2 UGC Posts API to /rest/posts (2024).
+// Docs: https://learn.microsoft.com/en-us/linkedin/marketing/integrations/community-management/shares/posts-api
 //
 // Required credentials (auth/linkedin.json):
 //   { "accessToken": "...", "authorUrn": "urn:li:person:<id>" or "urn:li:organization:<id>" }
+//
+// OAuth scope: w_member_social  (same as before)
+// Set LINKEDIN_API_VERSION env var to override the version header (default: 202501).
 
 import { Buffer } from 'node:buffer';
 import { assertAdapter } from '../publisher.mjs';
 import { withRetry } from '../retry.mjs';
 
-const BASE = 'https://api.linkedin.com/v2';
-
-function pickShareMediaCategory(draft) {
-  return draft.assetUrls?.length ? 'IMAGE' : 'NONE';
-}
+const REST_BASE = 'https://api.linkedin.com/rest';
+const LINKEDIN_VERSION = process.env.LINKEDIN_API_VERSION ?? '202501';
 
 function buildPayload({ draft }) {
+  const urls = draft.assetUrls ?? [];
+  let content;
+  if (urls.length === 1) {
+    content = { media: { id: '<urn:li:image:PLACEHOLDER>', title: '' } };
+  } else if (urls.length > 1) {
+    content = { multiImage: { images: urls.map(() => ({ id: '<urn:li:image:PLACEHOLDER>', altText: '' })) } };
+  }
   return {
     author: '<authorUrn>',
+    commentary: draft.text,
+    visibility: 'PUBLIC',
+    distribution: { feedDistribution: 'MAIN_FEED', targetEntities: [], thirdPartyDistributionChannels: [] },
+    ...(content ? { content } : {}),
     lifecycleState: 'PUBLISHED',
-    specificContent: {
-      'com.linkedin.ugc.ShareContent': {
-        shareCommentary: { text: draft.text },
-        shareMediaCategory: pickShareMediaCategory(draft),
-        media: (draft.assetUrls ?? []).map((u) => ({ status: 'READY', originalUrl: u })),
-      },
-    },
-    visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+    isReshareDisabledByAuthor: false,
   };
 }
 
@@ -42,57 +46,59 @@ export const adapter = assertAdapter({
 
   async publish({ draft, credentials }) {
     const urls = draft.assetUrls ?? [];
-    const hasImage = urls.length > 0;
 
-    // Each image needs its own register-upload + bytes PUT, then we collect the
-    // resulting asset URNs into a single ugcPosts media[] array.
-    const mediaEntries = [];
+    // Upload each image; collect URNs.
+    const imageUrns = [];
     for (const url of urls) {
-      const reg = await withRetry(() =>
-        liPost(`${BASE}/assets?action=registerUpload`, credentials.accessToken, {
-          registerUploadRequest: {
-            recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-            owner: credentials.authorUrn,
-            serviceRelationships: [{
-              relationshipType: 'OWNER',
-              identifier: 'urn:li:userGeneratedContent',
-            }],
-          },
-        })
+      const init = await withRetry(() =>
+        liPost(
+          `${REST_BASE}/images?action=initializeUpload`,
+          credentials.accessToken,
+          { initializeUploadRequest: { owner: credentials.authorUrn } },
+        )
       );
-      const uploadUrl = reg?.value?.uploadMechanism?.[
-        'com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest'
-      ]?.uploadUrl;
-      const asset = reg?.value?.asset;
-      if (!uploadUrl || !asset) throw new Error('linkedin register-upload missing uploadUrl/asset: ' + JSON.stringify(reg).slice(0, 300));
+      const uploadUrl = init?.value?.uploadUrl;
+      const imageUrn = init?.value?.image;
+      if (!uploadUrl || !imageUrn) {
+        throw new Error('linkedin initializeUpload missing uploadUrl/image: ' + JSON.stringify(init).slice(0, 300));
+      }
 
       const img = await fetch(url);
       if (!img.ok) throw new Error(`linkedin: failed to fetch source image ${url}: HTTP ${img.status}`);
       const bytes = Buffer.from(await img.arrayBuffer());
+
       const up = await fetch(uploadUrl, {
         method: 'PUT',
-        headers: { Authorization: `Bearer ${credentials.accessToken}` },
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`,
+          'Content-Type': img.headers.get('content-type') ?? 'image/jpeg',
+        },
         body: bytes,
       });
-      if (!up.ok) throw new Error('linkedin upload failed: HTTP ' + up.status);
+      if (!up.ok) throw new Error(`linkedin image upload failed: HTTP ${up.status}`);
 
-      mediaEntries.push({ status: 'READY', media: asset });
+      imageUrns.push(imageUrn);
+    }
+
+    // Build content block based on image count.
+    let content;
+    if (imageUrns.length === 1) {
+      content = { media: { id: imageUrns[0], title: '' } };
+    } else if (imageUrns.length > 1) {
+      content = { multiImage: { images: imageUrns.map((id) => ({ id, altText: '' })) } };
     }
 
     const body = {
       author: credentials.authorUrn,
+      commentary: draft.text,
+      visibility: 'PUBLIC',
+      distribution: { feedDistribution: 'MAIN_FEED', targetEntities: [], thirdPartyDistributionChannels: [] },
+      ...(content ? { content } : {}),
       lifecycleState: 'PUBLISHED',
-      specificContent: {
-        'com.linkedin.ugc.ShareContent': {
-          shareCommentary: { text: draft.text },
-          shareMediaCategory: hasImage ? 'IMAGE' : 'NONE',
-          media: mediaEntries,
-        },
-      },
-      visibility: { 'com.linkedin.ugc.MemberNetworkVisibility': 'PUBLIC' },
+      isReshareDisabledByAuthor: false,
     };
 
-    const json = await withRetry(() => liPost(`${BASE}/ugcPosts`, credentials.accessToken, body));
+    const json = await withRetry(() => liPost(`${REST_BASE}/posts`, credentials.accessToken, body));
     const urn = json.id ?? '';
     return {
       ok: true,
@@ -109,6 +115,7 @@ async function liPost(url, token, body) {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      'LinkedIn-Version': LINKEDIN_VERSION,
       'X-Restli-Protocol-Version': '2.0.0',
     },
     body: JSON.stringify(body),
