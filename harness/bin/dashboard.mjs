@@ -53,8 +53,7 @@ function readJsonOrYaml(path) {
   try {
     const txt = readFileSync(path, 'utf8').trim();
     if (!txt) return null;
-    // Some result.json files are actually YAML (saveResult uses writeYaml).
-    // Try JSON first; on failure fall back to YAML. Both work for "scalar: value" pairs anyway.
+    // Try JSON first; fall back to YAML for legacy files written before the format was standardised.
     if (txt.startsWith('{') || txt.startsWith('[')) {
       try { return JSON.parse(txt); } catch { /* fall through */ }
     }

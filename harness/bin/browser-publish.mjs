@@ -20,7 +20,7 @@
 import { resolve, basename } from 'node:path';
 import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import {
-  readYaml, writeYaml, findCampaignDir, latestDraftYaml,
+  readYaml, writeYaml, writeJson, findCampaignDir, latestDraftYaml,
   nowKstIso, ui, promptLine, ROOT,
 } from './_lib.mjs';
 
@@ -182,7 +182,7 @@ function collectCardPaths(draftPath, campaignDir, channel) {
 }
 
 function saveResult(campaignDir, channel, brief, briefPath, result, failed, skipStatusPatch) {
-  writeYaml(resolve(campaignDir, channel, 'result.json'), result);
+  writeJson(resolve(campaignDir, channel, 'result.json'), result);
   if (!skipStatusPatch) brief.status[channel] = failed ? 'failed' : 'published';
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);

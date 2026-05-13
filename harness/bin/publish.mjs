@@ -6,7 +6,7 @@
 // Even without dry-run, refuses to publish unless brief.status[<ch>] === 'approved'.
 
 import { resolve } from 'node:path';
-import { readYaml, writeYaml, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
+import { readYaml, writeYaml, writeJson, findCampaignDir, latestDraftYaml, nowKstIso, ui } from './_lib.mjs';
 import { getAdapter, isDryRun } from '../src/publisher/registry.mjs';
 import { load as loadCreds } from '../src/publisher/credentials.mjs';
 
@@ -80,7 +80,7 @@ try {
 }
 
 function saveResult(dir, channel, brief, briefPath, result, failed = false, dry = false) {
-  writeYaml(resolve(dir, channel, 'result.json'), result);
+  writeJson(resolve(dir, channel, 'result.json'), result);
   if (!dry) brief.status[channel] = failed ? 'failed' : 'published';
   brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
   writeYaml(briefPath, brief);

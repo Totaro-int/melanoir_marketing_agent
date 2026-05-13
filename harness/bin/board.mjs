@@ -8,10 +8,23 @@
 // Zero deps beyond picocolors. Ink/React was deliberately skipped — revisit if we add
 // inputs (approve/reject inline) to the board.
 
-import { readdirSync, statSync, watch } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, statSync, watch } from 'node:fs';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
+import YAML from 'yaml';
 import { PATHS, readYaml, ui, checkForUpdates, SPINNER_FRAMES as TICK_FRAMES } from './_lib.mjs';
+
+function readJsonOrYaml(path) {
+  if (!existsSync(path)) return null;
+  try {
+    const txt = readFileSync(path, 'utf8').trim();
+    if (!txt) return null;
+    if (txt.startsWith('{') || txt.startsWith('[')) {
+      try { return JSON.parse(txt); } catch { /* fall through */ }
+    }
+    return YAML.parse(txt);
+  } catch { return null; }
+}
 import { visibleWidth as wcwidth, stripAnsi } from '../src/util/width.mjs';
 
 checkForUpdates();
@@ -198,7 +211,7 @@ function listCampaigns() {
     const results = {};
     for (const ch of brief.channels ?? []) {
       const rPath = resolve(PATHS.campaignsDir, d.name, ch, 'result.json');
-      try { results[ch] = readYaml(rPath); } catch {}
+      results[ch] = readJsonOrYaml(rPath);
     }
     let mtime = 0;
     try { mtime = statSync(briefPath).mtimeMs; } catch {}

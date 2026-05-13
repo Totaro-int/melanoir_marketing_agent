@@ -65,6 +65,10 @@ export function writeYaml(path, data) {
   writeFileSync(path, YAML.stringify(data, { lineWidth: 100 }), 'utf8');
 }
 
+export function writeJson(path, data) {
+  writeFileSync(path, JSON.stringify(data, null, 2), 'utf8');
+}
+
 export function readText(path) {
   if (!existsSync(path)) return '';
   return readFileSync(path, 'utf8');

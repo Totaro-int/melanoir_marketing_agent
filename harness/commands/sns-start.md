@@ -26,7 +26,7 @@ description: 새 캠페인 시작. 온보딩 → 생성 → 발행까지 전체 
 
 ### 1단계 — 프로필 확인
 `company-profile.yaml` 존재 여부 확인.
-- **없음** → "처음 사용하시네요. 회사 프로필부터 만들게요." 안내 후 `sns-onboard-company` 스킬 (full 모드) 진행. 완료 후 `node harness/bin/profile-validate.mjs` 로 검증.
+- **없음** → "처음 사용하시네요. 회사 프로필부터 만들게요." 안내 후 `harness/commands/_sns-onboard-company.md` 가이드 (full 모드) 진행. 완료 후 `node harness/bin/profile-validate.mjs` 로 검증.
 - **있음** → 프로필 로드 후 다음 단계.
 
 ### 2단계 — 슬롯 분기
