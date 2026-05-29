@@ -781,23 +781,37 @@ spec.kind === "blog" 또는 channels.json의 채널이 `kind: "blog"` 면 **Blog
 - **회사 visual.colors** 반영 — prompt 끝에 색상 hex 추가
 - **회사 imageStyle.aestheticDirection** 반영 — organic / minimalist / modern / editorial / bold / playful 중 1개 키워드 prompt 포함
 
-##### 이미지 생성 호출 패턴 (fal-ai/fast-sdxl 기준 — flux 권한 401 회피)
+##### 이미지 생성 호출 — gen-image.mjs 경유 (모델 추상화 + 품질)
 
-```javascript
-POST https://queue.fal.run/fal-ai/fast-sdxl
-Headers: { Authorization: "Key <FAL_KEY>" }
-Body: {
-  prompt: "<slot.prompt> + visual.colors hex + aestheticDirection 키워드",
-  negative_prompt: "text, letters, words, faces, people, watermark, logo",
-  image_size: "portrait_4_3" | "landscape_4_3",
-  num_inference_steps: 30,
-  guidance_scale: 7.5,
-  num_images: 1
-}
+> ⚠️ **fal-ai/fast-sdxl 직접 호출 금지** (저품질 — 블로그 이미지가 "짜치는" 주원인이었음).
+> 반드시 `gen-image.mjs` 를 거친다 → `FAL_IMAGE_MODEL` env 를 따르고 기본값이 고품질.
 
-→ status_url poll until COMPLETED
-→ response_url → result.images[0].url
+**모델 (`FAL_IMAGE_MODEL` env)**:
+| 모델 | 품질 | 비고 |
+|------|------|------|
+| `fal-ai/nano-banana-2` (기본) | 높음 | Gemini 3.1 Flash Image. fast-sdxl 대비 큰 향상 |
+| `fal-ai/flux-pro/v1.1` | 최고 | 권한 필요 (과거 401 이력 — 키 권한 확인 후 사용) |
+| `fal-ai/flux/dev` | 높음 | flux-pro 권한 없을 때 대안 |
+| ~~`fal-ai/fast-sdxl`~~ | 낮음 | **사용 금지** |
+
+**호출** (슬롯마다, stdout 마지막 줄 = 저장 경로):
+```bash
+node harness/bin/gen-image.mjs \
+  --prompt="<6-component 조립 prompt — 아래 Brand DNA 공식>" \
+  --aspect=landscape \
+  --out=<campaignDir>/<channel>/img<N>.png
 ```
+- 헤더 슬롯 = `--aspect=landscape` (16:9), 본문 슬롯 = `landscape` 또는 `portrait`
+- exit 1 (FAL_KEY 없음 / 모델 401) → 사용자에게 모델·키 확인 안내 후 중단
+
+##### 🎬 블로그 이미지 프리미엄 품질 규칙 (fast-sdxl 티 제거)
+
+저품질 "AI 스톡사진" 느낌을 없애는 프롬프트 강제 조항 — 6-component 조립에 항상 더한다:
+- **단일 히어로 피사체** — 막연한 "abstract minimal" 금지. 한 장에 주제 하나 명확히.
+- **단일 광원 + 깊은 그림자** — `single dramatic light source, deep shadows, chiaroscuro`
+- **에디토리얼 파인아트** — `fine-art editorial photography, premium magazine quality`
+- **넉넉한 여백 + 의도적 구도** — `generous negative space, intentional composition`
+- **4장 톤 통일** — 같은 광질·색온도·질감으로 시리즈 일관성 (글 흐름이 끊기지 않게)
 
 #### B4. 본문 placeholder 치환
 
@@ -828,7 +842,7 @@ for slot in imageSlots:
   "meta": {
     "provider": "claude-subagent",
     "agent": "image-director",
-    "imageProvider": "fal-ai/fast-sdxl",
+    "imageProvider": "<FAL_IMAGE_MODEL — 기본 fal-ai/nano-banana-2>",
     "imagesGeneratedAt": "<ISO>",
     "generatedAt": "<ISO>"
   }

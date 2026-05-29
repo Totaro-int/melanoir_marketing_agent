@@ -266,7 +266,7 @@ async function publishThreads(page, draft, cardPaths, opts) {
   ui.step(3, 5, '카피 입력');
   await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
   await page.waitForTimeout(150);
-  await page.keyboard.press('Control+V');
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
   await page.waitForTimeout(800);
 
   if (cardPaths.length) {
@@ -326,7 +326,7 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
   await page.waitForTimeout(200);
   await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
   await page.waitForTimeout(150);
-  await page.keyboard.press('Control+V');
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
   await page.waitForTimeout(800);
 
   if (cardPaths.length) {
@@ -395,16 +395,22 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
     origin: 'https://blog.naver.com',
   }).catch(() => {});
 
-  await ensureLoggedIn(page, 'naver-blog');
-
-  // 본인 blog ID 감지 — MyBlog.naver 가 자동으로 본인 블로그로 redirect
-  await page.goto('https://blog.naver.com/MyBlog.naver', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(1500);
-  const blogIdMatch = page.url().match(/blog\.naver\.com\/([^/?#]+)/);
-  if (!blogIdMatch || blogIdMatch[1] === 'MyBlog.naver') {
-    throw new Error(`blogId 감지 실패 — 현재 URL: ${page.url()} (네이버 로그인 확인)`);
+  // 로그인 대기 — MyBlog.naver 는 미로그인 시 로그인 페이지로 갔다가, 로그인하면 본인 블로그로 redirect.
+  // 창에서 사용자가 로그인할 때까지 URL 폴링 (재navigation 없이 — 비번 입력 방해 X). 최대 ~5분.
+  ui.warn('  ▶ 뜬 Chromium 창에서 네이버 로그인 하세요. 로그인하면 자동으로 진행됩니다 (최대 5분 대기).');
+  await page.goto('https://blog.naver.com/MyBlog.naver', { waitUntil: 'domcontentloaded' }).catch(() => {});
+  let blogId = null;
+  for (let i = 0; i < 150; i++) {
+    const m = page.url().match(/blog\.naver\.com\/([^/?#]+)/);
+    if (m && m[1] !== 'MyBlog.naver') {
+      blogId = m[1];
+      break;
+    }
+    await page.waitForTimeout(2000);
   }
-  const blogId = blogIdMatch[1];
+  if (!blogId) {
+    throw new Error(`blogId 감지 실패 — 로그인 시간 초과 (현재 URL: ${page.url()})`);
+  }
   ui.dim(`  blogId: ${blogId}`);
 
   // 글쓰기 진입 — <blogId>?Redirect=Write 패턴 (PostWriteForm 직접 접근은 "유효하지 않은 요청" 에러)
@@ -510,7 +516,7 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
         })]);
       }, { html, text: html.replace(/<[^>]+>/g, ' ') });
       await page.waitForTimeout(150);
-      await page.keyboard.press('Control+V');
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
       await page.waitForTimeout(800);
     } else if (seg.type === 'image') {
       // 이미지 paste 전 Enter (텍스트 끝에 이미지 inline)
@@ -538,7 +544,7 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
         } catch (e) { return 'err: ' + e.message; }
       }, { b64 });
       await page.waitForTimeout(200);
-      await page.keyboard.press('Control+V');
+      await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
       // CDN 업로드 + 렌더링 대기
       await page.waitForTimeout(2000);
       pastedImages++;
@@ -1116,7 +1122,7 @@ async function publishInstagram(page, draft, cardPaths, opts) {
     await page.waitForTimeout(300);
     await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
     await page.waitForTimeout(150);
-    await page.keyboard.press('Control+V');
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
     await page.waitForTimeout(800);
     ui.dim('  캡션 paste 완료');
   } else {
