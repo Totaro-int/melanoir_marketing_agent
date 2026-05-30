@@ -1,0 +1,70 @@
+version: 1
+slug: 2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증
+topic: 진균 멜라닌의 광역 자외선 차단 + 항산화 — 2021 RSC 논문 검증
+slotTopic: null
+goal: education
+channels:
+  - naver-blog
+cadence: single
+blogMode: ai-briefing
+keyMessage: 진균 멜라닌(Amorphotheca resinae 유래) 5% 크림이 광역 자외선 차단(λc 388nm, UVA/UVB 0.87) + 아스코르브산 동등
+  항산화력 + HaCaT 세포 4mg/mL 72h 무독성을 동시에 입증 — RSC Adv. 2021 논문 핵심 데이터로 본 천연 멜라닌의 화장품 소재 가능성
+contentPoints:
+  - "in vitro SPF: 0% (1.0) → 0.5% (1.4) → 1% (1.5) → 3% (2.0) → 5% (2.5) — 멜라닌 함량 비례 증가"
+  - "임계파장 λc: 모든 농도에서 ~388 nm (FDA/EU 광역차단 기준 370 nm 초과)"
+  - "UVA/UVB 비율: 0.84–0.90 (광역차단 기준 0.81 초과)"
+  - "ORAC 항산화: 아스코르브산(비타민C)과 동등 수준, GSH(글루타치온)보다 높음 (AAPH 라디칼 소거)"
+  - "HaCaT 인간 각질세포 MTT assay: 0–4 mg/mL × 24/48/72h 모두 통계유의 세포독성 없음"
+  - "소재 출처: Amorphotheca resinae KUC3009 균주 14일 액체배양 → pH 2.0 산침전 → 6M HCl 가수분해 → 평균입자 146.8 nm"
+  - "UV 흡수 메커니즘: 인돌 기반 구성 요소의 불포화 탄소 결합 — 산란 아닌 화학적 분자 흡수"
+  - "FTIR: 1629 cm⁻¹ (C=O 퀴논), 1540 cm⁻¹ (C-N), 1228 cm⁻¹ (페놀 C-OH), 3409 cm⁻¹ (N-H)"
+  - "한계: SPF 2.5 = 상업 기준(SPF15+) 미달 / ORAC μMTE/g 정량수치 미보고 / 96h 독성 미측정"
+  - "시사: 천연 멜라닌의 광역차단+고항산화+저독성 조합 → 화학차단제 대체 + K-뷰티 지속가능 소재 가능성"
+angle: 학술 논문 검증형 (AEO/E-E-A-T 강화) — RSC Advances peer-reviewed 출처, DOI 명시, 정량 수치 + 한계 솔직 공개
+notes: >
+  원문: Oh, Jeong-Joo et al. "Fungal melanin as a biocompatible broad-spectrum sunscreen with high
+  antioxidant activity"
+
+  RSC Advances 2021, DOI: 10.1039/d1ra02583j
+
+
+  본 컨텐츠는 멜라누아 엠보 브랜드의 천연 멜라닌 안전성 / 기능성 근거 보강용.
+
+  학술 인용 톤 유지 + 일반 독자 접근성 (어려운 용어는 한 줄 풀이) 균형.
+
+  과장 X (SPF 2.5 한계 + 96h 미측정 등 솔직 공개) → 신뢰감 확보.
+sourceMaterials:
+  texts:
+    - path: C:/Users/WIN10/Downloads/!! 2021-(RSC Adv.) Fungal melanin as a biocompatible broad-spectrum
+        sunscreen with high antioxidant activity.md
+      type: paper-analysis
+      desc: Paper Analysis Agent v1.0 자동 분석 (학술 상세, 231줄, FTIR/UV-Vis/SPF/ORAC/MTT 데이터 전체)
+    - path: C:/Users/WIN10/Downloads/!! 2021-(RSC Adv.) Fungal melanin as a biocompatible broad-spectrum
+        sunscreen with high antioxidant activity.dashboard.json
+      type: structured-data
+      desc: KPI 3개, 주제축, verdict 구조화 JSON
+    - path: C:/Users/WIN10/Downloads/!! 2021-(RSC Adv.) Fungal melanin as a biocompatible broad-spectrum
+        sunscreen with high antioxidant activity.dashboard (1).html
+      type: dashboard-html
+      desc: Apple-style 시각화 대시보드 — KPI 카드 + verdict 3분할
+  images: []
+  designRef: null
+  citations:
+    - title: Fungal melanin as a biocompatible broad-spectrum sunscreen with high antioxidant activity
+      authors:
+        - Jeong-Joo Oh
+        - et al.
+      journal: RSC Advances
+      year: 2021
+      doi: 10.1039/d1ra02583j
+      url: https://doi.org/10.1039/d1ra02583j
+constraints:
+  maxLengthOverride: null
+  mustInclude: []
+  mustExclude: []
+status:
+  naver-blog: failed
+meta:
+  createdAt: 2026-05-28T16:48:57.473+09:00
+  updatedAt: 2026-05-28T17:32:04.652+09:00
+  profileBrand: Melanoir

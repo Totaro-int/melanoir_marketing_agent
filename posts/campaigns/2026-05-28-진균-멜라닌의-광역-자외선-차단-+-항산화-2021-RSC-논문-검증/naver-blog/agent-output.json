@@ -1,0 +1,76 @@
+{
+  "ts": "20260528-165003",
+  "slug": "2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증",
+  "channel": "naver-blog",
+  "blogMode": "ai-briefing",
+  "title": "진균 멜라닌의 광역 자외선 차단 — 2021 RSC 논문이 정리한 SPF·항산화·세포 안전성 데이터",
+  "cards": [
+    {
+      "index": 1,
+      "role": "single",
+      "title": "진균 멜라닌 SPF·임계파장·UVA/UVB · ORAC · HaCaT 데이터 카드",
+      "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-20260528-165003.html",
+      "reviewPngPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v1-review.png",
+      "reviewScore": 5,
+      "reviewNotes": "Hero ratio 0.363 (36.3%, PASS). Glow gradient + accent bar + ghost number + stat-card shadow + bullet dots + divider 등 장식 요소 6개. 텍스트 면적 약 50%. 검정 accent 일관 사용. 5/5 통과.",
+      "hookVariants": [
+        {
+          "index": 1,
+          "label": "Stat Card (라이트 베이스)",
+          "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v1-20260528-165003.html",
+          "pngPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v1-review.png",
+          "heroRatio": 0.363
+        },
+        {
+          "index": 2,
+          "label": "Full-Bleed Type (다크 베이스)",
+          "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v2-20260528-165003.html",
+          "pngPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v2-review.png",
+          "heroRatio": 0.479
+        },
+        {
+          "index": 3,
+          "label": "Split Layout (다크 + 데이터)",
+          "htmlPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v3-20260528-165003.html",
+          "pngPath": "C:\\Users\\WIN10\\AppData\\Local\\Temp\\marketing-agent-slides\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증-naver-blog-card1-v3-review.png",
+          "heroRatio": 0.312
+        }
+      ],
+      "text": "진균 멜라닌 5% 크림 in vitro SPF 2.5 · 임계파장 388 nm · UVA/UVB 0.87 · HaCaT 4 mg/mL × 72h 무독성 · ORAC 아스코르브산 동등 — RSC Adv. 2021 / DOI 10.1039/d1ra02583j",
+      "hashtags": [
+        "#천연멜라닌",
+        "#진균멜라닌",
+        "#광역자외선차단",
+        "#자외선차단성분",
+        "#항산화소재",
+        "#화장품원료",
+        "#K뷰티원료",
+        "#멜라누아",
+        "#멜라닌화장품",
+        "#지속가능화장품",
+        "#멜라누아엠보",
+        "#화장품성분분석",
+        "#자연유래선스크린",
+        "#RSC논문",
+        "#피그먼트사이언스"
+      ]
+    }
+  ],
+  "postYamlPath": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증\\naver-blog\\20260528-165003.yaml",
+  "hookVariantsPath": "C:\\Users\\WIN10\\Desktop\\개발공장\\마케팅 자동화 에이전트\\posts\\campaigns\\2026-05-28-진균-멜라닌의-광역-자외선-차단-+-항산화-2021-RSC-논문-검증\\naver-blog\\hook-variants.json",
+  "designRef": {
+    "brand": "supabase",
+    "applied": "레이아웃·여백·typography·shadow·border DNA. 색상은 visual.colors(검정/흰색) 우선 적용."
+  },
+  "notes": {
+    "bodyLengthChars": 2650,
+    "h2Count": 7,
+    "h3Count": 12,
+    "tableCount": 1,
+    "blockquoteCount": 2,
+    "faqCount": 5,
+    "tagCount": 15,
+    "imagePlaceholders": 2,
+    "imagePlaceholderNote": "IMAGE_PLACEHOLDER_1 = card 1장 (헤더, slide-spec 지정). IMAGE_PLACEHOLDER_2 = ORAC·HaCaT 추가 시각화 자리 (optional, slide-spec 외 추가 생성 권장)."
+  }
+}

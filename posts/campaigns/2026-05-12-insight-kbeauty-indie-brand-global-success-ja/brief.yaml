@@ -1,0 +1,50 @@
+version: 1
+slug: 2026-05-12-insight-kbeauty-indie-brand-global-success-ja
+topic: K-Beauty インディーブランド グローバル進出ケース — Anua · Beauty of Joseon · Skin1004
+goal: education
+channels:
+  - linkedin
+cadence: series-5
+keyMessage: Anua · Beauty of Joseon · Skin1004 — インディーブランド3社が18~24ヶ月で米Sephora·Whole Foods入店した
+  timeline·売上·チャネルパターン
+contentPoints:
+  - Anua — 22ヶ月 Sephora US·Ulta進入、ドクダミトナー → クレンジングオイルラインへ拡張
+  - Beauty of Joseon — 18ヶ月 Whole Foods·Target、Glow Serum(SPF) 単一SKU進入
+  - Skin1004 — 24ヶ月 Sephora·Walmart、マダガスカルセンテララインが核心
+  - 共通パターン — 韓国ODM stock formula → 自社ブランディング → TikTokバイラル → 米国リテール
+  - 時間·売上·チャネルマトリックス (各社IR + Bloombergデータ)
+  - 真似してはいけない罠 — MOQ 1,000個未満の進入限界、EWG認証必須、直訳コピー
+  - 本インサイトカードのフルバージョン → cos.totaro.co.kr/ja/insights/kbeauty-indie-brand-global-success
+angle: Why Korea (マクロ) のミクロ実証。carousel = 1 hook(3社平均21ヶ月) → 2 Anua → 3 Beauty of Joseon → 4 Skin1004
+  → 5 共通パターン + 罠 + CTA.
+notes: |
+  カード #8 (Why Korea 9 優位) のマクロデータ → 本カードのミクロ事例。インディーブランド創業者がベンチマーキング可能な timeline·売上·チャネル分析。
+  データ出所 — Anua/Cosrx Holdings IR、Beauty of Joseon Sephora入店公示、Skin1004売上統計。
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/ja/insights/kbeauty-indie-brand-global-success (作成予定)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/ja/insights/kbeauty-indie-brand-global-success
+  mustExclude:
+    - 最高の
+    - 1位
+    - 唯一
+    - 100%検証
+status:
+  linkedin: approved
+meta:
+  createdAt: 2026-05-12T20:00:00.000+09:00
+  updatedAt: 2026-05-21T14:55:32.222+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: kbeauty-indie-brand-global-success
+  slideLocale: ja
+feedback:
+  linkedin:
+    - at: 2026-05-21T14:33:42.179+09:00
+      reason: 해시태그 5개 이내로 정리 (KBeauty·IndieBrand·GlobalEntry·B2BSourcing·Sephora 핵심만 남기고 일본어·한글 해시태그 제외).
+        카드 이미지의 hero 영역(데이터 시각화)을 25~40%로 키워 핵심 숫자(21ヶ月·MOQ 1,000·EWG)가 잘 보이게. 본문 내용·톤·구조는 유지.

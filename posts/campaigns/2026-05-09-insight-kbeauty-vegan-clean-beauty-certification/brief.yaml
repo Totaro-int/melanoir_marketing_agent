@@ -1,0 +1,42 @@
+version: 1
+slug: 2026-05-09-insight-kbeauty-vegan-clean-beauty-certification
+topic: K-뷰티 비건·클린뷰티 인증 — Vegan Society · Leaping Bunny · COSMOS · EWG 비교
+goal: education
+channels:
+  - linkedin
+cadence: series-5
+keyMessage: 인디 브랜드가 Sephora·Whole Foods 진열대에 들어가려면 알아야 할 4개 자발적 인증
+contentPoints:
+  - Vegan Society (UK) — 가장 권위 있는 비건 인증, 동물성 성분 0
+  - Leaping Bunny — 동물실험 안 함 (cruelty-free 글로벌 표준)
+  - COSMOS — 유기농 인증 (Ecocert · Soil Association · ICEA · BDIH 4개 단체 통합)
+  - EWG Verified — 미국 Whole Foods·Sephora Clean 진입 사실상 필수
+  - 인증별 비용·기간 비교 + 한국 OEM 대응 현황 (Cosmax · Kolmar Korea · Kosmecca)
+  - 본 인사이트 카드 풀버전 → cos.totaro.co.kr/insights/kbeauty-vegan-clean-beauty-certification
+angle: Mandatory 진입 인증(MoCRA/CPNP)과 별개로 Voluntary 마케팅 인증 4종 비교. carousel = 1 hook → 2-4 각 인증 카드 → 5
+  비교표·CTA.
+notes: |
+  카드 #1 (MoCRA/CPNP/ISO) 와 인증 시리즈 빌딩 — Mandatory(통관) vs Voluntary(마케팅) 명확 구분.
+  K-뷰티 인디 브랜드의 차별화 핵심 → Skin1004·Anua·Beauty of Joseon 사례 인용 권장.
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/insights/kbeauty-vegan-clean-beauty-certification (작성 예정)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/insights/kbeauty-vegan-clean-beauty-certification
+  mustExclude:
+    - 최고의
+    - 1위
+    - 유일한
+    - 100% 검증
+status:
+  linkedin: preview
+meta:
+  createdAt: 2026-05-09T00:00:00.000+09:00
+  updatedAt: 2026-05-11T22:10:17.538+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: kbeauty-vegan-clean-beauty-certification

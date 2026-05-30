@@ -1,0 +1,41 @@
+version: 1
+slug: 2026-05-09-insight-korea-cosmetics-shipping-incoterms
+topic: K-뷰티 첫 수출 — 컨테이너 vs LCL · Incoterms 2020 가이드
+goal: education
+channels:
+  - linkedin
+cadence: series-5
+keyMessage: 화장품 첫 컨테이너, 잘못 정하면 단가 2배. 부산항·LCL·Incoterms 한 장 정리
+contentPoints:
+  - 첫 주문 컨테이너 vs LCL 결정 기준 — 20 CBM 손익분기점
+  - FCL 20ft = 28 m³ / 40ft = 58 m³ / LCL = CBM 단가 비교
+  - 부산항 → 주요 시장 운임 (LA·NYC·Hamburg·Tokyo, 2026.04 추정)
+  - Incoterms 2020 — EXW · FOB · CIF 책임 분기점
+  - 화장품 특화 — IATA 액체류, 알코올 농도 위험물 분류, 인증서 동봉
+  - 본 인사이트 카드 풀버전 → cos.totaro.co.kr/insights/korea-cosmetics-shipping-incoterms
+angle: 팩트·운임 수치·법령 중심. 첫 수출자 페인 정조준. carousel = 1 hook → 2 컨테이너 vs LCL → 3 운임표 → 4 Incoterms → 5 CTA.
+notes: |
+  참고 사이트 web.totaro.co.kr 의 K-Food 컨테이너 카드와 같은 톤·구조. 다만 화장품 특화 위험물 분류(IATA 3 등급) 추가.
+  TOTARO 매칭은 OEM 매칭 + 인증서 자동 첨부 → 통관 페인 해소.
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/insights/korea-cosmetics-shipping-incoterms (작성 예정)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/insights/korea-cosmetics-shipping-incoterms
+  mustExclude:
+    - 최고의
+    - 1위
+    - 유일한
+    - 100% 검증
+status:
+  linkedin: preview
+meta:
+  createdAt: 2026-05-09T00:00:00.000+09:00
+  updatedAt: 2026-05-11T22:09:55.643+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: korea-cosmetics-shipping-incoterms

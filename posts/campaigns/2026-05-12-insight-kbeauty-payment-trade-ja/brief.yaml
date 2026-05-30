@@ -1,0 +1,44 @@
+version: 1
+slug: 2026-05-12-insight-kbeauty-payment-trade-ja
+topic: K-Beauty 決済·貿易 — LC · TT · 貿易信用保険 · 為替リスク 5分ガイド
+goal: education
+channels:
+  - linkedin
+cadence: series-5
+keyMessage: K-Beauty初回取引の最大不安 = 決済。LC·TT·KSure·為替ヘッジを1枚に整理
+contentPoints:
+  - LC (Letter of Credit) — 最も安全、30~60日決済、発行手数料0.1~0.3%、大型取引の標準
+  - TT (Telegraphic Transfer) — 最速、60~80%前金 + 残金(B/L写し確認後)、K-Beauty取引の70%以上
+  - KSure 貿易信用保険 — 韓国政府が損失の90%負担、B2B初回取引のセーフティネット、保険料0.3~1.5%
+  - 為替リスク — KRW/USD 6ヶ月変動幅5~10%、先物ヘッジ費用 0.5~1%/年
+  - 推奨組み合わせ — FOB Busan + TT 30/70 + KSure (初回取引標準)
+  - 偽造·詐欺防止 — 正規事業者登録確認、KSure登録可能事業者のみ取引
+  - 本インサイトカードのフルバージョン → cos.totaro.co.kr/ja/insights/kbeauty-payment-trade-lc-tt-insurance
+angle: B2B commercial 痛点ど真ん中。carousel = 1 hook(決済が最大不安) → 2 LC vs TT 比較 → 3 KSure 保険 → 4 為替リスク + ヘッジ
+  → 5 推奨組み合わせ + CTA。
+notes: |
+  B2B初回取引のインディーブランド最大不安 = 決済。カード #6 (物流) と相乗効果。
+  データ出所 — KOTRA貿易実務ガイド、KSure公示資料。
+sourceMaterials:
+  images: []
+  texts:
+    - cos.totaro.co.kr/ja/insights/kbeauty-payment-trade-lc-tt-insurance (作成予定)
+  designRef: null
+constraints:
+  maxLengthOverride: null
+  mustInclude:
+    - cos.totaro.co.kr/ja/insights/kbeauty-payment-trade-lc-tt-insurance
+  mustExclude:
+    - 最高の
+    - 1位
+    - 唯一
+    - 100%検証
+status:
+  linkedin: preview
+meta:
+  createdAt: 2026-05-12T20:00:00.000+09:00
+  updatedAt: 2026-05-15T12:36:18.657+09:00
+  profileBrand: TOTARO
+  campaignFamily: insights-2026-q2
+  insightSlug: kbeauty-payment-trade-lc-tt-insurance
+  slideLocale: ja
