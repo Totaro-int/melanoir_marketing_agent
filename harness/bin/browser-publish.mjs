@@ -564,6 +564,35 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
   ui.dim(`  최종 components: ${counts}`);
   await page.waitForTimeout(500);
 
+  // 전체 가운데 정렬 (감성 블로그 스타일 — 레퍼런스 기준). 전체 선택 → 가운데정렬 버튼.
+  // 버튼 못 찾으면 좌측정렬 그대로 유지 (발행엔 지장 없음 — graceful).
+  ui.dim('  전체 가운데 정렬 시도');
+  await page.bringToFront();
+  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+A' : 'Control+A');
+  await page.waitForTimeout(400);
+  let centered = false;
+  for (const sel of [
+    '[data-name="align-center"]',
+    'button[data-log*="alc"]',
+    'button[aria-label*="가운데"]',
+    'button[title*="가운데"]',
+    '.se-toolbar-icon-align-center',
+    'button.se-toolbar-option-align-center-button',
+  ]) {
+    const b = frame.locator(sel).first();
+    if (await b.isVisible().catch(() => false)) {
+      await b.click({ force: true }).catch(() => {});
+      centered = true;
+      ui.dim(`  가운데 정렬 적용: ${sel}`);
+      break;
+    }
+  }
+  if (!centered) {
+    ui.warn('  가운데정렬 버튼 못 찾음 — 좌측정렬 유지 (툴바 셀렉터 확인 필요)');
+  }
+  await page.keyboard.press('ArrowRight').catch(() => {}); // 선택 해제
+  await page.waitForTimeout(300);
+
   ui.step(4, 7, '이미지는 segment paste 단계에서 본문 흐름 따라 inline 삽입 완료');
   // (이전: 별도 일괄 첨부 단계 — segment paste 로 인라인 처리되어 불필요)
   ui.dim(`  inline images: ${pastedImages}/${cardPaths.length}`);
@@ -920,6 +949,12 @@ function markdownToNaverHtml(md) {
         }
         out.push('</table>');
       }
+      continue;
+    }
+    // · · · (middot) 한 줄 → 네이버 구분선 <hr/>
+    if (line.replace(/\s/g, '').length >= 2 && /^[·•・]+$/.test(line.replace(/\s/g, ''))) {
+      out.push('<hr/>');
+      i++;
       continue;
     }
     // - / * 불릿 리스트 → <ul><li> (연속 라인 묶음)
