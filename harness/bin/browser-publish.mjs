@@ -922,6 +922,16 @@ function markdownToNaverHtml(md) {
       }
       continue;
     }
+    // - / * 불릿 리스트 → <ul><li> (연속 라인 묶음)
+    if (/^[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+        items.push(lines[i].trim().replace(/^[-*]\s+/, ''));
+        i++;
+      }
+      out.push('<ul>' + items.map((it) => `<li>${inlineMd(it)}</li>`).join('') + '</ul>');
+      continue;
+    }
     // 일반 단락
     out.push(`<p>${inlineMd(line)}</p>`);
     i++;
