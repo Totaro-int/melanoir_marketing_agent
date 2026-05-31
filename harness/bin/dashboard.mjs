@@ -161,6 +161,7 @@ const CHANNEL_LOGIN_COOKIE = {
 };
 
 let _chromeAuthCache = { at: 0, data: null };
+const _publishTasks = new Map();  // taskKey ('slug::channel') → { running, pid, exitCode, logPath, ... }
 
 async function readChromeCookieAuth() {
   // 5분 캐시 — browser-publish 와 race 안 나도록 길게
@@ -307,6 +308,38 @@ const handlers = {
     }
     events.sort((a, b) => (b.publishedAt || '').localeCompare(a.publishedAt || ''));
     return { events };
+  },
+
+  '/api/publish/status': (url) => {
+    const slug = url.searchParams.get('slug');
+    const channel = url.searchParams.get('channel');
+    if (slug && channel) {
+      const t = _publishTasks.get(slug + '::' + channel);
+      return { task: t || null };
+    }
+    return { tasks: Object.fromEntries(_publishTasks) };
+  },
+
+  // 채널 로그인 wizard — 한 채널의 현재 연결 상태 + 권장 액션
+  '/api/channels/login-status': async (url) => {
+    const channel = url?.searchParams?.get('channel');
+    if (!channel) return { error: 'channel required' };
+    // fresh — Chrome cookie cache 무효화
+    _chromeAuthCache = { at: 0, data: null };
+    const chrome = await readChromeCookieAuth();
+    if (chrome?._error) {
+      return { channel, connected: false, chromeError: chrome._error, recommendation: 'Chrome 9222 모드로 실행 안 됨 — start-demo.ps1 또는 doctor 확인' };
+    }
+    const info = chrome[channel];
+    return {
+      channel,
+      connected: !!info,
+      info: info || null,
+      loginUrl: CHANNEL_LOGIN_URL[channel] || null,
+      recommendation: info
+        ? '연결됨'
+        : '[로그인 시작] → Chrome 탭이 열림 → 로그인 후 "로그인 유지" 체크 → [확인] 클릭',
+    };
   },
 
   '/api/channels': async (url) => {
@@ -588,6 +621,74 @@ const server = createServer(async (req, res) => {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Chrome 연결 실패 — :9222 모드로 실행됐는지 확인. ' + e.message }));
         }
+        return;
+      }
+
+      // ── 발행 시작 (browser-publish.mjs spawn + publish.log tail) ──
+      if (path === '/api/publish/start') {
+        const { slug, channel, dryRun = true, autoClick = false } = body || {};
+        if (!slug || !channel) {
+          res.writeHead(400).end(JSON.stringify({ error: 'slug + channel required' }));
+          return;
+        }
+        const campaignDir = resolve(CAMPAIGNS, slug, channel);
+        if (!existsSync(campaignDir)) {
+          res.writeHead(404).end(JSON.stringify({ error: '캠페인/채널 없음: ' + campaignDir }));
+          return;
+        }
+        const taskKey = slug + '::' + channel;
+        if (_publishTasks.get(taskKey)?.running) {
+          res.writeHead(409).end(JSON.stringify({ error: '이미 실행 중', taskKey }));
+          return;
+        }
+        const logPath = resolve(campaignDir, 'publish.log');
+        // 로그 reset — 이전 실행 잔여 라인이 SSE 로 흘러가지 않도록
+        writeFileSync(logPath, `# publish.log — ${new Date().toISOString()} slug=${slug} channel=${channel} dryRun=${dryRun} autoClick=${autoClick}\n`, 'utf8');
+        const args = [
+          resolve(ROOT, 'harness/bin/browser-publish.mjs'),
+          slug,
+          '--channel=' + channel,
+          '--attach',
+        ];
+        if (dryRun) args.push('--dry-run');
+        if (autoClick) args.push('--auto-click');
+        const { spawn } = await import('node:child_process');
+        const child = spawn(process.execPath, args, { cwd: ROOT, env: { ...process.env }, windowsHide: true });
+        const startedAt = new Date().toISOString();
+        const task = { running: true, pid: child.pid, slug, channel, dryRun, autoClick, startedAt, exitCode: null, logPath };
+        _publishTasks.set(taskKey, task);
+        // child stdout/stderr → append to log
+        const append = (chunk, stream) => {
+          try {
+            const txt = chunk.toString('utf8');
+            writeFileSync(logPath, txt, { flag: 'a' });
+          } catch {}
+        };
+        child.stdout.on('data', (c) => append(c, 'stdout'));
+        child.stderr.on('data', (c) => append(c, 'stderr'));
+        child.on('exit', (code) => {
+          task.running = false;
+          task.exitCode = code;
+          task.endedAt = new Date().toISOString();
+          try { writeFileSync(logPath, `\n# [exit ${code}] ${task.endedAt}\n`, { flag: 'a' }); } catch {}
+        });
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, taskKey, pid: child.pid, logPath: logPath.replace(ROOT, '').replace(/^[\\\/]/, ''), startedAt }));
+        return;
+      }
+
+      // ── 발행 중단 ──
+      if (path === '/api/publish/stop') {
+        const { slug, channel } = body || {};
+        const taskKey = slug + '::' + channel;
+        const task = _publishTasks.get(taskKey);
+        if (!task?.running || !task.pid) {
+          res.writeHead(404).end(JSON.stringify({ error: '실행 중 작업 없음' }));
+          return;
+        }
+        try { process.kill(task.pid, 'SIGTERM'); } catch {}
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true }));
         return;
       }
 

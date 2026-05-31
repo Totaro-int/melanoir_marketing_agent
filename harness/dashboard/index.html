@@ -1114,6 +1114,9 @@
     <button id="btn-publish" class="btn-publish dry" onclick="startPublish()">
       ▶ dry-run 실행
     </button>
+    <button id="btn-publish-direct" title="Claude 안 거치고 대시보드가 직접 browser-publish.mjs spawn — Chrome 9222 attach 필요" onclick="startPublishDirect()" style="background:#5a4dd2; border:0; color:#fff; padding:11px 14px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; margin-left:6px;">
+      ⚡ 즉시
+    </button>
   </div>
 </aside>
 
@@ -1559,6 +1562,15 @@ function renderChannels() {
     html += '</div>';
   }
 
+  // 일괄 wizard 버튼
+  const unconnected = ALL_CHANNELS.filter((ch) => !authMap[ch]?.configured);
+  if (unconnected.length > 0 && chrome.ok) {
+    html += '<div style="background:rgba(90,77,210,0.10); border-left:3px solid #7a8aff; padding:14px 18px; border-radius:6px; margin-bottom:14px; font-size:13px; display:flex; align-items:center; gap:14px;">';
+    html += '<div>🧙 <strong>미연결 ' + unconnected.length + '개 일괄 진행</strong> — 한 번에 하나씩 Chrome 탭 열고 자동으로 연결 확인.</div>';
+    html += '<button onclick="startLoginWizard()" style="margin-left:auto; background:#7a8aff; border:0; color:#fff; padding:9px 18px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">📡 마법사 시작</button>';
+    html += '</div>';
+  }
+
   html += '<div style="background:rgba(122,138,255,0.08); border-left:3px solid var(--accent-blue); padding:14px 18px; border-radius:6px; margin-bottom:20px; font-size:13px;">';
   html += '💡 <strong>"연결" 버튼 클릭</strong> → Chrome 의 로그인 페이지 열림 → 1회 로그인하면 <code style="color:var(--accent);">auth/chrome-attach-profile/</code> 에 영구 캐시됩니다 (쿠키 삭제 X).';
   html += '</div>';
@@ -1610,13 +1622,117 @@ async function connectChannel(channel) {
     const data = await r.json();
     if (data.error) {
       alert('연결 실패: ' + data.error);
-    } else {
-      // 새 탭에 로그인 페이지 떴어요 — 사용자에게 알림
-      alert('Chrome 새 탭에 ' + (CHANNEL_LABEL[channel] || channel) + ' 로그인 페이지 열림. 로그인 완료 후 이 페이지 새로고침.');
+      return;
     }
+    // Chrome 탭 떴음 — 자동 polling 으로 로그인 감지
+    showLoginPollModal(channel);
   } catch (e) {
     alert('Chrome 9222 연결 실패: ' + e.message);
   }
+}
+
+// 단일 채널 로그인 polling 모달 — 사용자가 로그인하면 자동 감지
+function showLoginPollModal(channel, opts = {}) {
+  const label = CHANNEL_LABEL[channel] || channel;
+  let modal = document.getElementById('login-poll-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'login-poll-modal';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; display:flex; align-items:center; justify-content:center;';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML =
+    '<div style="background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:28px 32px; width:min(520px, 94vw); box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
+      '<div style="font-size:18px; font-weight:700; margin-bottom:8px;">🔌 ' + label + ' 연결 중</div>' +
+      '<div style="font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:18px;">' +
+        '1. Chrome 새 탭에서 <strong>' + label + ' 로그인</strong> 진행<br>' +
+        '2. "<strong>로그인 유지</strong>" 체크박스 확인 (있다면)<br>' +
+        '3. 로그인 완료되면 이 모달이 자동으로 ✅ 표시' +
+      '</div>' +
+      '<div id="poll-status" style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:14px; font-size:13px;">' +
+        '<span class="spin" style="display:inline-block; animation:spin 1s linear infinite;">⏳</span> 쿠키 검사 중...' +
+      '</div>' +
+      '<div style="display:flex; gap:10px;">' +
+        '<button onclick="cancelLoginPoll()" style="flex:1; background:transparent; border:1px solid var(--border); color:var(--text-dim); padding:10px; border-radius:6px; cursor:pointer;">취소</button>' +
+        (opts.next ? '<button id="poll-skip" onclick="loginWizardSkip()" style="flex:1; background:var(--panel-2); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:6px; cursor:pointer;">⏭ 건너뛰기</button>' : '') +
+      '</div>' +
+    '</div>';
+  modal.style.display = 'flex';
+
+  // polling — 5초마다 /api/channels/login-status
+  if (window._loginPoll) clearInterval(window._loginPoll);
+  let tries = 0;
+  const MAX_TRIES = 60;  // 5초 x 60 = 5분
+  const poll = async () => {
+    tries++;
+    if (tries > MAX_TRIES) {
+      clearInterval(window._loginPoll);
+      const s = document.getElementById('poll-status');
+      if (s) s.innerHTML = '⌛ 시간 초과 — 로그인 안 되었습니다. 모달 닫고 다시 시도.';
+      return;
+    }
+    try {
+      const r = await fetch('/api/channels/login-status?channel=' + encodeURIComponent(channel));
+      const data = await r.json();
+      if (data.connected) {
+        clearInterval(window._loginPoll);
+        const s = document.getElementById('poll-status');
+        if (s) s.innerHTML = '✅ <strong>연결됨!</strong> 쿠키 감지: ' + escapeHtml(data.info?.cookie || '?');
+        // 1.5초 후 자동 닫기 + 다음 단계
+        setTimeout(() => {
+          modal.style.display = 'none';
+          if (opts.next) opts.next();
+          else refreshChannels();
+        }, 1500);
+      }
+    } catch {}
+  };
+  poll();
+  window._loginPoll = setInterval(poll, 5000);
+}
+
+function cancelLoginPoll() {
+  if (window._loginPoll) clearInterval(window._loginPoll);
+  document.getElementById('login-poll-modal').style.display = 'none';
+}
+
+// 🧙 일괄 로그인 마법사
+let _wizardQueue = [];
+function startLoginWizard() {
+  const auth = cache.channels?.auth || [];
+  const authMap = Object.fromEntries(auth.map((a) => [a.channel, a]));
+  _wizardQueue = ALL_CHANNELS.filter((ch) => !authMap[ch]?.configured);
+  if (!_wizardQueue.length) {
+    alert('전부 연결됨!');
+    return;
+  }
+  loginWizardNext();
+}
+
+async function loginWizardNext() {
+  if (!_wizardQueue.length) {
+    if (window._loginPoll) clearInterval(window._loginPoll);
+    const m = document.getElementById('login-poll-modal');
+    if (m) m.style.display = 'none';
+    alert('🎉 마법사 완료! 모든 채널 진행 끝.');
+    refreshChannels();
+    return;
+  }
+  const ch = _wizardQueue.shift();
+  try {
+    await fetch('/api/channels/connect', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel: ch }),
+    });
+    showLoginPollModal(ch, { next: loginWizardNext });
+  } catch (e) {
+    alert('Chrome 연결 실패 (' + ch + '): ' + e.message);
+  }
+}
+
+function loginWizardSkip() {
+  if (window._loginPoll) clearInterval(window._loginPoll);
+  loginWizardNext();
 }
 
 // ─── 회사 / 브랜드 DNA ──────────────────────────────────────────
@@ -2715,6 +2831,84 @@ async function startPublish() {
     alert('시작 실패: ' + e.message);
     btn.disabled = false;
     setPublishButtonMode(document.getElementById('dry-toggle').checked);
+  }
+}
+
+// ⚡ 백엔드 직접 spawn — Claude 안 거치고 대시보드가 browser-publish.mjs 실행
+async function startPublishDirect() {
+  if (!DRAWER_STATE.slug || !DRAWER_STATE.channel) return;
+  const dryRun = document.getElementById('dry-toggle').checked;
+  const channelLabel = (CHANNEL_LABEL[DRAWER_STATE.channel] || DRAWER_STATE.channel);
+
+  if (!dryRun) {
+    const ok = confirm(
+      '⚠️ 실제 발행 (백엔드 직접)\n\n' +
+      '채널: ' + channelLabel + '\n\n' +
+      '대시보드가 직접 browser-publish.mjs 를 spawn 합니다.\n' +
+      'Chrome 9222 attach 모드 필수. 자동 클릭이 켜져 있으면 ' +
+      '바로 발행되니 dry-run 으로 먼저 확인하세요.\n\n진행할까요?'
+    );
+    if (!ok) return;
+  }
+
+  const btn = document.getElementById('btn-publish-direct');
+  btn.disabled = true;
+  btn.textContent = '⏳';
+
+  // drawer 더 넓게
+  document.getElementById('drawer').classList.add('publishing');
+
+  try {
+    const r = await fetch('/api/publish/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        slug: DRAWER_STATE.slug,
+        channel: DRAWER_STATE.channel,
+        dryRun,
+        autoClick: !dryRun,  // LIVE 일 때만 auto-click (dry-run 은 항상 skip)
+      }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+
+    // 모니터 영역 준비
+    const logArea = document.getElementById('drawer-log-area');
+    logArea.innerHTML =
+      '<div id="watch-hero" class="watch-hero">' +
+        '<div class="icon">⚡</div>' +
+        '<div class="info">' +
+          '<div class="title">백엔드 직접 — ' + channelLabel + (dryRun ? ' (dry-run)' : ' (LIVE)') + '</div>' +
+          '<div class="meta">' +
+            '<span>📁 publish.log 워치 중 · pid=' + (data.pid || '?') + '</span>' +
+            '<span style="opacity:0.7;">browser-publish.mjs 가 대시보드 백엔드에서 실행 중</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div id="pb-board" style="margin-top:8px;"></div>';
+
+    pbInit({
+      channel: DRAWER_STATE.channel,
+      topic: window.__lastDraft?.topic || DRAWER_STATE.slug,
+      dryRun,
+      totalImages: window.__lastDraft?.images?.length || 0,
+    });
+    DRAWER_STATE.logLines = 0;
+    pbRender();
+
+    connectWatchSSE(DRAWER_STATE.slug, DRAWER_STATE.channel, dryRun);
+
+    setTimeout(() => {
+      const hero = document.getElementById('watch-hero');
+      if (hero) hero.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    btn.textContent = '⚡ 즉시';
+    btn.disabled = false;
+  } catch (e) {
+    alert('백엔드 spawn 실패: ' + e.message + '\n\nChrome 9222 모드로 실행됐는지 확인.');
+    btn.disabled = false;
+    btn.textContent = '⚡ 즉시';
   }
 }
 
