@@ -57,6 +57,8 @@
     padding: 24px 16px;
     overflow-y: auto;
     z-index: 10;
+    display: flex;
+    flex-direction: column;
   }
   .brand {
     font-size: 16px; font-weight: 700;
@@ -1077,6 +1079,12 @@
     <div class="nav-item" data-tab="channels">🔌 채널 연결</div>
     <div class="nav-item" data-tab="company">🏢 회사 / 브랜드 DNA</div>
     <div class="nav-item" data-tab="env">⚙ 환경 설정</div>
+
+    <!-- 작업 미니맵 (활성 publish 작업 표시) -->
+    <div id="task-minimap" style="margin-top:auto; padding-top:14px; border-top:1px solid var(--border); display:none;">
+      <div style="font-size:10px; text-transform:uppercase; color:var(--text-mute); letter-spacing:0.06em; margin-bottom:8px;">진행 중 작업</div>
+      <div id="task-minimap-list"></div>
+    </div>
   </aside>
 
   <main class="main">
@@ -1281,18 +1289,57 @@ function renderToday() {
   return html;
 }
 
+function renderOnboardingStatus() {
+  const data = cache.channels || {};
+  const chromeOk = !!data.chrome?.ok;
+  const auth = data.auth || [];
+  const connected = auth.filter((a) => a.configured).length;
+  const total = 12;  // 우리가 지원하는 채널 수 (대략)
+  const campCount = (cache.campaigns?.campaigns || []).length;
+
+  let html = '<div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">';
+  // Chrome status
+  html += '<div onclick="' + (chromeOk ? "showTab('channels')" : "startChrome9222()") + '" style="flex:1; min-width:200px; background:var(--panel); border:1px solid ' + (chromeOk ? 'var(--accent)' : '#ff6b6b') + '; border-radius:10px; padding:14px 18px; cursor:pointer;">';
+  html += '<div style="font-size:11px; text-transform:uppercase; color:var(--text-mute); margin-bottom:4px;">1. Chrome 9222</div>';
+  html += '<div style="font-size:18px; font-weight:700; color:' + (chromeOk ? 'var(--accent)' : '#ff6b6b') + ';">' + (chromeOk ? '✓ 연결됨' : '✗ 미연결 → 클릭') + '</div>';
+  html += '</div>';
+  // 채널 status
+  const chColor = connected >= 1 ? 'var(--accent)' : '#ff9a3c';
+  html += '<div onclick="showTab(\'channels\')" style="flex:1; min-width:200px; background:var(--panel); border:1px solid ' + chColor + '; border-radius:10px; padding:14px 18px; cursor:pointer;">';
+  html += '<div style="font-size:11px; text-transform:uppercase; color:var(--text-mute); margin-bottom:4px;">2. 채널 로그인</div>';
+  html += '<div style="font-size:18px; font-weight:700; color:' + chColor + ';">' + connected + ' / ' + total + ' 연결</div>';
+  html += '</div>';
+  // 캠페인 status
+  const cpColor = campCount > 0 ? 'var(--accent)' : '#ff9a3c';
+  html += '<div onclick="openNewCampaign()" style="flex:1; min-width:200px; background:var(--panel); border:1px solid ' + cpColor + '; border-radius:10px; padding:14px 18px; cursor:pointer;">';
+  html += '<div style="font-size:11px; text-transform:uppercase; color:var(--text-mute); margin-bottom:4px;">3. 캠페인</div>';
+  html += '<div style="font-size:18px; font-weight:700; color:' + cpColor + ';">' + campCount + '개 ' + (campCount === 0 ? '→ 새로 만들기' : '· + 새 캠페인') + '</div>';
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function showTab(tab) {
+  document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
+  document.querySelector('[data-tab="' + tab + '"]')?.classList.add('active');
+  renderTab(tab);
+}
+
 function renderCalendar() {
   const data = cache.calendar;
   const sched = cache.schedule;
-  if (!data) return '<div class="empty">⏳ 로딩…</div>';
+  if (!data) return renderOnboardingStatus() + '<div class="empty">⏳ 로딩…</div>';
 
   const month = data.month;
   const days = data.days || {};
   const today = new Date().toISOString().slice(0, 10);
   const slots = sched?.slots || [];
 
+  // 첫 화면 — 사용자가 어디서 시작해야 할지 명확하게
+  const statusBar = renderOnboardingStatus();
+
   // Schedule slots header
-  let slotHtml = '';
+  let slotHtml = statusBar;
   if (slots.length) {
     slotHtml += '<h2>⏰ 예약 슬롯 (slots.yaml — cron 반복 큐)</h2>';
     slotHtml += '<div class="grid">';
@@ -3338,6 +3385,90 @@ setTimeout(() => {
     positionMenu(m, ev.clientX, ev.clientY);
   };
 })();
+
+// ─── 작업 미니맵 + 데스크탑 알림 ────────────────────────────
+let _seenTaskKeys = new Set();
+let _lastTaskRunningKeys = new Set();
+let _notifAsked = false;
+
+async function pollPublishTasks() {
+  try {
+    const r = await fetch('/api/publish/status');
+    const data = await r.json();
+    const tasks = data.tasks || {};
+    const root = document.getElementById('task-minimap');
+    const list = document.getElementById('task-minimap-list');
+    if (!root || !list) return;
+
+    const keys = Object.keys(tasks);
+    const runningNow = new Set(keys.filter((k) => tasks[k]?.running));
+
+    // 알림 — 직전 running 이었는데 지금 안 running 인 것 (= 끝남)
+    for (const k of _lastTaskRunningKeys) {
+      if (!runningNow.has(k)) {
+        const t = tasks[k];
+        if (!t) continue;
+        const code = t.exitCode;
+        const label = CHANNEL_LABEL[t.channel] || t.channel;
+        const msg = code === 0 ? `✓ ${label} 발행 완료` : `✗ ${label} 발행 실패 (exit ${code})`;
+        notifyDesktop(msg, { body: t.slug, tag: k });
+      }
+    }
+    _lastTaskRunningKeys = runningNow;
+
+    // 미니맵 — running 만 표시 (없으면 hide)
+    if (runningNow.size === 0) {
+      root.style.display = 'none';
+      list.innerHTML = '';
+      return;
+    }
+    root.style.display = 'block';
+    let html = '';
+    for (const k of runningNow) {
+      const t = tasks[k];
+      const label = CHANNEL_LABEL[t.channel] || t.channel;
+      html += '<div style="background:var(--panel-2); border:1px solid var(--border); border-radius:6px; padding:8px 10px; margin-bottom:6px; font-size:12px;">';
+      html += '<div style="display:flex; align-items:center; gap:6px; font-weight:600; margin-bottom:3px;">';
+      html += '<span style="display:inline-block; width:8px; height:8px; background:var(--accent); border-radius:50%; animation:pulse 1.4s ease-in-out infinite;"></span>';
+      html += escapeHtml(label) + (t.dryRun ? ' <span style="color:var(--accent-orange); font-size:10px;">DRY</span>' : '');
+      html += '</div>';
+      html += '<div style="color:var(--text-dim); font-size:10.5px; word-break:break-all;">' + escapeHtml(t.slug.slice(0, 40)) + '...</div>';
+      html += '</div>';
+    }
+    list.innerHTML = html;
+  } catch {}
+}
+
+function notifyDesktop(title, opts = {}) {
+  // Notification API
+  if (typeof Notification === 'undefined') return;
+  if (Notification.permission === 'granted') {
+    try { new Notification(title, opts); } catch {}
+  }
+  // 권한 요청 — 첫 발행 끝났을 때만 1회
+  else if (Notification.permission === 'default' && !_notifAsked) {
+    _notifAsked = true;
+    Notification.requestPermission().then((p) => {
+      if (p === 'granted') {
+        try { new Notification(title, opts); } catch {}
+      }
+    });
+  }
+}
+
+// pulse 애니메이션 CSS 동적 추가 (이미 있을 수도)
+(function injectPulseCSS() {
+  if (document.getElementById('pulse-anim-style')) return;
+  const s = document.createElement('style');
+  s.id = 'pulse-anim-style';
+  s.textContent = '@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }';
+  document.head.appendChild(s);
+})();
+
+// 5초마다 polling
+setInterval(pollPublishTasks, 5000);
+// 첫 호출 (페이지 로드 후 2초)
+setTimeout(pollPublishTasks, 2000);
 
 // ─── 키보드 단축키 ──────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
