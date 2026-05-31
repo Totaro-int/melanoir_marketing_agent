@@ -171,7 +171,8 @@ async function readChromeCookieAuth() {
   let browser = null;
   try {
     const { chromium } = await import('playwright');
-    browser = await chromium.connectOverCDP('http://localhost:9222', { timeout: 3000 });
+    // 탭이 많거나 Chrome 이 바쁘면 3초 부족 — 8초 넉넉히
+    browser = await chromium.connectOverCDP('http://localhost:9222', { timeout: 8000 });
     const ctx = browser.contexts()[0];
     if (!ctx) throw new Error('no chrome context');
     const cookies = await ctx.cookies();

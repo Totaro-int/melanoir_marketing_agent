@@ -188,6 +188,26 @@ function saveResult(campaignDir, channel, brief, briefPath, result, failed, skip
   writeYaml(briefPath, brief);
 }
 
+// 여러 셀렉터 후보 중 가장 먼저 visible 한 거 — selector drift 대응
+async function waitForFirst(page, selectors, timeoutMs = 15000) {
+  const start = Date.now();
+  const POLL = 250;
+  while (Date.now() - start < timeoutMs) {
+    for (const sel of selectors) {
+      try {
+        const loc = page.locator(sel).first();
+        const visible = await loc.isVisible({ timeout: 100 }).catch(() => false);
+        if (visible) {
+          ui.dim(`  match: ${sel}`);
+          return loc;
+        }
+      } catch {}
+    }
+    await page.waitForTimeout(POLL);
+  }
+  throw new Error(`waitForFirst timeout — none of ${selectors.length} selectors visible: ${selectors.join(' | ').slice(0, 200)}`);
+}
+
 async function gate(page, label) {
   await page.bringToFront();
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -317,9 +337,17 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
   await startBtn.waitFor({ timeout: SELECTOR_TIMEOUT });
   await startBtn.click({ force: true });
 
-  ui.step(3, 6, '컴포저 열림 대기');
-  const editor = page.locator('div.ql-editor[contenteditable="true"]').first();
-  await editor.waitFor({ timeout: SELECTOR_TIMEOUT });
+  ui.step(3, 6, '컴포저 열림 대기 (selector fallback chain)');
+  const editor = await waitForFirst(page, [
+    'div.ql-editor[contenteditable="true"]',                    // 기존 Quill (2024-)
+    '[role="textbox"][contenteditable="true"][aria-label*="텍스트 편집기" i]',
+    '[role="textbox"][contenteditable="true"][aria-label*="Text editor" i]',
+    '.share-creation-state__text-editor [contenteditable="true"]',
+    '.editor-content [contenteditable="true"]',
+    '[data-test-id*="editor"] [contenteditable="true"]',
+    'div[contenteditable="true"][role="textbox"]',
+    'div.share-box-feed-entry__top-bar ~ * [contenteditable="true"]',
+  ], SELECTOR_TIMEOUT);
   await page.waitForTimeout(800);
 
   ui.step(4, 6, '카피 입력');
@@ -763,42 +791,98 @@ async function publishTistory(page, draft, cardPaths, opts) {
 
   const parsed = parseDraftMarkdown(draft.text);
 
-  ui.step(2, 6, '제목 입력 (#post-title-inp)');
-  await page.fill('#post-title-inp', parsed.title || '').catch((e) => {
-    ui.warn(`  제목 fill 실패: ${e.message}`);
-  });
+  ui.step(2, 6, '제목 입력 (selector fallback)');
+  let titleField = null;
+  try {
+    titleField = await waitForFirst(page, [
+      '#post-title-inp',                            // 옛날 textarea
+      'input[placeholder*="제목"]',
+      'textarea[placeholder*="제목"]',
+      '[data-testid*="title"] input',
+      '[aria-label*="제목" i]',
+      'header input[type="text"]',
+    ], 12_000);
+    await titleField.fill(parsed.title || '');
+  } catch (e) {
+    ui.warn(`  제목 fill 실패 — selector drift: ${e.message.slice(0, 80)}`);
+  }
   await page.waitForTimeout(300);
 
-  ui.step(3, 6, '본문 입력 (TinyMCE setContent API)');
-  // markdown → HTML 변환 (간단 — H2/H3/단락/이미지)
+  ui.step(3, 6, '본문 입력 (TinyMCE → contenteditable fallback)');
+  // markdown → HTML 변환
   const bodyHtml = markdownToTistoryHtml(parsed.body);
-  const setBodyResult = await page.evaluate((html) => {
-    if (!window.tinymce?.editors?.length) return 'no tinymce';
-    window.tinymce.editors[0].setContent(html);
-    return 'set via tinymce';
+  let setBodyResult = await page.evaluate((html) => {
+    if (window.tinymce?.editors?.length) {
+      window.tinymce.editors[0].setContent(html);
+      return 'tinymce';
+    }
+    return null;
   }, bodyHtml);
+  // tinymce 없으면 contenteditable fallback
+  if (!setBodyResult) {
+    try {
+      const bodyEd = await waitForFirst(page, [
+        'iframe[id*="ifr"]',                  // TinyMCE 5 iframe
+        '.tox-edit-area iframe',
+        '[contenteditable="true"][role="textbox"]',
+        '[contenteditable="true"]:not([aria-label*="제목" i])',
+      ], 10_000);
+      // iframe 이면 frameContent
+      const tagName = await bodyEd.evaluate((el) => el.tagName.toLowerCase());
+      if (tagName === 'iframe') {
+        const frame = page.frameLocator('iframe').first();
+        await frame.locator('body').first().evaluate((el, h) => { el.innerHTML = h; }, bodyHtml);
+        setBodyResult = 'iframe-body';
+      } else {
+        await bodyEd.click();
+        await page.waitForTimeout(150);
+        // paste via clipboard (markdown HTML)
+        await page.evaluate((html) => navigator.clipboard.writeText(html), bodyHtml);
+        await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
+        setBodyResult = 'contenteditable-paste';
+      }
+    } catch (e) {
+      ui.warn(`  본문 fallback 도 실패: ${e.message.slice(0, 80)}`);
+      setBodyResult = 'fail';
+    }
+  }
   ui.dim(`  본문 → ${setBodyResult}`);
   await page.waitForTimeout(800);
 
   if (cardPaths.length) {
-    ui.step(4, 6, `이미지 ${cardPaths.length}장 첨부 (TinyMCE 첨부 → 사진)`);
-    // Tistory 사진 첨부 흐름: 첨부 dropdown → 사진 → native file dialog → setFiles
-    // Playwright filechooser 이벤트로 native dialog 잡음
+    ui.step(4, 6, `이미지 ${cardPaths.length}장 첨부 (selector fallback)`);
     try {
-      // 첨부 dropdown 열기
-      await page.click('#mceu_0-open');
-      await page.waitForTimeout(500);
-
-      // filechooser 이벤트 대기 + #attach-image 클릭 (dropdown menu item)
-      const fileChooserPromise = page.waitForEvent('filechooser', { timeout: 10_000 });
-      await page.click('#attach-image');
-      const fileChooser = await fileChooserPromise;
-      await fileChooser.setFiles(cardPaths);
-      ui.dim(`  ${cardPaths.length}장 setFiles 완료`);
-      // CDN 업로드 + 본문 삽입 대기
+      // 1차: 직접 input[type=file] 시도 (가장 안정 — Tistory CDN 업로드)
+      const directInput = page.locator('input[type="file"][accept*="image"]').first();
+      const hasDirect = await directInput.count();
+      if (hasDirect) {
+        await directInput.setInputFiles(cardPaths);
+        ui.dim(`  ${cardPaths.length}장 direct input setFiles 완료`);
+      } else {
+        // 2차: 첨부 dropdown 클릭 → 사진 → filechooser
+        const attachTrigger = await waitForFirst(page, [
+          '#mceu_0-open',                                  // 옛날 TinyMCE 4
+          '[aria-label*="첨부" i]',
+          'button:has-text("첨부")',
+          '[data-testid*="attach"]',
+          '.tox-toolbar button[title*="첨부" i]',
+        ], 6000);
+        await attachTrigger.click({ force: true });
+        await page.waitForTimeout(500);
+        const fileChooserPromise = page.waitForEvent('filechooser', { timeout: 10_000 });
+        const photoOpt = await waitForFirst(page, [
+          '#attach-image',
+          'a:has-text("사진")', 'button:has-text("사진")',
+          '[role="menuitem"]:has-text("사진")',
+        ], 5000);
+        await photoOpt.click({ force: true });
+        const fileChooser = await fileChooserPromise;
+        await fileChooser.setFiles(cardPaths);
+        ui.dim(`  ${cardPaths.length}장 dropdown setFiles 완료`);
+      }
       await page.waitForTimeout(1500 * cardPaths.length + 2000);
     } catch (e) {
-      ui.warn(`  사진 첨부 실패 (${e.message}) — 수동 첨부`);
+      ui.warn(`  사진 첨부 실패 (${e.message.slice(0, 100)}) — 수동 첨부`);
       await promptLine(`  이미지 ${cardPaths.length}장 수동 첨부 후 Enter`, { optional: true });
     }
   } else {
