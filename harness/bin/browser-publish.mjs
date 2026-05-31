@@ -1059,6 +1059,12 @@ async function publishInstagram(page, draft, cardPaths, opts) {
     throw new Error('Instagram requires at least 1 image');
   }
 
+  // dry-run 안전망 — 만들기 모달 열기 전 멈춤 (사용자가 dry-run 누른 의도 존중)
+  if (opts.dryRun) {
+    ui.info('  --dry-run — 만들기 모달 열기 전 종료 (이미지 ' + cardPaths.length + '장 준비됨)');
+    return { url: null, dryRun: true, cancelled: false, imageCount: cardPaths.length };
+  }
+
   ui.step(2, 6, 'Create 버튼 → 만들기 → 게시물 sub-menu');
   // Instagram 흐름: 사이드바 "만들기" (= aria-label 은 "새로운 게시물") 클릭
   //   → popover 열림 [게시물 / 릴스 / 라이브 방송 / 광고]

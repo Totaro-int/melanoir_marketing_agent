@@ -310,6 +310,20 @@ const handlers = {
     return { events };
   },
 
+  // Chrome 9222 alive check (단발 — 캐시 X)
+  '/api/chrome/status': async () => {
+    try {
+      const r = await fetch('http://localhost:9222/json/version', { signal: AbortSignal.timeout(1500) });
+      if (r.ok) {
+        const j = await r.json();
+        return { alive: true, browser: j?.Browser, version: j?.['User-Agent']?.match(/Chrome\/([\d.]+)/)?.[1] };
+      }
+      return { alive: false, error: 'HTTP ' + r.status };
+    } catch (e) {
+      return { alive: false, error: e.message };
+    }
+  },
+
   '/api/publish/status': (url) => {
     const slug = url.searchParams.get('slug');
     const channel = url.searchParams.get('channel');
@@ -607,6 +621,90 @@ const server = createServer(async (req, res) => {
   if (req.method === 'POST') {
     try {
       const body = await readBody(req);
+
+      // ── Chrome 9222 자동 시작 (OS 별 경로 자동 감지) ──
+      if (path === '/api/chrome/start') {
+        // 이미 살아 있는지 먼저
+        try {
+          const r = await fetch('http://localhost:9222/json/version', { signal: AbortSignal.timeout(2000) });
+          if (r.ok) {
+            const j = await r.json();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ ok: true, alreadyAlive: true, browser: j?.Browser }));
+            return;
+          }
+        } catch {}
+
+        // Chrome 실행 파일 경로 감지
+        const candidates = [];
+        const platform = process.platform;
+        if (platform === 'win32') {
+          candidates.push(
+            (process.env.ProgramFiles || 'C:/Program Files') + '/Google/Chrome/Application/chrome.exe',
+            (process.env['ProgramFiles(x86)'] || 'C:/Program Files (x86)') + '/Google/Chrome/Application/chrome.exe',
+            (process.env.LOCALAPPDATA || (process.env.USERPROFILE + '/AppData/Local')) + '/Google/Chrome/Application/chrome.exe',
+          );
+        } else if (platform === 'darwin') {
+          candidates.push(
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            (process.env.HOME || '~') + '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+          );
+        } else {
+          // linux
+          candidates.push(
+            '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium', '/usr/bin/chromium-browser',
+            '/snap/bin/chromium',
+          );
+        }
+        const chromeExe = candidates.find((p) => existsSync(p));
+        if (!chromeExe) {
+          res.writeHead(500).end(JSON.stringify({
+            error: 'Chrome 실행 파일 못 찾음',
+            platform,
+            tried: candidates,
+            hint: 'Chrome 을 설치하거나 PATH 추가 후 다시 시도',
+          }));
+          return;
+        }
+
+        const profileDir = resolve(ROOT, 'auth/chrome-attach-profile');
+        mkdirSync(profileDir, { recursive: true });
+
+        const { spawn } = await import('node:child_process');
+        const child = spawn(chromeExe, [
+          '--remote-debugging-port=9222',
+          '--user-data-dir=' + profileDir,
+          '--no-first-run',
+          '--no-default-browser-check',
+        ], { detached: true, stdio: 'ignore', windowsHide: false });
+        child.unref();
+
+        // alive polling — 최대 15초
+        const start = Date.now();
+        let alive = false; let browserInfo = null;
+        while (Date.now() - start < 15_000) {
+          await new Promise((r) => setTimeout(r, 1000));
+          try {
+            const r = await fetch('http://localhost:9222/json/version', { signal: AbortSignal.timeout(1500) });
+            if (r.ok) { alive = true; browserInfo = await r.json(); break; }
+          } catch {}
+        }
+
+        // cookie cache 무효화 (새 Chrome 이라 readChromeCookieAuth 다시 해야)
+        _chromeAuthCache = { at: 0, data: null };
+
+        if (!alive) {
+          res.writeHead(500).end(JSON.stringify({
+            error: 'Chrome 시작했으나 9222 응답 없음 (15초 초과)',
+            chromeExe, pid: child.pid,
+          }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, chromeExe, browser: browserInfo?.Browser, pid: child.pid }));
+        return;
+      }
 
       if (path === '/api/channels/connect') {
         const channel = body?.channel;

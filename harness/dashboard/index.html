@@ -1550,8 +1550,11 @@ function renderChannels() {
   // Chrome attach 상태 배너
   if (!chrome.ok) {
     html += '<div style="background:rgba(255,107,107,0.10); border-left:3px solid #ff6b6b; padding:14px 18px; border-radius:6px; margin-bottom:14px; font-size:13px;">';
-    html += '⚠️ <strong>Chrome attach 모드 미연결</strong> — <code style="color:var(--accent);">--remote-debugging-port=9222</code> 모드로 Chrome 을 켜지 않았습니다. ';
-    html += '쿠키 검사를 못 해서 모든 채널이 "미연결" 로 표시됩니다.';
+    html += '<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">';
+    html += '<div style="flex:1; min-width:240px;">⚠️ <strong>Chrome attach 모드 미연결</strong> — <code style="color:var(--accent);">--remote-debugging-port=9222</code> 모드로 Chrome 을 켜지 않았습니다.</div>';
+    html += '<button onclick="startChrome9222()" id="btn-chrome-start" style="background:var(--accent); border:0; color:#0a0a0c; padding:9px 16px; border-radius:6px; cursor:pointer; font-size:13px; font-weight:600; white-space:nowrap;">🌐 Chrome 9222 켜기</button>';
+    html += '</div>';
+    html += '<div style="margin-top:8px; font-size:11px; opacity:0.7;">대시보드가 Chrome 을 OS 별 자동 경로 (Program Files / Applications) 에서 찾아 spawn 합니다. 기존 Chrome 인스턴스에 영향 X — <code>auth/chrome-attach-profile</code> 별도 프로필 사용.</div>';
     if (chrome.error) html += '<div style="margin-top:6px; opacity:0.7; font-family:monospace; font-size:11px;">' + escapeHtml(chrome.error) + '</div>';
     html += '</div>';
   } else {
@@ -1609,6 +1612,34 @@ async function refreshChannels() {
     renderTab('channels');
   } catch (e) {
     alert('재검사 실패: ' + e.message);
+  }
+}
+
+async function startChrome9222() {
+  const btn = document.getElementById('btn-chrome-start');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Chrome 시작 중...'; }
+  try {
+    const r = await fetch('/api/chrome/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const data = await r.json();
+    if (!r.ok || data.error) {
+      let msg = data.error || ('HTTP ' + r.status);
+      if (data.tried) msg += '\n\n시도한 경로:\n' + data.tried.join('\n');
+      if (data.hint) msg += '\n\n' + data.hint;
+      alert('Chrome 시작 실패:\n\n' + msg);
+      if (btn) { btn.disabled = false; btn.textContent = '🌐 Chrome 9222 켜기'; }
+      return;
+    }
+    if (data.alreadyAlive) {
+      // 이미 살아 있었음 — 새로고침으로 마무리
+      refreshChannels();
+      return;
+    }
+    if (btn) btn.textContent = '✓ Chrome 시작됨 (' + (data.browser || 'OK') + ')';
+    // cookie cache 새로 검사
+    setTimeout(() => refreshChannels(), 800);
+  } catch (e) {
+    alert('Chrome 시작 실패: ' + e.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🌐 Chrome 9222 켜기'; }
   }
 }
 
