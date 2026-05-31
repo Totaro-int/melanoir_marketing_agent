@@ -590,8 +590,21 @@ process.on('uncaughtException', (err) => {
 async function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
-    req.on('data', (c) => chunks.push(c));
+    let total = 0;
+    const MAX = 100 * 1024 * 1024;  // 100 MB — PDF base64 도 여유
+    let rejected = false;
+    req.on('data', (c) => {
+      total += c.length;
+      if (total > MAX && !rejected) {
+        rejected = true;
+        req.destroy();
+        reject(new Error('body too large (> 100 MB)'));
+        return;
+      }
+      chunks.push(c);
+    });
     req.on('end', () => {
+      if (rejected) return;
       try {
         const buf = Buffer.concat(chunks);
         const txt = buf.toString('utf8');
@@ -600,7 +613,7 @@ async function readBody(req) {
         resolve({ raw: buf, text: txt });
       } catch (e) { reject(e); }
     });
-    req.on('error', reject);
+    req.on('error', (e) => { if (!rejected) reject(e); });
   });
 }
 
@@ -996,11 +1009,43 @@ ${cmd}
         return;
       }
 
-      // ── 자료 파싱 (md/url/text → brief partial) ──
+      // ── 자료 파싱 (md/url/text/pdf → brief partial) ──
       if (path === '/api/source/parse') {
         const { type, content, sourceName } = body || {};
         if (!content) {
           res.writeHead(400).end(JSON.stringify({ error: 'content required' }));
+          return;
+        }
+
+        // PDF 분기 — content 는 base64
+        if (type === 'pdf') {
+          const SOURCES_DIR = resolve(ROOT, 'posts/sources');
+          mkdirSync(SOURCES_DIR, { recursive: true });
+          const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+          const rawName = (sourceName || `source-${ts}`).replace(/\.pdf$/i, '');
+          const safeName = rawName.replace(/[^\w가-힣.\- ]/g, '_').slice(0, 80);
+          const pdfPath = resolve(SOURCES_DIR, `${ts}-${safeName}.pdf`);
+          try {
+            const buf = Buffer.from(content, 'base64');
+            if (buf.length < 100) throw new Error('PDF 너무 작음 (base64 디코딩 실패?)');
+            // PDF magic: %PDF
+            if (buf.slice(0, 4).toString() !== '%PDF') throw new Error('PDF magic %PDF 없음');
+            writeFileSync(pdfPath, buf);
+          } catch (e) {
+            res.writeHead(400).end(JSON.stringify({ error: 'PDF 디코딩 실패: ' + e.message }));
+            return;
+          }
+          const { spawnSync } = await import('node:child_process');
+          const r = spawnSync(process.execPath, [resolve(ROOT, 'harness/bin/parse-source.mjs'), pdfPath, '--json'], {
+            encoding: 'utf8', timeout: 60_000, maxBuffer: 50 * 1024 * 1024,
+          });
+          if (r.status !== 0) {
+            res.writeHead(500).end(JSON.stringify({ error: 'parse-source(PDF) 실패: ' + (r.stderr || r.stdout).slice(0, 500) }));
+            return;
+          }
+          const parsed = JSON.parse(r.stdout);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ parsed, savedSrcPath: pdfPath.replace(ROOT, '').replace(/^[\\\/]/, '') }));
           return;
         }
 

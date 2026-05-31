@@ -10,29 +10,70 @@
 // 정규식 기반 추출 (LLM 호출 X, 무료/즉시). 정확도 80-90%.
 // LLM 보정이 필요하면: --llm 플래그 (claude API, 비용 ~$0.01)
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+import { resolve, basename, dirname, extname } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 import { ROOT, ui } from './_lib.mjs';
 
 const argv = process.argv.slice(2);
-const mdPath = argv.find((a) => !a.startsWith('--'));
+const srcPath = argv.find((a) => !a.startsWith('--'));
 const asJson = argv.includes('--json');
 const applySlug = argv.find((a) => a.startsWith('--apply='))?.split('=')[1];
 const useLlm = argv.includes('--llm');
+const skipImages = argv.includes('--no-images');
 
-if (!mdPath) {
-  ui.err('사용법: parse-source.mjs <md-path> [--json] [--apply=<slug>] [--llm]');
+if (!srcPath) {
+  ui.err('사용법: parse-source.mjs <src-path> [--json] [--apply=<slug>] [--llm] [--no-images]');
+  ui.err('  src-path: .md / .markdown / .txt / .pdf');
   process.exit(2);
 }
 
-if (!existsSync(mdPath)) {
-  ui.err(`파일 없음: ${mdPath}`);
+if (!existsSync(srcPath)) {
+  ui.err(`파일 없음: ${srcPath}`);
   process.exit(2);
+}
+
+// .pdf 면 parse-pdf.mjs 로 md 변환 후 진행
+let mdPath = srcPath;
+let pdfMeta = null;
+if (/\.pdf$/i.test(srcPath)) {
+  ui.dim(`PDF 인식 → parse-pdf.mjs 호출`);
+  const r = spawnSync(process.execPath, [resolve(ROOT, 'harness/bin/parse-pdf.mjs'), srcPath, '--json'], {
+    encoding: 'utf8', maxBuffer: 50 * 1024 * 1024,
+  });
+  if (r.status !== 0) {
+    ui.err(`parse-pdf 실패: ${r.stderr || r.stdout}`);
+    process.exit(2);
+  }
+  let pdfResult;
+  try { pdfResult = JSON.parse(r.stdout); }
+  catch (e) {
+    ui.err(`parse-pdf 출력 파싱 실패: ${e.message}`);
+    process.exit(2);
+  }
+  pdfMeta = { title: pdfResult.title, pageCount: pdfResult.pageCount, author: pdfResult.author };
+  // PDF 의 md 를 같은 디렉토리에 저장 (재실행 캐싱 + 사용자가 확인 가능)
+  mdPath = srcPath.replace(/\.pdf$/i, '.pdf.md');
+  writeFileSync(mdPath, pdfResult.md, 'utf8');
+  ui.dim(`PDF → md 저장: ${basename(mdPath)} (${pdfResult.pageCount} pages)`);
 }
 
 const raw = readFileSync(mdPath, 'utf8');
 const parsed = parseMarkdown(raw, mdPath);
+if (pdfMeta) parsed._meta.pdf = pdfMeta;
+
+// 이미지 자동 다운로드 (Phase 2.4)
+if (!skipImages) {
+  const downloaded = await downloadImages(raw, mdPath);
+  if (downloaded.length) {
+    parsed.sourceMaterials.images = [
+      ...(parsed.sourceMaterials.images || []),
+      ...downloaded,
+    ];
+    ui.dim(`이미지 자동 다운로드: ${downloaded.length}장`);
+  }
+}
 
 if (asJson) {
   console.log(JSON.stringify(parsed, null, 2));
@@ -154,6 +195,61 @@ function parseMarkdown(raw, srcPath) {
       },
     },
   };
+}
+
+// ─── 이미지 자동 다운로드 (Phase 2.4) ──────────────────────
+async function downloadImages(raw, mdSrcPath) {
+  // ![alt](url) 패턴 추출. data: / file: 제외, http(s) 만
+  const re = /!\[([^\]]*)\]\((https?:\/\/[^\s)"]+)\)/g;
+  const matches = [...raw.matchAll(re)];
+  if (!matches.length) return [];
+
+  // 저장 디렉토리 — md 와 같은 디렉토리에 _assets/<md-basename>/
+  const baseName = basename(mdSrcPath).replace(/\.(md|markdown|txt|pdf\.md)$/i, '');
+  const assetsDir = resolve(dirname(mdSrcPath), '_assets', baseName);
+  mkdirSync(assetsDir, { recursive: true });
+
+  const seen = new Set();
+  const downloaded = [];
+  let i = 0;
+  for (const [, alt, url] of matches) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    i++;
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(15_000) });
+      if (!r.ok) {
+        ui.warn(`  이미지 다운로드 실패 (HTTP ${r.status}): ${url.slice(0, 60)}`);
+        continue;
+      }
+      const contentType = r.headers.get('content-type') || '';
+      // 확장자 — content-type → URL → fallback
+      let ext = '';
+      if (contentType.includes('jpeg') || contentType.includes('jpg')) ext = '.jpg';
+      else if (contentType.includes('png')) ext = '.png';
+      else if (contentType.includes('webp')) ext = '.webp';
+      else if (contentType.includes('gif')) ext = '.gif';
+      else if (contentType.includes('svg')) ext = '.svg';
+      else {
+        const urlExt = url.match(/\.(jpe?g|png|webp|gif|svg)(?:\?|$)/i)?.[0]?.split('?')[0];
+        ext = urlExt || '.bin';
+      }
+      const safeAlt = (alt || `img${i}`).replace(/[^\w가-힣\- ]/g, '_').slice(0, 40) || `img${i}`;
+      const fileName = `${String(i).padStart(2, '0')}-${safeAlt}${ext}`;
+      const outPath = resolve(assetsDir, fileName);
+      const buf = Buffer.from(await r.arrayBuffer());
+      writeFileSync(outPath, buf);
+      downloaded.push({
+        path: outPath.replace(/\\/g, '/'),
+        alt: alt || null,
+        src: url,
+        size: buf.length,
+      });
+    } catch (e) {
+      ui.warn(`  이미지 다운로드 에러: ${e.message} — ${url.slice(0, 60)}`);
+    }
+  }
+  return downloaded;
 }
 
 function applyToBrief(slug, parsed) {

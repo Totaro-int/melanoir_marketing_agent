@@ -1988,7 +1988,7 @@ function openNewCampaign(opts = {}) {
         '<label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="nc-type" value="file"> 파일 업로드</label>' +
       '</div>' +
       '<textarea id="nc-content" placeholder="md 텍스트 붙여넣기 — front-matter (---) 포함 가능. 또는 위에서 URL/파일 선택." rows="8" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; color:var(--text); font-family:JetBrains Mono,monospace; font-size:12px; line-height:1.6; resize:vertical;"></textarea>' +
-      '<input id="nc-file" type="file" accept=".md,.markdown,.txt" style="display:none; margin-top:8px;">' +
+      '<input id="nc-file" type="file" accept=".md,.markdown,.txt,.pdf,application/pdf" style="display:none; margin-top:8px;">' +
       '<div style="display:flex; gap:8px; margin-top:10px; align-items:center;">' +
         '<input id="nc-source-name" type="text" placeholder="자료 이름 (선택) — posts/sources/ 저장명" style="flex:1; padding:8px 10px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px;">' +
         '<button onclick="parseCampaignSource()" class="btn-save" style="padding:9px 16px; border-radius:6px;">🔍 분석</button>' +
@@ -2056,10 +2056,32 @@ function openNewCampaign(opts = {}) {
   document.getElementById('nc-file').onchange = async (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    const text = await f.text();
-    document.getElementById('nc-content').value = text;
     if (!document.getElementById('nc-source-name').value) {
       document.getElementById('nc-source-name').value = f.name;
+    }
+    // PDF 면 base64 인코딩 + type='pdf' 로 강제 변경
+    if (/\.pdf$/i.test(f.name) || f.type === 'application/pdf') {
+      const buf = await f.arrayBuffer();
+      // ArrayBuffer → base64 (chunked, 큰 파일 대비)
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+      }
+      const b64 = btoa(bin);
+      document.getElementById('nc-content').value = `[PDF binary ${(f.size/1024).toFixed(1)} KB · base64 ${b64.length.toLocaleString()} 자]`;
+      // pdf radio 가 없으니 hidden flag 로 저장
+      window._ncPdfBase64 = b64;
+      // type radio 변경 — 'file' 유지하되 [분석] 시 PDF 로 분기
+      const ta = document.getElementById('nc-content');
+      ta.placeholder = 'PDF 로드됨 — [🔍 분석] 클릭하면 파싱 시작';
+      ta.disabled = true;
+    } else {
+      window._ncPdfBase64 = null;
+      const text = await f.text();
+      document.getElementById('nc-content').value = text;
+      document.getElementById('nc-content').disabled = false;
     }
   };
 }
@@ -2072,12 +2094,19 @@ function closeNewCampaign() {
 let _ncParsed = null;
 
 async function parseCampaignSource() {
-  const type = document.querySelector('input[name="nc-type"]:checked').value;
-  const content = document.getElementById('nc-content').value.trim();
+  let type = document.querySelector('input[name="nc-type"]:checked').value;
+  let content = document.getElementById('nc-content').value.trim();
   const sourceName = document.getElementById('nc-source-name').value.trim();
+
+  // PDF 모드 — base64 buffer 우선
+  if (window._ncPdfBase64) {
+    type = 'pdf';
+    content = window._ncPdfBase64;
+  }
+
   if (!content) { alert('자료 입력 필요'); return; }
   const status = document.getElementById('nc-parse-status');
-  status.textContent = '분석 중...';
+  status.textContent = '분석 중... (PDF 는 페이지 수에 따라 10-60초 소요)';
   try {
     const r = await fetch('/api/source/parse', {
       method: 'POST',
