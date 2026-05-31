@@ -97,6 +97,34 @@ add('publisher', 'auth/browser-profile/', hasBrowserProfile ? 'ok' : 'warn',
     ? '존재 (browser-publish 시 SNS 쿠키 재사용)'
     : '없음 — browser-publish 첫 실행 시 자동 생성, SNS 1회 로그인 필요');
 
+// chrome-attach-profile (Chrome 9222 attach 모드 전용 프로파일)
+const chromeAttachProfile = resolve(ROOT, 'auth/chrome-attach-profile');
+const hasChromeAttachProfile = existsSync(chromeAttachProfile);
+add('publisher', 'auth/chrome-attach-profile/', hasChromeAttachProfile ? 'ok' : 'warn',
+  hasChromeAttachProfile
+    ? '존재 (Chrome 9222 attach 모드용)'
+    : '없음 — scripts/start-demo.ps1 첫 실행 시 자동 생성');
+
+// Chrome 9222 라이브 점검 (선택 — 빠른 timeout)
+try {
+  const r = await fetch('http://localhost:9222/json/version', { signal: AbortSignal.timeout(2000) });
+  add('publisher', 'Chrome 9222 attach', r.ok ? 'ok' : 'warn',
+    r.ok ? 'live (browser-publish 가능)' : `HTTP ${r.status}`);
+} catch {
+  add('publisher', 'Chrome 9222 attach', 'warn',
+    '미실행 — .\\scripts\\start-demo.ps1 또는 chrome --remote-debugging-port=9222');
+}
+
+// Dashboard 7777 라이브 점검 (선택)
+try {
+  const r = await fetch('http://localhost:7777/api/today', { signal: AbortSignal.timeout(2000) });
+  add('dashboard', 'dashboard 7777', r.ok ? 'ok' : 'warn',
+    r.ok ? 'live (http://localhost:7777)' : `HTTP ${r.status}`);
+} catch {
+  add('dashboard', 'dashboard 7777', 'warn',
+    '미실행 — node harness/bin/dashboard.mjs');
+}
+
 // marketing-sources.yaml — RSS 등 자동수집 소스 (선택, 없으면 사용자 수동 입력만)
 const sourcesPath = resolve(ROOT, 'marketing-sources.yaml');
 const hasSources = existsSync(sourcesPath);

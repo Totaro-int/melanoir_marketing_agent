@@ -335,6 +335,29 @@ const handlers = {
     };
   },
 
+  // 환경 변수 현재 값 (.env.local 의 키만, value 는 masked)
+  '/api/env': () => {
+    const envPath = resolve(ROOT, '.env.local');
+    if (!existsSync(envPath)) return { keys: {}, exists: false };
+    const content = readFileSync(envPath, 'utf8');
+    const keys = {};
+    for (const raw of content.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+      if (!m) continue;
+      const [, k, vRaw] = m;
+      const v = vRaw.replace(/\s+#.*$/, '').trim().replace(/^["']|["']$/g, '');
+      // mask 보안 — 처음 4자 + 마지막 4자만 표시
+      let masked = v;
+      if (v && v.length > 12 && !/^(fal-ai\/|claude-|gpt-|inhouse|mock)/i.test(v)) {
+        masked = v.slice(0, 4) + '••••' + v.slice(-4);
+      }
+      keys[k] = { value: masked, raw_length: v.length, is_placeholder: /^(your-|<|placeholder|example|todo|change-?me)/i.test(v) };
+    }
+    return { keys, exists: true };
+  },
+
   '/api/profile': () => {
     const p = readYaml(PROFILE) || {};
     return {
@@ -553,6 +576,78 @@ const server = createServer(async (req, res) => {
         writeFileSync(PROFILE, YAML.stringify(profile, { lineWidth: 100 }), 'utf8');
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ ok: true, savedAt: new Date().toISOString() }));
+        return;
+      }
+
+      // ── 환경 변수 (.env.local) 갱신 ──
+      if (path === '/api/env') {
+        const { keys } = body || {};
+        if (!keys || typeof keys !== 'object') {
+          res.writeHead(400).end(JSON.stringify({ error: 'keys object required' }));
+          return;
+        }
+        const envPath = resolve(ROOT, '.env.local');
+        let content = existsSync(envPath) ? readFileSync(envPath, 'utf8') : '';
+        // backup
+        if (existsSync(envPath)) {
+          writeFileSync(envPath + '.bak', content);
+        }
+        // 갱신: 같은 키 존재하면 그 줄만 교체, 없으면 마지막에 append
+        const updated = {};
+        for (const [k, v] of Object.entries(keys)) {
+          if (typeof v !== 'string') continue;
+          const re = new RegExp(`^${k}=.*$`, 'm');
+          if (re.test(content)) {
+            content = content.replace(re, `${k}=${v}`);
+            updated[k] = 'updated';
+          } else {
+            content += (content.endsWith('\n') ? '' : '\n') + `${k}=${v}\n`;
+            updated[k] = 'added';
+          }
+        }
+        writeFileSync(envPath, content, 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, updated, savedAt: new Date().toISOString() }));
+        return;
+      }
+
+      // ── 환경 변수 검증 (실 API 호출) ──
+      if (path === '/api/env/verify') {
+        const { fal, anthropic } = body || {};
+        const results = {};
+
+        if (fal) {
+          try {
+            const r = await fetch('https://rest.alpha.fal.ai/billing/user_balance', {
+              headers: { Authorization: `Key ${fal}` },
+              signal: AbortSignal.timeout(5000),
+            });
+            if (r.ok) {
+              const j = await r.json().catch(() => null);
+              results.fal = { ok: true, balance: typeof j === 'number' ? j : (j?.balance ?? '?') };
+            } else {
+              results.fal = { ok: false, error: `HTTP ${r.status}` };
+            }
+          } catch (e) { results.fal = { ok: false, error: e.message }; }
+        }
+
+        if (anthropic) {
+          try {
+            const r = await fetch('https://api.anthropic.com/v1/models', {
+              headers: {
+                'x-api-key': anthropic,
+                'anthropic-version': '2023-06-01',
+              },
+              signal: AbortSignal.timeout(5000),
+            });
+            results.anthropic = r.ok
+              ? { ok: true, models: 'live' }
+              : { ok: false, error: `HTTP ${r.status}` };
+          } catch (e) { results.anthropic = { ok: false, error: e.message }; }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ results }));
         return;
       }
 

@@ -1074,6 +1074,7 @@
     <div class="nav-item" data-tab="history">📤 발행 히스토리</div>
     <div class="nav-item" data-tab="channels">🔌 채널 연결</div>
     <div class="nav-item" data-tab="company">🏢 회사 / 브랜드 DNA</div>
+    <div class="nav-item" data-tab="env">⚙ 환경 설정</div>
   </aside>
 
   <main class="main">
@@ -1204,6 +1205,7 @@ function setTab(tab) {
     history: ['발행 히스토리', '채널별 발행 결과 + URL'],
     channels: ['채널 연결', '클릭하면 Chrome 에서 로그인 페이지 열림 — 쿠키 영구 보존'],
     company: ['회사 / 브랜드 DNA', 'company-profile.yaml 편집 + 제품 사진'],
+    env: ['환경 설정', 'API 키 + 모델 + provider — .env.local 직접 편집 안 함'],
   };
   document.getElementById('page-title').textContent = titles[tab][0];
   document.getElementById('page-sub').textContent = titles[tab][1];
@@ -1753,8 +1755,153 @@ function renderTab(tab) {
     history: renderHistory,
     channels: renderChannels,
     company: renderCompany,
+    env: renderEnv,
   };
   document.getElementById('content').innerHTML = (map[tab] || (() => '?'))();
+  if (tab === 'env') loadEnvOnce();
+}
+
+// ─── 환경 설정 탭 ─────────────────────────────────────────────
+let _envLoaded = false;
+async function loadEnvOnce() {
+  if (_envLoaded) return;
+  _envLoaded = true;
+  try {
+    const r = await fetch('/api/env');
+    const data = await r.json();
+    const root = document.getElementById('env-current');
+    if (!root) return;
+    if (!data.exists) {
+      root.innerHTML = '<div style="color:var(--danger)">.env.local 파일 없음 — 아래 값 입력 후 저장하면 자동 생성됩니다</div>';
+      return;
+    }
+    const fal = data.keys?.FAL_KEY;
+    const ant = data.keys?.ANTHROPIC_API_KEY;
+    const eng = data.keys?.CONTENT_ENGINE_PROVIDER;
+    const mdl = data.keys?.FAL_IMAGE_MODEL;
+    const statusOf = (k) => !k ? 'missing' : (k.is_placeholder ? 'placeholder' : 'set');
+    const badge = (s) => {
+      const cls = s === 'set' ? 'published' : (s === 'missing' ? 'failed' : 'preview');
+      const txt = s === 'set' ? '설정됨' : (s === 'missing' ? '없음' : 'placeholder');
+      return '<span class="pill ' + cls + '">' + txt + '</span>';
+    };
+    let html = '<div class="grid">';
+    html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">FAL_KEY</div>' + badge(statusOf(fal)) + '</div>';
+    html += '<div class="card-meta">' + (fal?.value || '—') + '</div></div>';
+    html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">ANTHROPIC_API_KEY</div>' + badge(statusOf(ant)) + '</div>';
+    html += '<div class="card-meta">' + (ant?.value || '—') + '</div></div>';
+    html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">CONTENT_ENGINE_PROVIDER</div>' + badge(statusOf(eng)) + '</div>';
+    html += '<div class="card-meta">' + (eng?.value || '—') + '</div></div>';
+    html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">FAL_IMAGE_MODEL</div>' + badge(statusOf(mdl)) + '</div>';
+    html += '<div class="card-meta">' + (mdl?.value || '—') + '</div></div>';
+    html += '</div>';
+    root.innerHTML = html;
+  } catch (e) {
+    document.getElementById('env-current').innerHTML = '<div style="color:var(--danger)">로드 실패: ' + e.message + '</div>';
+  }
+}
+
+async function saveEnvForm() {
+  const fal = document.getElementById('env-fal').value.trim();
+  const ant = document.getElementById('env-anthropic').value.trim();
+  const eng = document.getElementById('env-provider').value;
+  const mdl = document.getElementById('env-model').value.trim();
+  const keys = {};
+  if (fal) keys.FAL_KEY = fal;
+  if (ant) keys.ANTHROPIC_API_KEY = ant;
+  if (eng) keys.CONTENT_ENGINE_PROVIDER = eng;
+  if (mdl) keys.FAL_IMAGE_MODEL = mdl;
+  if (Object.keys(keys).length === 0) { alert('변경된 키 없음'); return; }
+  const status = document.getElementById('env-save-status');
+  status.textContent = '저장 중...';
+  try {
+    const r = await fetch('/api/env', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ keys }) });
+    const data = await r.json();
+    if (data.ok) {
+      status.textContent = '저장됨 — 백업: .env.local.bak';
+      _envLoaded = false;
+      loadEnvOnce();
+      // 입력 폼 비우기
+      document.getElementById('env-fal').value = '';
+      document.getElementById('env-anthropic').value = '';
+      document.getElementById('env-model').value = '';
+    } else {
+      status.textContent = '실패: ' + (data.error || '?');
+    }
+  } catch (e) {
+    status.textContent = '실패: ' + e.message;
+  }
+}
+
+async function verifyEnv() {
+  const fal = document.getElementById('env-fal').value.trim();
+  const ant = document.getElementById('env-anthropic').value.trim();
+  const status = document.getElementById('env-verify-status');
+  if (!fal && !ant) { status.textContent = '검증할 키 입력 필요'; return; }
+  status.textContent = '검증 중 (API 호출)...';
+  try {
+    const r = await fetch('/api/env/verify', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ fal: fal || undefined, anthropic: ant || undefined }),
+    });
+    const data = await r.json();
+    const lines = [];
+    if (data.results?.fal) {
+      lines.push(data.results.fal.ok ? '✓ FAL 통과 (balance: ' + data.results.fal.balance + ')' : '✗ FAL 실패: ' + data.results.fal.error);
+    }
+    if (data.results?.anthropic) {
+      lines.push(data.results.anthropic.ok ? '✓ Anthropic 통과' : '✗ Anthropic 실패: ' + data.results.anthropic.error);
+    }
+    status.textContent = lines.join(' / ');
+  } catch (e) {
+    status.textContent = '검증 실패: ' + e.message;
+  }
+}
+
+function renderEnv() {
+  let html = '<div style="background:rgba(122,138,255,0.08); border-left:3px solid var(--accent-blue); padding:14px 18px; border-radius:6px; margin-bottom:20px; font-size:13px;">';
+  html += '<strong>환경 변수</strong> — <code style="background:rgba(122,138,255,0.15); padding:1px 6px; border-radius:4px;">.env.local</code> 파일 직접 편집 없이 여기서 키 입력. 값은 마스킹 표시 (보안). 변경 시 .env.local.bak 자동 백업.';
+  html += '</div>';
+
+  html += '<h2>현재 상태</h2>';
+  html += '<div id="env-current"><div class="empty">⏳ 로딩...</div></div>';
+
+  html += '<h2 style="margin-top:30px;">키 입력 / 변경</h2>';
+  html += '<div class="card" style="padding:24px; display:flex; flex-direction:column; gap:16px;">';
+
+  html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">FAL_KEY</label>';
+  html += '<input id="env-fal" type="password" placeholder="32fb11d5-...-...-...:abc123..." style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:monospace; font-size:12px;">';
+  html += '<div style="font-size:11px; color:var(--text-mute); margin-top:4px;">https://fal.ai/dashboard/keys 에서 발급</div></div>';
+
+  html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">ANTHROPIC_API_KEY</label>';
+  html += '<input id="env-anthropic" type="password" placeholder="sk-ant-..." style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:monospace; font-size:12px;">';
+  html += '<div style="font-size:11px; color:var(--text-mute); margin-top:4px;">https://console.anthropic.com/settings/keys</div></div>';
+
+  html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">CONTENT_ENGINE_PROVIDER</label>';
+  html += '<select id="env-provider" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">';
+  html += '<option value="">(변경 없음)</option><option value="inhouse-slides">inhouse-slides (권장)</option><option value="fal">fal</option><option value="anthropic">anthropic</option><option value="openai">openai</option><option value="mock">mock (오프라인)</option>';
+  html += '</select></div>';
+
+  html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">FAL_IMAGE_MODEL</label>';
+  html += '<input id="env-model" type="text" placeholder="fal-ai/flux/schnell (권장 — 빠르고 무료 권한)" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:monospace; font-size:12px;">';
+  html += '<div style="font-size:11px; color:var(--text-mute); margin-top:4px;">모델 권한 안 맞으면 자동 fallback (flux/schnell → nano-banana-2 → fast-sdxl)</div></div>';
+
+  html += '<div style="display:flex; gap:10px; align-items:center; margin-top:8px;">';
+  html += '<button onclick="verifyEnv()" class="btn-cancel" style="padding:9px 16px; border-radius:6px;">🔍 검증 (API 호출)</button>';
+  html += '<span id="env-verify-status" style="font-size:12px; color:var(--text-dim);"></span>';
+  html += '</div>';
+
+  html += '<div style="display:flex; gap:10px; align-items:center;">';
+  html += '<button onclick="saveEnvForm()" class="btn-save" style="padding:11px 20px;">💾 저장</button>';
+  html += '<span id="env-save-status" style="font-size:12px; color:var(--text-dim);"></span>';
+  html += '</div>';
+  html += '</div>';
+
+  html += '<div style="margin-top:20px; padding:12px 16px; background:rgba(255,184,74,0.08); border-left:3px solid var(--accent-orange); border-radius:6px; font-size:12px; color:var(--text-dim);">';
+  html += '저장 후 변경 적용은 새 작업부터. 현재 실행 중인 dashboard/browser-publish 는 기존 값 유지 — 재시작 필요시 <code>scripts\\stop-demo.ps1</code> → <code>scripts\\start-demo.ps1</code>.';
+  html += '</div>';
+
+  return html;
 }
 
 function escapeHtml(s) {
