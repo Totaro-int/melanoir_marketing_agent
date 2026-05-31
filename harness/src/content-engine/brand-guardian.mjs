@@ -30,9 +30,11 @@ const KOREAN_AD_LAW = {
   ],
 };
 
-// 톤 — 친근체 어미 (정중체 글에 섞이면 warn)
-const CASUAL_ENDINGS = /(?:해요|이에요|예요|거든요|잖아요)(?:[.!?]|$)/gm;
-const FORMAL_ENDINGS = /(?:합니다|됩니다|입니다|있습니다)(?:[.!?]|$)/gm;
+// 톤 — 친근체 어미 (정중체 글에 섞이면 warn).
+// 더 넓은 범위 — 일반적인 친근체 종결어미 모두 포함.
+const CASUAL_ENDINGS = /(?:해요|이에요|예요|거든요|잖아요|네요|는데요|이래요|아요|어요|죠[.!?]|구요|는걸요|군요)(?:[.!?]|$)/gm;
+// 정중체 — `~합니다/됩니다/입니다/있습니다/없습니다/었습니다/였습니다/세요/십시오` 등
+const FORMAL_ENDINGS = /(?:합니다|됩니다|입니다|있습니다|없습니다|었습니다|였습니다|드립니다|드렸습니다|십니다|십시오|세요|시기\s*바랍니다)(?:[.!?]|$)/gm;
 
 // AI-스러운 패턴 (style-guide 의 "bad" 예시)
 const AI_PATTERNS = [
@@ -171,12 +173,21 @@ export function inspect({ channel, text, hashtags = [], profile, brief = null, s
   const casualMatches = text.match(CASUAL_ENDINGS) || [];
   const formalMatches = text.match(FORMAL_ENDINGS) || [];
   if (['relate-kr', 'b2b', 'informational'].includes(tonePreset)) {
-    // 정중체 강제 톤 — 친근체 1개 이상 = warn
-    if (casualMatches.length >= 1 && formalMatches.length >= 3) {
+    // 정중체 강제 톤 — 친근체 1개 이상 + 정중체 2개 이상 = warn (mix 명확)
+    if (casualMatches.length >= 1 && formalMatches.length >= 2) {
       findings.push({
         severity: 'warn',
         code: 'tone.mix_casual_in_formal',
-        detail: `${tonePreset} 정중체 톤인데 친근체 ${casualMatches.length}회 사용 (${casualMatches.slice(0, 3).join(', ')})`,
+        detail: `${tonePreset} 정중체 톤인데 친근체 ${casualMatches.length}회 (${casualMatches.slice(0, 3).join(', ')})`,
+      });
+    }
+    // 정중체 어미 동일 어미 3회 이상 연속 — style-guide §3 "종결어미 다양화" 권장
+    const consecutive = text.match(/(?:합니다[.!?])\s*[^.!?]*(?:합니다[.!?])\s*[^.!?]*(?:합니다[.!?])/g);
+    if (consecutive && consecutive.length > 0) {
+      findings.push({
+        severity: 'info',
+        code: 'tone.monotone_endings',
+        detail: `"~합니다." 3회 연속 — 종결어미 다양화 권장 (style-guide §3)`,
       });
     }
   } else if (tonePreset === 'friendly') {
