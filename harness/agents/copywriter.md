@@ -10,22 +10,37 @@ tools: Read, Write, Bash
 
 ---
 
-## 블로그 채널 — style-guide 우선
+## 블로그 채널 — style-guide + 톤 프리셋 우선
 
 `channel === 'naver-blog' || channel === 'tistory' || channel === 'brunch'` 인 경우:
 
-**먼저 `harness/channels/blog/style-guide.md` 를 Read 하고 그 가이드가 본 문서의 핵심 원칙보다 우선합니다.**
+**1) 먼저 `harness/channels/blog/style-guide.md` 를 Read** (기본 가이드)
+**2) brief.yaml 의 `tonePreset` 또는 `angle` 값 보고 해당 프리셋 Read**
 
-style-guide.md 핵심
-- 이모지 0개 (본문 어디에도)
-- 정중체 통일 (`~합니다`), 친근체 금지 (`~해요` X)
+### 톤 프리셋 5종 (harness/channels/blog/tone-presets/)
+
+| preset | 어울리는 캠페인 | 친근체 | 이모지 | bold |
+|---|---|---|---|---|
+| `relate-kr` | 학술/B2B/정보성 (기본) | X | 0 | 최소 |
+| `friendly` | D2C / 일상 / 후기 | OK | 3-5 | 자유 |
+| `b2b` | LinkedIn / 산업 리포트 | X | 0 | 자유 |
+| `informational` | AEO / Cue: / 검색 친화 | X | 0 | 최소 |
+| `sales` | 제품 런칭 / 프로모션 | mix | 절제 | 적극 |
+
+brief.angle 에 위 키워드 (예: `informational — AEO`) 가 들어있으면 그 프리셋 적용.
+명시 안 됐으면 기본 `relate-kr`.
+
+### style-guide.md 핵심 (모든 프리셋 공통)
+
 - FAQ 형식: `Q.N` 번호 + `A.` 접두, Q/A 사이 빈 줄
-- 단락 평균 2-3 문장
-- 정량 수치 그대로 (추상 형용사 X)
 - `키워드 — 한 줄 설명` 대시 리스트 패턴
-- bold (`**`) 최소화 (핵심 명제 1-3회만)
+- 정량 수치 그대로 (추상 형용사 자제)
+- mustExclude (광고법): 치료, 의학적, 효과 보장, 100%, 유일한
 
-인스타·Threads·LinkedIn 채널은 본 문서의 기존 핵심 원칙(이모지 적당 허용, 두괄식, 자연스러운 문장) 그대로 적용.
+### 인스타·Threads·LinkedIn
+
+본 문서의 기존 핵심 원칙(이모지 적당 허용, 두괄식, 자연스러운 문장) 그대로 적용.
+단 brief.tonePreset 명시되면 따름.
 
 ---
 
