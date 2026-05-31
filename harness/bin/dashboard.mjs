@@ -335,6 +335,31 @@ const handlers = {
     };
   },
 
+  // 자료 라이브러리 — posts/sources/ 안의 분석된 md 들
+  '/api/sources': () => {
+    const dir = resolve(ROOT, 'posts/sources');
+    if (!existsSync(dir)) return { sources: [] };
+    const items = readdirSync(dir)
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => {
+        const p = resolve(dir, f);
+        const stat = statSync(p);
+        const content = readFileSync(p, 'utf8');
+        const title = content.match(/^#\s+(.+)$/m)?.[1]?.trim() || f.replace(/\.md$/, '');
+        const preview = content.replace(/^---[\s\S]*?---/m, '').replace(/^#+\s.*$/gm, '').replace(/\s+/g, ' ').trim().slice(0, 160);
+        return {
+          name: f,
+          path: 'posts/sources/' + f,
+          title: title.slice(0, 100),
+          preview,
+          size: stat.size,
+          modifiedAt: stat.mtime.toISOString(),
+        };
+      })
+      .sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
+    return { sources: items, dir: 'posts/sources' };
+  },
+
   // 환경 변수 현재 값 (.env.local 의 키만, value 는 masked)
   '/api/env': () => {
     const envPath = resolve(ROOT, '.env.local');
@@ -772,6 +797,113 @@ ${cmd}
         return;
       }
 
+      // ── 자료 파싱 (md/url/text → brief partial) ──
+      if (path === '/api/source/parse') {
+        const { type, content, sourceName } = body || {};
+        if (!content) {
+          res.writeHead(400).end(JSON.stringify({ error: 'content required' }));
+          return;
+        }
+
+        // type 별 raw markdown 추출
+        let md = content;
+        let savedSrcPath = null;
+        if (type === 'url') {
+          try {
+            const fr = await fetch(content, { signal: AbortSignal.timeout(15_000) });
+            if (!fr.ok) throw new Error(`HTTP ${fr.status}`);
+            const html = await fr.text();
+            // 매우 간단한 HTML→md (전체 텍스트만)
+            md = html
+              .replace(/<script[\s\S]*?<\/script>/gi, '')
+              .replace(/<style[\s\S]*?<\/style>/gi, '')
+              .replace(/<h1[^>]*>([^<]+)<\/h1>/gi, '\n# $1\n')
+              .replace(/<h2[^>]*>([^<]+)<\/h2>/gi, '\n## $1\n')
+              .replace(/<h3[^>]*>([^<]+)<\/h3>/gi, '\n### $1\n')
+              .replace(/<li[^>]*>([^<]+)<\/li>/gi, '- $1\n')
+              .replace(/<p[^>]*>([^<]+)<\/p>/gi, '\n$1\n')
+              .replace(/<[^>]+>/g, '')
+              .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+              .replace(/\n{3,}/g, '\n\n')
+              .trim();
+          } catch (e) {
+            res.writeHead(400).end(JSON.stringify({ error: 'URL fetch 실패: ' + e.message }));
+            return;
+          }
+        }
+
+        // 자료 라이브러리 저장 — posts/sources/
+        const SOURCES_DIR = resolve(ROOT, 'posts/sources');
+        mkdirSync(SOURCES_DIR, { recursive: true });
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const rawName = (sourceName || `source-${ts}`).replace(/\.(md|markdown|txt)$/i, '');
+        const safeName = rawName.replace(/[^\w가-힣.\- ]/g, '_').slice(0, 80);
+        savedSrcPath = resolve(SOURCES_DIR, `${ts}-${safeName}.md`);
+        writeFileSync(savedSrcPath, md, 'utf8');
+
+        // parse-source.mjs 호출 (child)
+        const { spawnSync } = await import('node:child_process');
+        const r = spawnSync(process.execPath, [resolve(ROOT, 'harness/bin/parse-source.mjs'), savedSrcPath, '--json'], {
+          encoding: 'utf8', timeout: 15_000,
+        });
+        if (r.status !== 0) {
+          res.writeHead(500).end(JSON.stringify({ error: 'parse-source 실패: ' + (r.stderr || r.stdout) }));
+          return;
+        }
+        const parsed = JSON.parse(r.stdout);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ parsed, savedSrcPath: savedSrcPath.replace(ROOT, '').replace(/^[\\\/]/, '') }));
+        return;
+      }
+
+      // ── 캠페인 생성 (parse-source 결과 + 채널/톤 → brief.yaml) ──
+      if (path === '/api/campaign/create') {
+        const { parsed, channels, tonePreset, blogMode, goal, cadence } = body || {};
+        if (!parsed?.topic || !channels?.length) {
+          res.writeHead(400).end(JSON.stringify({ error: 'parsed.topic + channels required' }));
+          return;
+        }
+        // campaign-new.mjs 호출
+        const { spawnSync } = await import('node:child_process');
+        const args = [
+          resolve(ROOT, 'harness/bin/campaign-new.mjs'),
+          parsed.topic,
+          '--channels=' + channels.join(','),
+          '--goal=' + (goal || 'education'),
+          '--cadence=' + (cadence || 'single'),
+        ];
+        if (blogMode) args.push('--blogMode=' + blogMode);
+        const r = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 30_000, cwd: ROOT });
+        if (r.status !== 0) {
+          res.writeHead(500).end(JSON.stringify({ error: 'campaign-new 실패: ' + (r.stderr || r.stdout) }));
+          return;
+        }
+        // 슬러그 추출
+        const slugMatch = r.stdout.match(/캠페인 생성:\s*(\S+)/);
+        const slug = slugMatch?.[1];
+        if (!slug) {
+          res.writeHead(500).end(JSON.stringify({ error: 'slug 추출 실패', stdout: r.stdout }));
+          return;
+        }
+        // brief 에 parsed 값 merge
+        const briefPath = resolve(CAMPAIGNS, slug, 'brief.yaml');
+        if (existsSync(briefPath)) {
+          const b = readYaml(briefPath) || {};
+          b.keyMessage    = parsed.keyMessage || b.keyMessage;
+          b.contentPoints = parsed.contentPoints?.length ? parsed.contentPoints : b.contentPoints;
+          b.angle         = parsed.angle || b.angle;
+          if (tonePreset) b.tonePreset = tonePreset;
+          else if (parsed.tonePreset) b.tonePreset = parsed.tonePreset;
+          b.notes         = parsed.notes || b.notes;
+          b.hashtags      = parsed.hashtags?.length ? parsed.hashtags : (b.hashtags || []);
+          b.sourceMaterials = parsed.sourceMaterials || b.sourceMaterials;
+          b.meta = { ...(b.meta || {}), updatedAt: new Date().toISOString() };
+          writeFileSync(briefPath, YAML.stringify(b, { lineWidth: 100 }), 'utf8');
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: true, slug, briefPath: briefPath.replace(ROOT, '').replace(/^[\\\/]/, '') }));
+        return;
+      }
 
       res.writeHead(404).end(JSON.stringify({ error: 'POST endpoint not found' }));
       return;
@@ -944,6 +1076,28 @@ ${cmd}
     const ext = extname(filePath).slice(1).toLowerCase();
     const types = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
     res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream', 'Cache-Control': 'public, max-age=300' });
+    res.end(readFileSync(filePath));
+    return;
+  }
+
+  // ── /posts/sources/<file> — 자료 라이브러리 raw md 다운로드 ──
+  if (path.startsWith('/posts/sources/')) {
+    const fn = decodeURIComponent(path.replace('/posts/sources/', ''));
+    if (/[\\/]/.test(fn) || fn.startsWith('.')) {
+      res.writeHead(403).end('forbidden');
+      return;
+    }
+    const filePath = resolve(ROOT, 'posts/sources', fn);
+    const sourceDir = resolve(ROOT, 'posts/sources');
+    if (!filePath.startsWith(sourceDir) || !existsSync(filePath)) {
+      res.writeHead(404).end('not found');
+      return;
+    }
+    if (!/\.(md|markdown|txt)$/i.test(filePath)) {
+      res.writeHead(403).end('not text');
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end(readFileSync(filePath));
     return;
   }

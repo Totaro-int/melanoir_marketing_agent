@@ -1068,9 +1068,11 @@
     <div class="brand">🤖 Marketing Agent</div>
     <div class="brand-sub">로컬 발행 대시보드</div>
 
+    <button onclick="openNewCampaign()" style="width:100%; margin-bottom:14px; padding:12px 14px; background:var(--accent); border:0; color:#0a0a0c; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">+ 새 캠페인</button>
     <div class="nav-item active" data-tab="calendar">🗓 캘린더</div>
     <div class="nav-item" data-tab="today">📅 오늘 요약</div>
     <div class="nav-item" data-tab="campaigns">📋 캠페인</div>
+    <div class="nav-item" data-tab="sources">📚 자료 라이브러리</div>
     <div class="nav-item" data-tab="history">📤 발행 히스토리</div>
     <div class="nav-item" data-tab="channels">🔌 채널 연결</div>
     <div class="nav-item" data-tab="company">🏢 회사 / 브랜드 DNA</div>
@@ -1205,6 +1207,7 @@ function setTab(tab) {
     history: ['발행 히스토리', '채널별 발행 결과 + URL'],
     channels: ['채널 연결', '클릭하면 Chrome 에서 로그인 페이지 열림 — 쿠키 영구 보존'],
     company: ['회사 / 브랜드 DNA', 'company-profile.yaml 편집 + 제품 사진'],
+    sources: ['자료 라이브러리', '분석한 자료 모음 — 새 캠페인 시 재사용'],
     env: ['환경 설정', 'API 키 + 모델 + provider — .env.local 직접 편집 안 함'],
   };
   document.getElementById('page-title').textContent = titles[tab][0];
@@ -1755,10 +1758,247 @@ function renderTab(tab) {
     history: renderHistory,
     channels: renderChannels,
     company: renderCompany,
+    sources: renderSources,
     env: renderEnv,
   };
   document.getElementById('content').innerHTML = (map[tab] || (() => '?'))();
   if (tab === 'env') loadEnvOnce();
+  if (tab === 'sources') loadSourcesOnce();
+}
+
+// ─── 자료 라이브러리 탭 ────────────────────────────────────────
+let _sourcesLoaded = false;
+async function loadSourcesOnce() {
+  if (_sourcesLoaded) return;
+  _sourcesLoaded = true;
+  try {
+    const r = await fetch('/api/sources');
+    const data = await r.json();
+    const root = document.getElementById('sources-list');
+    if (!root) return;
+    const items = data.sources || [];
+    if (!items.length) {
+      root.innerHTML = '<div class="empty"><div class="empty-emoji">📭</div>아직 분석된 자료 없음<br><span style="font-size:12px; color:var(--text-mute);">[+ 새 캠페인] 버튼으로 자료 입력하면 여기 모입니다</span></div>';
+      return;
+    }
+    let html = '<div class="grid">';
+    for (const s of items) {
+      html += '<div class="card" style="cursor:pointer;" onclick="reuseSource(\'' + encodeURIComponent(s.path) + '\')">';
+      html += '<div class="card-row" style="margin-bottom:6px;"><div class="card-title">' + escapeHtml(s.title) + '</div></div>';
+      html += '<div class="card-meta" style="font-size:11px; color:var(--text-mute); margin-bottom:8px;">' + (s.size/1024).toFixed(1) + ' KB · ' + formatRelTime(s.modifiedAt) + '</div>';
+      html += '<div style="font-size:12px; color:var(--text-dim); line-height:1.5;">' + escapeHtml(s.preview) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    root.innerHTML = html;
+  } catch (e) {
+    document.getElementById('sources-list').innerHTML = '<div style="color:var(--danger)">로드 실패: ' + e.message + '</div>';
+  }
+}
+
+function renderSources() {
+  let html = '<div style="background:rgba(80,200,120,0.08); border-left:3px solid var(--accent); padding:14px 18px; border-radius:6px; margin-bottom:20px; font-size:13px;">';
+  html += '<strong>자료 라이브러리</strong> — 한 번 분석한 자료는 여기 모입니다. 카드 클릭하면 그 자료로 새 캠페인 생성 폼 열림.';
+  html += '</div>';
+  html += '<div id="sources-list"><div class="empty">⏳ 로딩...</div></div>';
+  return html;
+}
+
+async function reuseSource(encodedPath) {
+  const path = decodeURIComponent(encodedPath);
+  try {
+    const r = await fetch('/' + path);
+    const content = await r.text();
+    openNewCampaign({ prefilledMd: content, sourceName: path.split('/').pop() });
+  } catch (e) {
+    alert('자료 로드 실패: ' + e.message);
+  }
+}
+
+// ─── 새 캠페인 모달 ───────────────────────────────────────────
+function openNewCampaign(opts = {}) {
+  let modal = document.getElementById('new-campaign-modal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'new-campaign-modal';
+    modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:300; display:flex; align-items:center; justify-content:center; padding:20px;';
+    modal.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML =
+    '<div style="background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:24px 28px; width:min(900px, 100%); max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
+      '<div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">' +
+        '<h2 style="margin:0; font-size:20px;">+ 새 캠페인</h2>' +
+        '<button onclick="closeNewCampaign()" style="margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--text-dim); width:32px; height:32px; border-radius:6px; cursor:pointer; font-size:16px;">✕</button>' +
+      '</div>' +
+
+      // Step 1 — 자료 입력
+      '<h3 style="font-size:13px; text-transform:uppercase; color:var(--text-mute); margin:0 0 10px;">1. 자료</h3>' +
+      '<div style="display:flex; gap:8px; margin-bottom:8px;">' +
+        '<label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="nc-type" value="md" checked> 직접 md 텍스트</label>' +
+        '<label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="nc-type" value="url"> URL fetch</label>' +
+        '<label style="display:flex; align-items:center; gap:6px; font-size:13px;"><input type="radio" name="nc-type" value="file"> 파일 업로드</label>' +
+      '</div>' +
+      '<textarea id="nc-content" placeholder="md 텍스트 붙여넣기 — front-matter (---) 포함 가능. 또는 위에서 URL/파일 선택." rows="8" style="width:100%; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:12px 14px; color:var(--text); font-family:JetBrains Mono,monospace; font-size:12px; line-height:1.6; resize:vertical;"></textarea>' +
+      '<input id="nc-file" type="file" accept=".md,.markdown,.txt" style="display:none; margin-top:8px;">' +
+      '<div style="display:flex; gap:8px; margin-top:10px; align-items:center;">' +
+        '<input id="nc-source-name" type="text" placeholder="자료 이름 (선택) — posts/sources/ 저장명" style="flex:1; padding:8px 10px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:12px;">' +
+        '<button onclick="parseCampaignSource()" class="btn-save" style="padding:9px 16px; border-radius:6px;">🔍 분석</button>' +
+        '<span id="nc-parse-status" style="font-size:12px; color:var(--text-dim);"></span>' +
+      '</div>' +
+
+      // Step 2 — 미리뷰 (분석 결과)
+      '<div id="nc-preview" style="display:none; margin-top:20px;"></div>' +
+
+      // Step 3 — 채널 + 톤
+      '<div id="nc-config" style="display:none; margin-top:20px;">' +
+        '<h3 style="font-size:13px; text-transform:uppercase; color:var(--text-mute); margin:0 0 10px;">2. 채널 + 톤</h3>' +
+        '<div style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:14px;">' +
+          ['naver-blog','tistory','brunch','instagram','threads','linkedin','facebook','x'].map((c) =>
+            '<label style="display:flex; align-items:center; gap:6px; font-size:13px;">' +
+            '<input type="checkbox" class="nc-channel" value="' + c + '"' + (c === 'naver-blog' ? ' checked' : '') + '> ' + c + '</label>'
+          ).join('') +
+        '</div>' +
+        '<div style="display:flex; gap:12px; align-items:center; margin-bottom:14px;">' +
+          '<label style="font-size:13px;">톤:</label>' +
+          '<select id="nc-tone" style="padding:8px 10px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px;">' +
+            '<option value="">자동 선택 (분석 결과 따름)</option>' +
+            '<option value="relate-kr">relate-kr (정중체)</option>' +
+            '<option value="friendly">friendly (~해요)</option>' +
+            '<option value="b2b">b2b (LinkedIn)</option>' +
+            '<option value="informational">informational (AEO)</option>' +
+            '<option value="sales">sales (영업)</option>' +
+          '</select>' +
+          '<label style="font-size:13px; margin-left:14px;">목표:</label>' +
+          '<select id="nc-goal" style="padding:8px 10px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:13px;">' +
+            '<option value="education">education</option>' +
+            '<option value="awareness">awareness</option>' +
+            '<option value="launch">launch</option>' +
+            '<option value="traffic">traffic</option>' +
+            '<option value="lead">lead</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>' +
+
+      // Step 4 — 생성
+      '<div id="nc-actions" style="display:none; margin-top:14px; display:flex; gap:10px; align-items:center;">' +
+        '<button onclick="createCampaign()" class="btn-save" style="padding:11px 22px; font-weight:700;">캠페인 생성</button>' +
+        '<span id="nc-create-status" style="font-size:12px; color:var(--text-dim);"></span>' +
+      '</div>' +
+    '</div>';
+
+  modal.style.display = 'flex';
+  if (opts.prefilledMd) {
+    document.getElementById('nc-content').value = opts.prefilledMd;
+  }
+  if (opts.sourceName) {
+    document.getElementById('nc-source-name').value = opts.sourceName;
+  }
+  // 파일 type 변경 시 file input 토글
+  document.querySelectorAll('input[name="nc-type"]').forEach((el) => {
+    el.onchange = () => {
+      const t = document.querySelector('input[name="nc-type"]:checked').value;
+      document.getElementById('nc-file').style.display = (t === 'file') ? 'block' : 'none';
+      const ta = document.getElementById('nc-content');
+      if (t === 'url') ta.placeholder = 'https://... — URL 한 줄 입력';
+      else if (t === 'md') ta.placeholder = 'md 텍스트 붙여넣기...';
+      else ta.placeholder = '위 파일 업로드 후 자동 채워짐';
+    };
+  });
+  document.getElementById('nc-file').onchange = async (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const text = await f.text();
+    document.getElementById('nc-content').value = text;
+    if (!document.getElementById('nc-source-name').value) {
+      document.getElementById('nc-source-name').value = f.name;
+    }
+  };
+}
+
+function closeNewCampaign() {
+  const m = document.getElementById('new-campaign-modal');
+  if (m) m.style.display = 'none';
+}
+
+let _ncParsed = null;
+
+async function parseCampaignSource() {
+  const type = document.querySelector('input[name="nc-type"]:checked').value;
+  const content = document.getElementById('nc-content').value.trim();
+  const sourceName = document.getElementById('nc-source-name').value.trim();
+  if (!content) { alert('자료 입력 필요'); return; }
+  const status = document.getElementById('nc-parse-status');
+  status.textContent = '분석 중...';
+  try {
+    const r = await fetch('/api/source/parse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, content, sourceName }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+    _ncParsed = data.parsed;
+    status.textContent = '분석 완료 · 저장: ' + data.savedSrcPath;
+    renderNcPreview(data.parsed);
+    document.getElementById('nc-config').style.display = 'block';
+    document.getElementById('nc-actions').style.display = 'flex';
+    // tonePreset 자동 선택
+    if (data.parsed.tonePreset) {
+      document.getElementById('nc-tone').value = data.parsed.tonePreset;
+    }
+  } catch (e) {
+    status.textContent = '실패: ' + e.message;
+    _ncParsed = null;
+  }
+}
+
+function renderNcPreview(p) {
+  const root = document.getElementById('nc-preview');
+  root.style.display = 'block';
+  let html = '<h3 style="font-size:13px; text-transform:uppercase; color:var(--text-mute); margin:0 0 10px;">분석 결과 (미리뷰)</h3>';
+  html += '<div class="card" style="padding:16px;">';
+  html += '<div style="margin-bottom:8px;"><strong>주제:</strong> ' + escapeHtml(p.topic) + '</div>';
+  if (p.keyMessage) html += '<div style="margin-bottom:8px; font-size:13px; color:var(--text-dim);"><strong>핵심:</strong> ' + escapeHtml(p.keyMessage) + '</div>';
+  if (p.contentPoints?.length) {
+    html += '<div style="margin-bottom:8px;"><strong>요점 ' + p.contentPoints.length + '개:</strong><ul style="margin:6px 0 0 18px; padding:0;">';
+    for (const c of p.contentPoints.slice(0, 8)) html += '<li style="font-size:12px; color:var(--text-dim);">' + escapeHtml(c) + '</li>';
+    html += '</ul></div>';
+  }
+  html += '<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11px; color:var(--text-mute);">';
+  html += '<span><strong>angle:</strong> ' + escapeHtml(p.angle || '—') + '</span>';
+  html += '<span><strong>톤 추천:</strong> ' + (p.tonePreset || '—') + '</span>';
+  html += '<span><strong>해시태그:</strong> ' + (p.hashtags?.length || 0) + '개</span>';
+  html += '</div>';
+  html += '</div>';
+  root.innerHTML = html;
+}
+
+async function createCampaign() {
+  if (!_ncParsed) { alert('먼저 [🔍 분석] 클릭'); return; }
+  const channels = [...document.querySelectorAll('.nc-channel:checked')].map((el) => el.value);
+  if (!channels.length) { alert('채널 1개 이상 선택'); return; }
+  const tonePreset = document.getElementById('nc-tone').value;
+  const goal = document.getElementById('nc-goal').value;
+  const status = document.getElementById('nc-create-status');
+  status.textContent = '생성 중...';
+  try {
+    const r = await fetch('/api/campaign/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ parsed: _ncParsed, channels, tonePreset: tonePreset || undefined, goal }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error || ('HTTP ' + r.status));
+    status.textContent = '생성됨: ' + data.slug;
+    setTimeout(() => {
+      closeNewCampaign();
+      loadAll();
+    }, 1200);
+  } catch (e) {
+    status.textContent = '실패: ' + e.message;
+  }
 }
 
 // ─── 환경 설정 탭 ─────────────────────────────────────────────
