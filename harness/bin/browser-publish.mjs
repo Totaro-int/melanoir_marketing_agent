@@ -193,6 +193,11 @@ async function gate(page, label) {
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   ui.warn(`  🛑 게시 직전 — ${label}`);
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  // dry-run safety — auto-click 보다 우선. 절대 게시 안 함.
+  if (dryRun) {
+    ui.info('  --dry-run — 게시 클릭 없이 종료 (auto-click 보다 우선)');
+    return 'N';
+  }
   if (autoClick) {
     ui.warn('  --auto-click 지정 — 5초 카운트다운 (Ctrl+C 로 중단)');
     for (let i = 5; i > 0; i--) {
@@ -201,10 +206,6 @@ async function gate(page, label) {
     }
     process.stdout.write('\r' + ' '.repeat(40) + '\r');
     return 'Y';
-  }
-  if (dryRun) {
-    ui.info('  --dry-run — 게시 클릭 없이 종료');
-    return 'N';
   }
   const ans = (await promptLine('  [Y] 게시 / [N] 취소', { optional: false })).toUpperCase();
   return ans === 'Y' ? 'Y' : 'N';
@@ -602,6 +603,14 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
   // (commercial tool 도 paste-remaining-segments 후 별도 caption 처리)
   // 일단은 skip — Naver 가 자동으로 alt 처리하기도 함
 
+  // dry-run safety — 발행 모달 자체를 안 엶. 사용자가 모달에서 실수로 누를 위험 차단.
+  if (opts.dryRun) {
+    ui.step(6, 7, 'dry-run — 발행 모달 열기 skip (실제 발행 안전 차단)');
+    ui.step(7, 7, 'dry-run 통과 — 본문/이미지 paste 까지 검증 완료');
+    ui.dim('  실제 발행하려면 --dry-run 빼고 다시 실행하세요');
+    return { url: null, dryRun: true, cancelled: false };
+  }
+
   ui.step(6, 7, '발행 모달 열기 (publish_btn) + 태그 입력');
   // 발행 모달 열기 직전 — 임시저장 다이얼로그가 다시 떠 있을 수 있어 한번 더 dismiss
   await dismissNaverDialogs(frame, page, /* layoutPopup */ false);
@@ -794,6 +803,14 @@ async function publishTistory(page, draft, cardPaths, opts) {
     }
   } else {
     ui.step(4, 6, '이미지 없음');
+  }
+
+  // dry-run safety — 발행 모달 자체를 안 엶
+  if (opts.dryRun) {
+    ui.step(5, 6, 'dry-run — 발행 모달 열기 skip (실제 발행 안전 차단)');
+    ui.step(6, 6, 'dry-run 통과 — 본문/이미지 paste 까지 검증 완료');
+    ui.dim('  실제 발행하려면 --dry-run 빼고 다시 실행하세요');
+    return { url: null, dryRun: true, cancelled: false };
   }
 
   ui.step(5, 6, '발행 모달 열기 (#publish-layer-btn) + 공개 라디오 + 태그');
@@ -1345,6 +1362,14 @@ async function publishBrunch(page, draft, cardPaths, opts) {
     }
   } else {
     ui.step(4, 6, '이미지 없음');
+  }
+
+  // dry-run safety — Draft 저장도 skip (Brunch 는 draft 저장 → 작가신청 단계로 갈 위험)
+  if (opts.dryRun) {
+    ui.step(5, 6, 'dry-run — Draft 저장 skip');
+    ui.step(6, 6, 'dry-run 통과 — 본문/이미지 paste 까지 검증 완료');
+    ui.dim('  실제 발행하려면 --dry-run 빼고 다시 실행하세요');
+    return { url: null, dryRun: true, cancelled: false };
   }
 
   ui.step(5, 6, 'Draft 저장 (button.article_save_draft)');
