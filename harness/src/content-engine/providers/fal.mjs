@@ -89,10 +89,29 @@ export const provider = assertProvider({
   async generateImage(req) {
     if (!KEY()) throw new Error('FAL_KEY not set');
     const t0    = Date.now();
-    const model = IMAGE_MODEL();
-    const body  = buildBody(model, req.prompt, req.aspect, req.count);
+    // 모델 fallback chain — 권한 401 시 다음 모델로
+    // 사용자가 FAL_IMAGE_MODEL 명시했으면 그것만 시도. 명시 안 했으면 chain 시도.
+    const userModel = process.env.FAL_IMAGE_MODEL;
+    const chain = userModel
+      ? [userModel]
+      : ['fal-ai/flux/schnell', 'fal-ai/nano-banana-2', 'fal-ai/fast-sdxl'];
 
-    const json   = await falPost(`https://fal.run/${model}`, body);
+    let lastErr = null;
+    let model = chain[0];
+    let json = null;
+    for (const m of chain) {
+      try {
+        const body = buildBody(m, req.prompt, req.aspect, req.count);
+        json = await falQueueGenerate(m, body);
+        model = m;
+        break;
+      } catch (e) {
+        lastErr = e;
+        if (!String(e.message).includes('401')) throw e; // 401 외 에러는 즉시 실패
+        // 401 면 다음 모델 시도
+      }
+    }
+    if (!json) throw new Error(`fal: 모든 모델 401 거부. 마지막: ${lastErr?.message}. .env.local 의 FAL_KEY + FAL_IMAGE_MODEL 확인.`);
     const images = json.images ?? [];
     if (!images.length) throw new Error('fal returned no images: ' + JSON.stringify(json).slice(0, 300));
 
@@ -144,4 +163,39 @@ async function falPost(url, body, attempt = 1) {
 
   const text = await r.text();
   throw new Error(`fal HTTP ${r.status}: ${text.slice(0, 300)}`);
+}
+
+// fal queue 모드 — submit → 폴링 → result. sync 거부되는 모델용.
+async function falQueueGenerate(model, body, opts = {}) {
+  const { pollIntervalMs = 1500, maxPolls = 80 } = opts;
+  // 1. submit
+  const subR = await fetch(`https://queue.fal.run/${model}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Key ${KEY()}` },
+    body: JSON.stringify(body),
+  });
+  if (!subR.ok) {
+    const t = await subR.text();
+    throw new Error(`fal queue submit HTTP ${subR.status}: ${t.slice(0, 300)}`);
+  }
+  const sub = await subR.json();
+  const statusUrl = sub.status_url || `https://queue.fal.run/${model}/requests/${sub.request_id}/status`;
+  const responseUrl = sub.response_url || `https://queue.fal.run/${model}/requests/${sub.request_id}`;
+
+  // 2. poll
+  for (let i = 0; i < maxPolls; i++) {
+    await new Promise((r) => setTimeout(r, pollIntervalMs));
+    const sR = await fetch(statusUrl, { headers: { Authorization: `Key ${KEY()}` } });
+    if (!sR.ok) continue;
+    const s = await sR.json();
+    if (s.status === 'COMPLETED') {
+      const rR = await fetch(responseUrl, { headers: { Authorization: `Key ${KEY()}` } });
+      if (!rR.ok) throw new Error(`fal queue result HTTP ${rR.status}`);
+      return rR.json();
+    }
+    if (s.status !== 'IN_QUEUE' && s.status !== 'IN_PROGRESS') {
+      throw new Error(`fal queue unexpected status: ${JSON.stringify(s).slice(0, 200)}`);
+    }
+  }
+  throw new Error(`fal queue timeout (${maxPolls} polls × ${pollIntervalMs}ms)`);
 }

@@ -43,6 +43,70 @@ node bin/doctor.mjs
 
 빨간 점이 없으면 OK.
 
+## 4.5. 브라우저 발행 환경 (Chrome 9222 attach 모드)
+
+`browser-publish.mjs` 는 사용자가 실행 중인 Chrome 에 attach 해서 발행합니다. 채널 로그인은 그 Chrome 안에서 1회만 하면 cookies 가 영구 보존됩니다.
+
+### Chrome 9222 모드로 띄우기 — OS 별
+
+**Windows (PowerShell)**
+
+```powershell
+.\scripts\start-demo.ps1
+```
+
+또는 수동:
+
+```powershell
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" `
+  --remote-debugging-port=9222 `
+  --user-data-dir="$pwd\auth\chrome-attach-profile" `
+  --no-first-run --no-default-browser-check
+```
+
+**macOS**
+
+```bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  --remote-debugging-port=9222 \
+  --user-data-dir="$(pwd)/auth/chrome-attach-profile" \
+  --no-first-run --no-default-browser-check
+```
+
+**Linux**
+
+```bash
+google-chrome \
+  --remote-debugging-port=9222 \
+  --user-data-dir="$(pwd)/auth/chrome-attach-profile" \
+  --no-first-run --no-default-browser-check
+```
+
+### 채널 로그인 (1회만)
+
+대시보드 (`node harness/bin/dashboard.mjs`) 띄운 후:
+
+1. http://localhost:7777 접속
+2. 좌측 메뉴 **🔌 채널 연결** 클릭
+3. 각 채널 카드의 **[🔌 연결]** 버튼 클릭 → Chrome 에 로그인 페이지 열림
+4. 로그인 시 **"로그인 유지" / "Remember me" 체크박스 켜고 로그인** (안 켜면 session cookie 라 Chrome 종료 시 사라짐)
+5. 다 끝나면 채널 연결 페이지 상단 **[🔄 지금 다시 검사]** 클릭 → 연결 상태 갱신
+
+지원 채널 — 네이버 블로그 (NID_AUT) · Tistory (TSSESSION) · 브런치 (카카오 _kawlt) · Instagram (sessionid) · Threads (sessionid) · LinkedIn (li_at) · Facebook (c_user) · YouTube (Google SID)
+
+### Chrome 9222 안전 종료 (cookies 보존)
+
+**금지** — `taskkill /F`, `Stop-Process -Force`, `kill -9`. cookies SQLite flush 안 돼서 로그인 다 풀림.
+
+**권장** — graceful shutdown helper:
+
+```bash
+node harness/bin/chrome-shutdown.mjs --verify
+```
+
+또는 Chrome 창 X 버튼으로 직접 닫기.
+
+
 ## 5. 첫 캠페인 사이클 (Claude Code 안에서)
 
 **사용자가 직접 호출하는 슬래시 명령은 4개뿐**입니다. 모든 단계(온보딩·생성·검수·승인·발행)는 `/sns-start` 안에서 자동으로 진행됩니다.

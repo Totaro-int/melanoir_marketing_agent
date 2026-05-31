@@ -23,18 +23,39 @@ export const HARNESS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..
 export const ROOT = resolve(HARNESS_ROOT, '..');
 
 // Auto-load .env.local once at module init (KEY=VALUE per line, # comments).
-// Existing process.env values win, so user-set env still overrides the file.
+// 우선순위:
+//   1. .env.local 의 실제 값이 placeholder 아닌 경우 → 시스템 env 덮어씀 (사용자 직접 명시한 키 우선)
+//   2. 시스템 env 가 placeholder ("your-...", "<...>" 등) 인 경우 → .env.local 가 덮어씀
+//   3. 그 외 (시스템 env 가 진짜 값) → 시스템 env 유지
+// 시스템에 placeholder 가 박혀있으면 .env.local 무시되는 사고 (어제 fal 401) 방지.
+function isPlaceholder(v) {
+  if (!v) return true;
+  const s = String(v).trim();
+  return /^(your-|<|placeholder|example|todo|change-?me)/i.test(s) || s === '';
+}
 (() => {
   const envFile = resolve(ROOT, '.env.local');
   if (!existsSync(envFile)) return;
+  // 인라인 # 주석도 안전하게 끊음 (FAL_IMAGE_MODEL=fal-ai/fast-sdxl  # comment 같은 case)
+  // 단 #! 같은 escape 없으니 단순 split.
   for (const raw of readFileSync(envFile, 'utf8').split('\n')) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) continue;
     const m = line.match(/^([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
     if (!m) continue;
-    const [, k, v] = m;
-    if (k in process.env) continue;
-    process.env[k] = v.replace(/^["']|["']$/g, '');
+    const [, k, vRaw] = m;
+    // 인라인 # 주석 제거 (단 quote 안의 # 는 보존 — 단순 처리)
+    let v = vRaw;
+    if (!/^["']/.test(v)) {
+      const hashIdx = v.indexOf(' #');
+      if (hashIdx >= 0) v = v.slice(0, hashIdx);
+    }
+    v = v.trim().replace(/^["']|["']$/g, '');
+    // .env.local 의 값이 placeholder 면 무시
+    if (isPlaceholder(v)) continue;
+    // 시스템 env 에 진짜 값이 있으면 유지, placeholder 면 덮어쓰기
+    if (k in process.env && !isPlaceholder(process.env[k])) continue;
+    process.env[k] = v;
   }
 })();
 

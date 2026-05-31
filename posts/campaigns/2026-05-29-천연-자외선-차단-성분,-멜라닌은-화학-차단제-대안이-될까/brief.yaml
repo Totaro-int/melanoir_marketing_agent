@@ -17,7 +17,7 @@ constraints:
   mustInclude: []
   mustExclude: []
 status:
-  naver-blog: published
+  naver-blog: approved
 meta:
   createdAt: 2026-05-29T15:15:47.695+09:00
   updatedAt: 2026-05-29T17:00:04.936+09:00
