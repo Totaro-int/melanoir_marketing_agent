@@ -13,10 +13,12 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Buffer } from 'node:buffer';
 import { assertProvider } from '../provider.mjs';
 
-const ROOT = resolve(new URL('.', import.meta.url).pathname, '../../../..');
+// fileURLToPath: Windows 의 한글/공백 path 가 URL-encoded 로 깨지는 사고 방지
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..');
 const KEY = () => process.env.FAL_KEY ?? '';
 const IMAGE_MODEL = () => process.env.FAL_IMAGE_MODEL ?? 'fal-ai/nano-banana-2';
 

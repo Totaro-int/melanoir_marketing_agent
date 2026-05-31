@@ -69,11 +69,17 @@ if ($dashAlive) {
   $psi.WindowStyle = "Minimized"
   $psi.UseShellExecute = $true
   [System.Diagnostics.Process]::Start($psi) | Out-Null
-  Start-Sleep -Seconds 4
-  try {
-    $r = Invoke-WebRequest -Uri "http://localhost:7777/api/today" -TimeoutSec 3 -UseBasicParsing
-    if ($r.StatusCode -eq 200) { Write-Host "  [OK] Dashboard started" -ForegroundColor Green }
-  } catch { Write-Host "  [WARN] Dashboard not responding" -ForegroundColor Yellow }
+  # 5초 대기 + 5회 retry (시작 시간 변동성 흡수)
+  $ok = $false
+  for ($i = 0; $i -lt 6; $i++) {
+    Start-Sleep -Seconds 2
+    try {
+      $r = Invoke-WebRequest -Uri "http://localhost:7777/api/today" -TimeoutSec 2 -UseBasicParsing
+      if ($r.StatusCode -eq 200) { $ok = $true; break }
+    } catch {}
+  }
+  if ($ok) { Write-Host "  [OK] Dashboard started" -ForegroundColor Green }
+  else { Write-Host "  [WARN] Dashboard 시작 12초 초과 — 다시 시도하거나 수동: node harness/bin/dashboard.mjs" -ForegroundColor Yellow }
 }
 
 # 3. Open dashboard tab
