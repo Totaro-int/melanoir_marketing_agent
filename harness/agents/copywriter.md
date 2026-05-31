@@ -37,6 +37,35 @@ brief.angle 에 위 키워드 (예: `informational — AEO`) 가 들어있으면
 - 정량 수치 그대로 (추상 형용사 자제)
 - mustExclude (광고법): 치료, 의학적, 효과 보장, 100%, 유일한
 
+### AEO 친화 필수 (informational/relate-kr 톤 — 검색엔진 답변 친화)
+
+블로그 채널 (naver-blog/tistory/brunch) 글을 informational/relate-kr 톤으로 작성할 때는 다음 4개 중 **최소 3개** 본문에 포함:
+
+1. **FAQ 섹션** (`## 자주 묻는 질문`) — Q.N + A. 형식, 3-5개 항목
+2. **H2/H3 헤딩** — 본문 4-6개 H2, 각 H2 아래 1-3 단락
+3. **표 또는 체크리스트** — 정량 데이터 비교 또는 마무리 체크리스트 (style-guide §9)
+4. **정량 수치 5개 이상** — SPF, nm, %, mg, 회/장/일/주/개월 등 단위 포함
+
+검색엔진 (Naver C-Rank, Google AEO, Perplexity) 가 "이 페이지가 질문에 답하는가" 를 판단할 때 이 패턴들을 본다. brand-guardian 도 자동 검증함.
+
+### 자료 인용 의무 (sourceMaterials 있을 때 — E-E-A-T)
+
+brief.yaml 의 `sourceMaterials.texts` 에 자료가 1개 이상 있으면 본문 끝에 **반드시** `## 참고` 또는 `## 출처` 섹션:
+
+```markdown
+## 참고
+
+- 자료 제목 1 — 발행처, 연도 (또는 path 참조)
+- 자료 제목 2 — 발행처, 연도
+```
+
+학술 논문이면 저자/년도/저널 형식:
+```
+- Han, S. et al. (2021). Title. Journal Name, Vol(Issue), pp-pp. DOI 또는 URL
+```
+
+이 섹션 누락하면 brand-guardian 가 warn 발화. AEO/E-E-A-T 점수에 직접 영향.
+
 ### 인스타·Threads·LinkedIn
 
 본 문서의 기존 핵심 원칙(이모지 적당 허용, 두괄식, 자연스러운 문장) 그대로 적용.

@@ -74,7 +74,7 @@ export async function finalizeRegularChannels({ slug, dir, briefPath, brief, pro
       const primaryText     = updatedCards[0]?.text ?? existing.text;
       const primaryHashtags = cardIdx === 0 ? (newCard.hashtags ?? []) : extractHashtags(primaryText);
       const merged          = mergeHashtags(primaryText, primaryHashtags, profile);
-      const report          = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
+      const report          = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile, brief, sourceMaterials: brief.sourceMaterials });
 
       const newTs = nowKstFilename();
       const draft = {
@@ -130,7 +130,7 @@ export async function finalizeRegularChannels({ slug, dir, briefPath, brief, pro
 
     const primary = cards[0];
     const merged  = mergeHashtags(primary.text, primary.hashtags ?? [], profile);
-    const report  = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile });
+    const report  = inspect({ channel, text: merged.text, hashtags: merged.hashtags, profile, brief, sourceMaterials: brief.sourceMaterials });
 
     const draft = {
       version:     1,
@@ -326,7 +326,7 @@ export async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profi
     const finalText    = allHashtags.length ? `${strippedText}\n\n${allHashtags.join(' ')}` : strippedText;
 
     // B: 비주얼 가드 findings 를 postCopy guardian report 에 병합
-    const report = inspect({ channel, text: finalText, hashtags: allHashtags, profile });
+    const report = inspect({ channel, text: finalText, hashtags: allHashtags, profile, brief, sourceMaterials: brief.sourceMaterials });
     if (visualFindings.length) {
       report.findings.push(...visualFindings);
       report.summary.warns += visualFindings.filter((f) => f.severity === 'warn').length;
