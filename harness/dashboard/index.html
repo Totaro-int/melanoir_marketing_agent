@@ -1410,7 +1410,7 @@ function renderDayDetail(dateStr) {
   for (const c of matched) {
     const chCount = Object.keys(c.channelData || {}).length;
     console.log('  campaign:', c.slug, 'channels:', chCount);
-    html += '<div class="day-camp-card">';
+    html += '<div class="day-camp-card" oncontextmenu="showCampaignMenu(\'' + c.slug.replace(/'/g, "\\'") + '\', event)">';
     html += '<div class="camp-head">';
     html += '<div class="camp-title">' + escapeHtml(c.topic) + '</div>';
     html += '<span class="camp-meta">' + (c.profileBrand || '—') + ' · ' + c.goal + (c.blogMode ? ' · ' + c.blogMode : '') + '</span>';
@@ -1930,7 +1930,8 @@ async function loadSourcesOnce() {
     }
     let html = '<div class="grid">';
     for (const s of items) {
-      html += '<div class="card" style="cursor:pointer;" onclick="reuseSource(\'' + encodeURIComponent(s.path) + '\')">';
+      const safePath = s.path.replace(/'/g, "\\'");
+      html += '<div class="card" style="cursor:pointer;" onclick="reuseSource(\'' + encodeURIComponent(s.path) + '\')" oncontextmenu="showSourceMenu(\'' + safePath + '\', event)">';
       html += '<div class="card-row" style="margin-bottom:6px;"><div class="card-title">' + escapeHtml(s.title) + '</div></div>';
       html += '<div class="card-meta" style="font-size:11px; color:var(--text-mute); margin-bottom:8px;">' + (s.size/1024).toFixed(1) + ' KB · ' + formatRelTime(s.modifiedAt) + '</div>';
       html += '<div style="font-size:12px; color:var(--text-dim); line-height:1.5;">' + escapeHtml(s.preview) + '</div>';
@@ -3165,6 +3166,205 @@ setTimeout(() => {
   console.log('=== 자동 진단 ===');
   window.__scrollDiag();
 }, 1500);
+
+// ─── 전역 드래그앤드롭 ───────────────────────────────────────
+// 어디든 md/PDF 파일 떨어뜨리면 새 캠페인 모달 자동 오픈 + 파일 prefill
+(function setupGlobalDropzone() {
+  let dragCounter = 0;
+  let overlay = null;
+
+  function ensureOverlay() {
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'global-drop-overlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(80,200,120,0.10); border:4px dashed var(--accent); z-index:500; display:none; align-items:center; justify-content:center; pointer-events:none; backdrop-filter:blur(2px);';
+    overlay.innerHTML = '<div style="background:var(--panel); border:1px solid var(--accent); border-radius:14px; padding:32px 40px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);"><div style="font-size:48px; margin-bottom:12px;">📥</div><div style="font-size:20px; font-weight:700; color:var(--text); margin-bottom:6px;">자료 드롭 → 새 캠페인</div><div style="font-size:13px; color:var(--text-dim);">md · markdown · txt · pdf 지원</div></div>';
+    document.body.appendChild(overlay);
+    return overlay;
+  }
+
+  window.addEventListener('dragenter', (e) => {
+    if (!e.dataTransfer?.types?.includes('Files')) return;
+    dragCounter++;
+    ensureOverlay().style.display = 'flex';
+  });
+
+  window.addEventListener('dragleave', (e) => {
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      if (overlay) overlay.style.display = 'none';
+    }
+  });
+
+  window.addEventListener('dragover', (e) => {
+    if (e.dataTransfer?.types?.includes('Files')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  });
+
+  window.addEventListener('drop', async (e) => {
+    if (!e.dataTransfer?.files?.length) return;
+    e.preventDefault();
+    dragCounter = 0;
+    if (overlay) overlay.style.display = 'none';
+
+    const file = e.dataTransfer.files[0];
+    if (!/\.(md|markdown|txt|pdf)$/i.test(file.name)) {
+      alert('지원하지 않는 파일 형식: ' + file.name + '\n\nmd · markdown · txt · pdf 만 지원');
+      return;
+    }
+
+    // 새 캠페인 모달 열기
+    openNewCampaign();
+
+    // 짧은 지연 후 파일 input 에 setFiles (모달 DOM 완성 후)
+    setTimeout(async () => {
+      const fileInput = document.getElementById('nc-file');
+      if (!fileInput) return;
+      // DataTransfer 로 input 의 files 강제 설정 (브라우저 보안 우회)
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      // change 이벤트 트리거
+      fileInput.dispatchEvent(new Event('change'));
+      // type 라디오를 'file' 로 변경
+      const fileRadio = document.querySelector('input[name="nc-type"][value="file"]');
+      if (fileRadio) {
+        fileRadio.checked = true;
+        fileRadio.dispatchEvent(new Event('change'));
+      }
+    }, 200);
+  });
+})();
+
+// ─── 콘텍스트 메뉴 (캠페인 카드 우클릭) ─────────────────────
+(function setupContextMenu() {
+  let menu = null;
+
+  function ensureMenu() {
+    if (menu) return menu;
+    menu = document.createElement('div');
+    menu.id = 'ctx-menu';
+    menu.style.cssText = 'position:fixed; background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:6px; box-shadow:0 12px 40px rgba(0,0,0,0.4); z-index:400; display:none; min-width:180px;';
+    document.body.appendChild(menu);
+    document.addEventListener('click', () => { if (menu) menu.style.display = 'none'; });
+    document.addEventListener('contextmenu', (e) => {
+      // 한 번 더 우클릭이 메뉴 자체 위면 무시
+      if (menu && menu.contains(e.target)) return;
+    });
+    return menu;
+  }
+
+  // 위치 잡기 (화면 밖으로 안 나가게)
+  function positionMenu(m, x, y) {
+    m.style.left = x + 'px';
+    m.style.top = y + 'px';
+    m.style.display = 'block';
+    requestAnimationFrame(() => {
+      const r = m.getBoundingClientRect();
+      if (r.right > window.innerWidth - 8) m.style.left = (window.innerWidth - r.width - 8) + 'px';
+      if (r.bottom > window.innerHeight - 8) m.style.top = (window.innerHeight - r.height - 8) + 'px';
+    });
+  }
+
+  function renderItems(items) {
+    return items.map((it) => {
+      if (it === '---') return '<div style="height:1px; background:var(--border); margin:4px 0;"></div>';
+      return `<div data-id="${it.id}" style="padding:8px 14px; cursor:pointer; font-size:13px; color:${it.danger ? '#ff6b6b' : 'var(--text)'}; border-radius:5px; user-select:none;" onmouseover="this.style.background='var(--panel-2)'" onmouseout="this.style.background='transparent'">${it.label}</div>`;
+    }).join('');
+  }
+
+  // 캠페인 카드 우클릭
+  window.showCampaignMenu = function(slug, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const m = ensureMenu();
+    const items = [
+      { id: 'open', label: '📅 캘린더에서 열기' },
+      { id: 'duplicate', label: '📋 복제 (clipboard)' },
+      '---',
+      { id: 'copylink', label: '🔗 slug 복사' },
+    ];
+    m.innerHTML = renderItems(items);
+    for (const el of m.querySelectorAll('[data-id]')) {
+      el.onclick = async (e) => {
+        e.stopPropagation();
+        m.style.display = 'none';
+        const id = el.dataset.id;
+        if (id === 'open') {
+          // 캘린더 탭 + 해당 slug 의 캠페인 강조
+          document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
+          document.querySelector('[data-tab="calendar"]')?.classList.add('active');
+          renderTab('calendar');
+        } else if (id === 'duplicate') {
+          await navigator.clipboard.writeText(slug).catch(() => {});
+          alert('slug 복사됨 (복제 endpoint 는 추후): ' + slug);
+        } else if (id === 'copylink') {
+          await navigator.clipboard.writeText(slug).catch(() => {});
+        }
+      };
+    }
+    positionMenu(m, ev.clientX, ev.clientY);
+  };
+
+  // 자료 카드 우클릭
+  window.showSourceMenu = function(srcPath, ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const m = ensureMenu();
+    const items = [
+      { id: 'reuse', label: '♻️ 이 자료로 새 캠페인' },
+      { id: 'open', label: '📄 raw md 열기 (새 탭)' },
+      '---',
+      { id: 'copy', label: '🔗 경로 복사' },
+    ];
+    m.innerHTML = renderItems(items);
+    for (const el of m.querySelectorAll('[data-id]')) {
+      el.onclick = async (e) => {
+        e.stopPropagation();
+        m.style.display = 'none';
+        const id = el.dataset.id;
+        if (id === 'reuse') {
+          reuseSource(encodeURIComponent(srcPath));
+        } else if (id === 'open') {
+          window.open('/' + srcPath, '_blank');
+        } else if (id === 'copy') {
+          await navigator.clipboard.writeText(srcPath).catch(() => {});
+        }
+      };
+    }
+    positionMenu(m, ev.clientX, ev.clientY);
+  };
+})();
+
+// ─── 키보드 단축키 ──────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  // 입력 중이면 단축키 무시 (Esc 제외)
+  const inField = /input|textarea/i.test(e.target.tagName) || e.target.isContentEditable;
+
+  // Esc — 모달 닫기
+  if (e.key === 'Escape') {
+    const modals = ['new-campaign-modal', 'login-poll-modal', 'run-cmd-modal', 'ctx-menu', 'global-drop-overlay'];
+    for (const id of modals) {
+      const el = document.getElementById(id);
+      if (el && el.style.display !== 'none') {
+        el.style.display = 'none';
+        return;
+      }
+    }
+  }
+
+  if (inField) return;
+
+  // Ctrl+N — 새 캠페인
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    openNewCampaign();
+  }
+  // Ctrl+R — 새로고침 (override 안 함 — 브라우저 그대로)
+});
 </script>
 </body>
 </html>
