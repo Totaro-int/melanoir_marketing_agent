@@ -22,6 +22,46 @@ tools: Read, Bash
 - `banned.claims` — 같음, 인용 안 가림
 - `hashtags.always` — 본문 끝 또는 첫 댓글에 모두 포함되었는지
 
+#### 1-A. 자동 광고법 (사용자 등록 불필요 — 코드 내장)
+
+`brand-guardian.mjs` 가 한국 광고법 7개 block + 영업 톤 4개 warn + AI 표현 5개 warn 자동 검출:
+
+**Block (block — 발행 차단)**:
+- 의학적 치료 단정 — `치료해/치료합니다/치료효과/치료효능` (lookbehind: "세포 안전성 치료" 제외)
+- `의학적 효능`, `의학적 효과`
+- `효과 보장`, `보장된 효과`
+- `부작용 없음/0/제로`
+- `100% 안전/순수/천연/자연`
+- `최고의/유일한/완벽한/기적의/영구적인 [한글]`
+- `즉각적인/즉각적으로 효과/개선`
+
+**Warn (warn — 톤 약화 경고)**:
+- `지금 바로 시작/구매/만나`, `놓치지 마세요`
+- `곧 마감/마감 임박/한정 수량`
+- `클릭만 하면 즉시`
+- AI 표현: `혁신적/획기적/강력한/다양한/효율적`, `첫째/둘째/셋째` 패턴
+
+#### 1-B. 자동 톤 검증 (`brief.tonePreset` 기준)
+
+- `relate-kr / b2b / informational` — 친근체 어미 1회 이상 + 정중체 2회 이상 → warn (`tone.mix_casual_in_formal`)
+- `friendly` — 친근체 어미 0개 + 정중체만 5회 이상 → info (`tone.too_formal_in_friendly`)
+- `~합니다.` 3회 연속 → info (`tone.monotone_endings`)
+
+#### 1-C. 자동 AEO 검증 (informational/relate-kr 블로그)
+
+- FAQ Q.N 패턴 / 표 / H2 / 정량 수치 4가지 중 2가지 누락 → info (`aeo.weak_structure`)
+- Q.N 있는데 A. 접두 없음 → warn (`aeo.faq_missing_answer_prefix`)
+
+#### 1-D. 자료 인용 검증
+
+- `sourceMaterials.texts.length >= 1` 인데 본문에 `[참고]` / `## 참고` / `## 출처` / `references` 섹션 없음 → warn (`references.missing_section`)
+
+#### 1-E. 채널 분량 / mustInclude / mustExclude
+
+- 채널별 권장 분량 미달 → warn (`length.too_short`)
+- `brief.constraints.mustInclude` 키워드 누락 → warn
+- `brief.constraints.mustExclude` 발견 → block
+
 ### 2. 채널별 자동 점검 (`channels/<ch>/checklist.md` 자동 룰)
 
 각 채널의 자동 점검 항목을 적용:
