@@ -18,11 +18,8 @@ auth/
 # 생성된 이미지·빌드 산출물
 out/
 
-# 캠페인 폴더 구조는 유지하되 생성된 드래프트·타임스탬프 파일만 제외
-posts/campaigns/**/draft.yaml
-posts/campaigns/**/draft.md
-posts/campaigns/**/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.yaml
-posts/campaigns/**/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-*.md
+# 캠페인 데이터 — 고객사별 실제 데이터이므로 전체 제외 (템플릿에 포함 X)
+posts/campaigns/
 
 # symlink 자동 생성물 (sync-posts.mjs)
 posts/by-channel/

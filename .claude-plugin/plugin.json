@@ -1,14 +1,14 @@
 {
   "name": "marketing_agent",
   "version": "0.9.1",
-  "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스. 다채널 (channels.json 참조). /sns-start로 시작, /sns-repeat으로 반복, /sns-edit으로 수정, /sns-doctor로 환경 진단.",
+  "description": "Claude Code 기반 SNS 마케팅 자동화 하네스. 회사 프로필 한 번 설정으로 다채널 카피·이미지 생성 및 발행. /sns-start로 시작, /sns-repeat으로 반복, /sns-edit으로 수정, /sns-doctor로 환경 진단.",
   "author": {
-    "name": "Totaro Inc."
+    "name": "{{고객사명}}"
   },
-  "homepage": "https://github.com/Totaro-int/marketing_agent",
-  "repository": "https://github.com/Totaro-int/marketing_agent",
+  "homepage": "",
+  "repository": "",
   "license": "Proprietary",
-  "keywords": ["marketing", "sns", "social", "publishing", "korean", "totaro"],
+  "keywords": ["marketing", "sns", "social", "publishing", "korean"],
   "commands": [
     "./harness/commands/sns-start.md",
     "./harness/commands/sns-repeat.md",

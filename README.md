@@ -2,7 +2,7 @@
 
 > 회사 정보를 한 번 입력하면, Claude가 SNS 카피·이미지·카드뉴스를 만들고, 사람이 한 번 보고 승인하면 SNS에 올려주는 도구.
 
-토타로(Totaro) 사내·고객사 전용. Claude Code 위에서 동작합니다.
+Claude Code 위에서 동작하는 마케팅 자동화 하네스입니다.
 
 > **⚠️ Claude 데스크탑 앱(Mac/Windows)·웹(claude.ai)에서는 동작하지 않습니다.**
 > 로컬 파일 접근, 터미널 실행, 커스텀 스킬(`/sns-start` 등)은 **Claude Code CLI 전용** 기능입니다.
@@ -336,4 +336,4 @@ OPENAI_API_KEY=sk-...
 
 ## 라이선스
 
-Proprietary — Totaro Inc. 사내·계약 고객사 전용. 외부 배포 금지.
+Proprietary — 라이선스 계약 고객사 전용. 외부 배포 금지.
