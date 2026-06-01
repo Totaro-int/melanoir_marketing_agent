@@ -1,5 +1,4 @@
-# 회사 프로필·자격증명 — 절대 커밋 금지
-company-profile.yaml
+# 회사 프로필 로컬 오버라이드
 company-profile.local.yaml
 marketing-sources.yaml
 *.local.yaml
@@ -41,6 +40,10 @@ _research/
 
 # 회사 자체 자산 (제품 사진 등)
 assets/
+
+# 내부 개발 메모 (납품용 레포에 불필요)
+docs/sj-company/
+docs/superpowers/
 
 # 백업 파일 (회사 프로필, draft 인라인 편집 백업, original 보존본)
 *.bak.yaml

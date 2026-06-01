@@ -1,8 +1,8 @@
 {
-  "name": "marketing_agent",
-  "version": "0.9.1",
+  "name": "melanoir-marketing-agent",
+  "version": "1.0.0",
   "private": true,
-  "description": "Totaro SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
+  "description": "Melanoir SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -31,7 +31,9 @@
     "queue:tick": "node harness/bin/queue-tick.mjs",
     "queue:dry": "node harness/bin/queue-tick.mjs --dry-run",
     "queue:install": "node harness/bin/install-cron.mjs install",
-    "sync-posts": "node harness/bin/sync-posts.mjs"
+    "sync-posts": "node harness/bin/sync-posts.mjs",
+    "morning": "node harness/bin/morning-routine.mjs",
+    "morning:dry": "node harness/bin/morning-routine.mjs --dry-run"
   },
   "dependencies": {
     "ajv": "^8.17.1",

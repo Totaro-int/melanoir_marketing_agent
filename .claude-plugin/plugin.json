@@ -1,14 +1,14 @@
 {
-  "name": "marketing_agent",
-  "version": "0.9.1",
-  "description": "Totaro 사내·고객사 전용 SNS 마케팅 자동화 하네스. 다채널 (channels.json 참조). /sns-start로 시작, /sns-repeat으로 반복, /sns-edit으로 수정, /sns-doctor로 환경 진단.",
+  "name": "melanoir-marketing-agent",
+  "version": "1.0.0",
+  "description": "Melanoir SNS 마케팅 자동화 하네스. 다채널 (channels.json 참조). /sns-start로 시작, /sns-repeat으로 반복, /sns-edit으로 수정, /sns-doctor로 환경 진단.",
   "author": {
     "name": "Totaro Inc."
   },
-  "homepage": "https://github.com/Totaro-int/marketing_agent",
-  "repository": "https://github.com/Totaro-int/marketing_agent",
+  "homepage": "https://github.com/Totaro-int/melanoir-marketing-agent",
+  "repository": "https://github.com/Totaro-int/melanoir-marketing-agent",
   "license": "Proprietary",
-  "keywords": ["marketing", "sns", "social", "publishing", "korean", "totaro"],
+  "keywords": ["marketing", "sns", "social", "publishing", "korean", "melanoir"],
   "commands": [
     "./harness/commands/sns-start.md",
     "./harness/commands/sns-repeat.md",
@@ -19,6 +19,8 @@
     "./harness/agents/copywriter.md",
     "./harness/agents/image-director.md",
     "./harness/agents/brand-guardian.md",
-    "./harness/agents/publisher.md"
+    "./harness/agents/publisher.md",
+    "./harness/agents/card-evaluator.md",
+    "./harness/agents/guideline-reviewer.md"
   ]
 }

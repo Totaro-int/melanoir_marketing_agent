@@ -125,10 +125,8 @@ export function listChannels() {
 }
 
 export function activeChannels() {
-  // channels.json 의 status === 'active' 인 채널만.
-  // 'reference' 분기는 과거 비전 잔여물 — channels.json 에 0개라 dead code 제거 (review-code MEDIUM).
   return listChannels()
-    .filter((c) => c.status === 'active')
+    .filter((c) => c.status === 'active' || c.status === 'beta')
     .map((c) => c.id);
 }
 

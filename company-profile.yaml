@@ -1,0 +1,98 @@
+# Melanoir 회사 프로필
+version: 1
+
+brand:
+  name: 멜라누아
+  legalName: Melanoir
+  websites:
+    - https://www.melanoir.com
+
+taglineOneLine: "지구에서 가장 안전한 Black. 데이터로 증명한 반영구 색소."
+
+industry: "반영구 메이크업 소재 — 순수 멜라닌 기반 색소 브랜드"
+
+targetAudience:
+  - persona: "반영구 시술 아티스트 (퍼머넌트 메이크업·눈썹·아이라인 전문가)"
+    painPoints:
+      - "색소 안전성 데이터를 직접 확인하기 어려움"
+      - "유해물질·중금속 불검출 여부를 신뢰할 수 있는 공인 자료가 없음"
+      - "고객 피부 반응·자극 이슈로 클레임 리스크 존재"
+    channelsTheyUse: [instagram, naver-blog, tistory, brunch]
+  - persona: "반영구 아카데미·교육 기관 원장"
+    painPoints:
+      - "수강생에게 추천할 안전한 색소 브랜드 부재"
+      - "위생·멸균 기준을 충족하는 프리미엄 제품 필요"
+    channelsTheyUse: [instagram, naver-blog]
+
+tone:
+  preset: relate-kr
+  voiceNotes: |
+    - '~합니다' 체 기본. 과학적·데이터 중심 톤.
+    - 안전성 수치와 공인 시험 결과를 적극 활용.
+    - 이모지 최소화 (✅ 🔬 정도만). 전문가 대상 커뮤니케이션.
+    - "안전한", "순수한", "증명된" 키워드 활용.
+  sampleSentences:
+    - "멜라누아 엠보는 28-FREE 유해물질 불검출, 무균 적합, 외부 자극 51% 감소를 데이터로 증명했습니다."
+    - "순수 멜라닌만 — 다른 색소 없이. 단 한 명을 위한 일회용 멸균팩 시스템."
+  preferredTerms:
+    "28-FREE": "28-FREE 유해물질 불검출"
+    "무균": "무균 적합 (Sterility Negative)"
+    "멜라닌": "순수 멜라닌"
+
+banned:
+  words:
+    - "최저가"
+    - "100% 보장"
+    - "공짜"
+    - "무료"
+    - "치료"
+    - "의학적"
+  topics:
+    - "경쟁사 직접 비방"
+    - "정치·종교"
+    - "의료 효능 주장"
+  claims:
+    - "업계 1위"
+    - "유일한"
+    - "최고의"
+    - "세계 최초"
+    - "효과 보장"
+
+visual:
+  colors:
+    primary:    "#1A1A1A"
+    accent:     "#C8A96E"
+    background: "#F8F8F6"
+  logoPath: "./assets/logo.png"
+  fontFamily: "Pretendard"
+
+hashtags:
+  always:
+    - "#멜라누아"
+    - "#melanoir"
+  pool:
+    - "#반영구색소"
+    - "#퍼머넌트메이크업"
+    - "#눈썹문신"
+    - "#안전한색소"
+    - "#멜라닌색소"
+    - "#28FREE"
+    - "#무균색소"
+    - "#반영구아티스트"
+    - "#PMU"
+
+legal:
+  adDisclosureRequired: true
+  adHashtag: "#광고"
+
+channels:
+  enabled: [instagram, naver-blog, tistory, brunch, threads]
+
+campaigns:
+  defaultGoals: [awareness, lead]
+  cadencePerWeek: 3
+
+meta:
+  createdAt: "2026-06-01T00:00:00+09:00"
+  updatedAt: "2026-06-01T00:00:00+09:00"
+  filledBy: manual

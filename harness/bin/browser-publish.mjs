@@ -33,11 +33,14 @@ const slug = argv.find((a) => !a.startsWith('--'));
 const channel = argv.find((a) => a.startsWith('--channel='))?.split('=')[1];
 const dryRun = argv.includes('--dry-run');
 const autoClick = argv.includes('--auto-click');
+// --pre-publish: 모달 열고 모든 내용 채운 뒤 gate에서 멈춤. Chrome 탭 유지 (morning-routine 전용).
+const prePublish = argv.includes('--pre-publish');
 const attach = argv.includes('--attach') || argv.find((a) => a.startsWith('--attach='));
 const attachUrl = (typeof attach === 'string' ? attach.split('=')[1] : null) || 'http://localhost:9222';
 
 if (!slug || !channel) {
-  ui.err('사용법: browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click] [--attach[=URL]]');
+  ui.err('사용법: browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click] [--pre-publish] [--attach[=URL]]');
+  ui.err('  --pre-publish: 모달+카피+이미지 채우고 gate에서 멈춤. Chrome 탭 유지 (morning-routine 용)');
   ui.err('  --attach: 사용자 Chrome (--remote-debugging-port=9222 모드) 에 attach (default URL: http://localhost:9222)');
   process.exit(2);
 }
@@ -216,6 +219,11 @@ async function gate(page, label) {
   // dry-run safety — auto-click 보다 우선. 절대 게시 안 함.
   if (dryRun) {
     ui.info('  --dry-run — 게시 클릭 없이 종료 (auto-click 보다 우선)');
+    return 'N';
+  }
+  // pre-publish: 모달+카피+이미지 채우기 완료. Chrome 탭 그대로 유지. 게시 안 함.
+  if (prePublish) {
+    ui.ok('  --pre-publish — 발행 준비 완료. Chrome 탭에서 [공유] 클릭.');
     return 'N';
   }
   if (autoClick) {

@@ -25,9 +25,9 @@
 이 플러그인은 3계층으로 동작합니다:
 
 ```
-커맨드 (4개, 사용자 호출)
+커맨드 (5개, 사용자 호출)
   └─ 스킬 (3개, 커맨드가 invoke)
-       └─ bin 스크립트 (25개, 스킬이 실행)
+       └─ bin 스크립트 (36개, 스킬이 실행)
 ```
 
 ### 커맨드 → 스킬 위임 관계
@@ -67,8 +67,8 @@
 skills/                      ← 스킬 3개 (플러그인 루트 — Claude Code가 자동 인식)
 harness/
   commands/                  ← 사용자 커맨드 4개 + 내부 가이드 14개(_sns-*)
-  agents/                    ← 에이전트 4개
-  bin/                       ← Node.js 스크립트 25개
+  agents/                    ← 에이전트 6개
+  bin/                       ← Node.js 스크립트 36개
   channels/                  ← 채널별 전략·톤·템플릿
 posts/                       ← 생성된 캠페인 (gitignore)
 auth/                        ← SNS 자격증명 (gitignore)

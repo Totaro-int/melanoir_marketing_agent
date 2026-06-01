@@ -241,15 +241,17 @@ severity:
 }
 ```
 
-## banned.topics 처리 주의
+## 책임 분리 (결정론 vs 의미론)
 
-`brand-guardian.mjs`의 결정론적 체크는 `banned.words` + `banned.claims` 만 다룬다.
+이 에이전트(`brand-guardian`)는 **결정론적 검사만** 담당한다:
+- `banned.words` + `banned.claims` — 문자열 일치
+- 한국 광고법 패턴 (`KOREAN_AD_LAW`) — 정규식
+- 분량, 해시태그 수, 광고 고지 — 규칙 기반
 
-**`banned.topics`** (예: "경쟁사 비방", "의료 효능 주장", "정치·종교") 는 **의미론적 판단**이 필요하므로 결정론 룰로 차단하지 않는다.
+**`banned.topics`** (예: "경쟁사 비방", "의료 효능 주장", "정치·종교") 의 **의미론적 판단**은 이 에이전트의 범위가 아니다.
+`inspect-guidelines.mjs` → `guideline-reviewer` 서브에이전트가 LLM으로 최종 판정(`ok: true/false`)한다.
 
-- copywriter step 5 자가검열이 1차 방어선
-- 휴먼 승인 게이트가 최종 방어선
-- 이 에이전트는 topics 위반 의심 시 `severity: warn` + `rule: banned.topics.semantic-review` 로 표시 (block X)
+이 에이전트가 `banned.topics`를 직접 판단하거나 severity를 반환해서는 안 된다.
 
 ## 매체별 추가 안전 룰
 
