@@ -83,11 +83,26 @@ company-profile.yaml         ← 회사 프로필 (gitignore)
 - 플러그인 업데이트 후 `/plugin reload` 필요.
 - 자세한 설치/운영: `harness/docs/INSTALL.md`, `harness/docs/OPERATIONS.md`
 
+## 🎯 사용자 궁극 목표 (morning routine)
+
+```
+컴퓨터 켜고 명령어 1개 → 사용자가 [발행] 만 누름.
+  npm run morning  (또는 /sns-morning)
+  → Chrome 9222 + 대시보드 자동
+  → 오늘 캠페인 자동 카피 + 이미지 + 검수
+  → browser-publish 게시 직전까지 (모달 + paste + 이미지 첨부)
+  → Chrome 탭 N개 발행 직전 상태로 열림
+  → 사용자 검토 → [공유] 클릭만
+```
+
+자세한 작업 지시: **`harness/docs/DEVELOPER-WORKORDER.md`** (P0/P1/P2/P3 우선순위)
+
 ## 개발자에게 인계할 때
 
 코드 최적화 / 리팩토링 / 신기능 작업 전 **반드시** 읽어야 할 문서:
 
-→ **`harness/docs/DEVELOPER-HANDOFF.md`**
+→ **`harness/docs/DEVELOPER-HANDOFF.md`** (설계 동결 + 회귀 함정)
+→ **`harness/docs/DEVELOPER-WORKORDER.md`** (P0 ~ P3 작업 우선순위 + morning routine 목표)
 
 ### ⛔ 설계 동결 (§0) — 사용자 허락 없이 변경 금지
 
