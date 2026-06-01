@@ -89,10 +89,24 @@ company-profile.yaml         ← 회사 프로필 (gitignore)
 
 → **`harness/docs/DEVELOPER-HANDOFF.md`**
 
-이 문서에는:
+### ⛔ 설계 동결 (§0) — 사용자 허락 없이 변경 금지
+
+- 아키텍처 3계층 (커맨드 → 스킬 → bin)
+- 플러그인 구조 (`.claude-plugin/plugin.json` + `skills/` + `harness/`)
+- 4개 에이전트 + 3개 스킬 + 4개 사용자 커맨드
+- 데이터 schema — `brief.yaml`, `copy-spec.json`, `slide-spec.json`, `draft.yaml`, `posts/campaigns/<slug>/<channel>/` 디렉토리 구조
+- Dashboard API contract (`/api/*` 응답 형태)
+- `KOREAN_AD_LAW.block` 7개 패턴
+- `dry-run safety` 패턴 (`gate()` 우선순위, `publishX()` 조기 종료)
+- `tonePreset` 5종 ID — `relate-kr | b2b | informational | friendly | sales`
+- 외부 의존 — Chrome 9222 attach / fal.ai queue API / pdfjs legacy / Playwright connectOverCDP
+
+위 영역 변경 필요해 보이면 PR 만들기 전 사용자에게 먼저 묻기.
+
+### 이 문서가 다루는 다른 내용
 - 절대 손대지 말 영역 (`auth/`, `posts/`, `company-profile.yaml`)
-- 신중하게 손댈 영역 (광고법 검증 / dry-run safety / Chrome cookie 보존)
-- `/s-skills` 각 sub-agent 별 작업 영역 분배
-- 회귀 금지 함정 7가지 (dry-run 누락, Chrome 강제 종료, Windows 경로, CRLF, fal sync, env placeholder, selector drift)
+- 신중 영역 (광고법 검증 / dry-run safety / Chrome cookie 보존)
+- `/s-skills` 각 sub-agent 별 작업 영역 분배 표
+- 회귀 금지 함정 7가지 (dry-run, Chrome 강제 종료, 한국어 경로, CRLF, fal sync, env placeholder, selector drift)
 - 최적화 추천 영역 (3200줄 dashboard 분할, brand-guardian 단위 테스트, browser-publish 채널별 분리)
-- 검증 절차 + 코드 리뷰 체크리스트
+- 검증 절차 + sj-reviewer-code 체크리스트

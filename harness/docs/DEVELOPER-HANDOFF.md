@@ -5,6 +5,193 @@
 
 ---
 
+## ⛔ 0. 설계 동결 — 절대 변경 금지 (사용자 허락 필수)
+
+**작업 요청은 "최적화 / 리팩토링 / 버그 수정" 입니다. 설계 변경이 아닙니다.**
+아래 항목은 **임의로 바꾸면 안 됩니다.** 변경 필요해 보이면 반드시 사용자에게 먼저 묻기.
+
+### 0-1. 아키텍처 3계층 구조 — 유지
+
+```
+커맨드 (사용자 호출) → 스킬 (커맨드가 invoke) → bin 스크립트 (스킬이 실행)
+```
+
+- 커맨드 4개: `/sns-start`, `/sns-repeat`, `/sns-edit`, `/sns-doctor` — **추가 OK, 제거/이름 변경 X**
+- 스킬 3개: `sns-campaign-flow`, `sns-copy-generation`, `sns-brand-review` — **이름/역할 변경 X**
+- 에이전트 4개: `copywriter`, `image-director`, `brand-guardian`, `publisher` — **추가 OK, 제거 X**
+- 위임 관계 — 커맨드 ↔ 스킬 ↔ bin 의존 그래프 (CLAUDE.md 표) **그대로 유지**
+
+### 0-2. 플러그인 구조 — 유지
+
+```
+.claude-plugin/plugin.json    ← 매니페스트 — 필드 추가 OK, 제거 X
+skills/                       ← 플러그인 루트 — Claude Code 가 자동 인식. 위치 변경 X
+harness/commands/             ← 위치 변경 X
+harness/agents/               ← 위치 변경 X
+harness/bin/                  ← 위치 변경 X
+harness/channels/             ← 위치 변경 X
+```
+
+플러그인 형식은 Claude Code marketplace 가 인식하는 표준. 망가지면 사용자 환경에서 설치 안 됨.
+
+### 0-3. 데이터 schema — 유지
+
+#### `brief.yaml` (캠페인 정의서)
+
+다음 필드는 **모두 copywriter / brand-guardian / image-director / generate-finalize 가 의존**. 이름/타입 바꾸면 4개 컴포넌트 동시에 깨짐:
+
+```yaml
+slug:            string         ← 디렉토리명 기준
+topic:           string         ← copywriter 의 1순위
+keyMessage:      string         ← copywriter 첫 단락
+contentPoints:   string[]       ← copywriter H2 후보
+angle:           string         ← 톤 자동 선택 키
+tonePreset:      enum           ← relate-kr | b2b | informational | friendly | sales (ID 변경 X)
+notes:           string
+hashtags:        string[]
+sourceMaterials:
+  texts:         {path,type,desc}[]
+  images:        {path,alt,src,size}[]
+constraints:
+  mustInclude:   string[]
+  mustExclude:   string[]
+status:          { <channel>: 'pending'|'published'|'failed' }
+meta:            { updatedAt, ... }
+```
+
+필드 **추가 OK**. 필드 **이름 변경 / 제거는 사용자 허락 필수**.
+
+#### `copy-spec.json` (copywriter 입력)
+
+copywriter agent 가 spec → output 변환 2단계 패턴. **인터페이스 변경 X**:
+
+```json
+{
+  "channel": "naver-blog",
+  "brief": { ...brief.yaml },
+  "profile": { ...company-profile.yaml },
+  "tonePresetPath": "harness/channels/blog/tone-presets/relate-kr.md",
+  "styleGuidePath": "harness/channels/blog/style-guide.md",
+  "outputPath": "..."
+}
+```
+
+#### `slide-spec.json` (image-director 입력)
+
+image-director 도 동일 패턴. cards 배열 + dimensions 형식 유지.
+
+#### `draft.yaml` (browser-publish 입력)
+
+browser-publish.mjs 가 모든 채널에서 읽음. 형식 변경 시 SNS 발행 전체 깨짐:
+
+```yaml
+version:   1
+slug:      string
+channel:   string
+text:      string         ← 발행 본문
+hashtags:  string[]
+cards:     [{role, text}] | undefined
+assets:    string[]       ← 이미지 절대 경로
+thumbnail: string | undefined
+guardian:  { ok, severity, findings, summary }
+```
+
+#### `posts/campaigns/<slug>/<channel>/` 디렉토리 구조
+
+```
+posts/campaigns/<slug>/
+  brief.yaml                           ← 캠페인 정의
+  <channel>/
+    <YYYYMMDD-HHMMSS>.yaml             ← draft (publish 가 읽음)
+    <YYYYMMDD-HHMMSS>.md               ← human-readable
+    card{N}-<ts>.png                   ← 이미지
+    img{N}.jpg                         ← blog 인라인 이미지 (naver/tistory/brunch)
+    result.json                        ← 발행 결과
+    publish.log                        ← SSE 가 tail
+```
+
+**디렉토리 구조 변경 X.** dashboard 의 calendar/campaigns/history 가 이 구조에 의존.
+
+### 0-4. Dashboard API contract — 유지
+
+대시보드 frontend (`index.html`) 와 backend (`dashboard.mjs`) 사이 API 응답 형태. **응답 필드 제거 / 이름 변경 X**:
+
+```
+GET  /api/today        → { date, items: Campaign[] }
+GET  /api/campaigns    → { campaigns: Campaign[] }
+GET  /api/calendar     → { month, days: { [date]: Campaign[] } }
+GET  /api/history      → { events: Event[] }
+GET  /api/channels     → { auth: Auth[], meta: ChannelMeta[], chrome: {ok,...} }
+GET  /api/sources      → { sources: Source[], dir }
+GET  /api/env          → { keys: { [name]: {value,raw_length,is_placeholder} }, exists }
+GET  /api/chrome/status → { alive, browser, version }
+GET  /api/publish/status → { tasks: { [taskKey]: Task } }
+GET  /api/profile      → { brand, tagline, industry, colors, adDisclosure }
+
+POST /api/channels/connect      { channel } → { ok, url } | { error }
+POST /api/chrome/start          {}          → { ok, browser } | { error }
+POST /api/publish/start         { slug, channel, dryRun, autoClick } → { ok, taskKey, pid, logPath }
+POST /api/publish/stop          { slug, channel } → { ok }
+POST /api/source/parse          { type, content, sourceName } → { parsed, savedSrcPath }
+POST /api/campaign/create       { parsed, channels, tonePreset, goal } → { ok, slug, briefPath }
+POST /api/env                   { keys: { [k]: v } } → { ok, updated }
+POST /api/env/verify            { fal, anthropic } → { results }
+POST /api/draft                 { slug, channel, ts, text } → { ok }
+POST /api/company               { profile } → { ok }
+
+SSE  /api/watch?slug=X&channel=Y → event: log { t, stream, line, step, icon, ... }
+                                  event: result { result, source }
+```
+
+응답 **필드 추가 OK**, **응답 필드 제거 / 이름 변경 X**.
+
+### 0-5. 검증 로직 (광고법) — 패턴 제거 금지
+
+`brand-guardian.mjs` 의 `KOREAN_AD_LAW.block` 7개 패턴. **제거하면 사용자가 광고법 위반 콘텐츠를 발행해서 법적 책임이 발생**. 사용자 명시 동의 없이 절대 제거 X.
+
+```javascript
+KOREAN_AD_LAW.block = [
+  치료 단정, 의학적 효능, 효과 보장, 부작용 없음,
+  100% 안전/순수/천연, 최고의/유일한/완벽한/기적의/영구적,
+  즉각적 효과
+]
+```
+
+추가는 환영. 제거는 금지.
+
+### 0-6. dry-run safety — 패턴 유지
+
+`gate()` 함수의 우선순위:
+```
+1. dryRun → 'N' 반환 (autoClick 보다 우선)
+2. autoClick → 5초 카운트 후 'Y'
+3. prompt → 사용자 입력
+```
+
+각 `publishX()` 의 모달 열기 전 조기 종료:
+```javascript
+if (opts.dryRun) return { url: null, dryRun: true, cancelled: false };
+```
+
+이 패턴 **임의로 리팩토링 / 제거 X**. 실제로 LIVE 발행 사고가 났던 영역.
+
+### 0-7. tonePreset 5종 ID — 변경 금지
+
+```
+relate-kr | b2b | informational | friendly | sales
+```
+
+ID 자체가 brand-guardian / copywriter / parse-source 의 분기 키. 이름 바꾸면 톤 분기 깨짐. 새 프리셋 **추가 OK**.
+
+### 0-8. 환경/외부 의존 — 변경 금지
+
+- Chrome 9222 attach 모드 (`--remote-debugging-port=9222 --user-data-dir=auth/chrome-attach-profile`) — 그대로
+- fal.ai **queue API 만 사용** (`queue.fal.run` — sync `fal.run` 은 401)
+- pdfjs-dist legacy build (`pdfjs-dist/legacy/build/pdf.mjs`) — Node 호환
+- Playwright `connectOverCDP` (직접 launch X) — 사용자 cookie 보존
+
+---
+
 ## 1. 절대 손대지 말 것 (사용자 데이터)
 
 다음 경로는 `.gitignore` 대상이며 **사용자별 secrets**. 코드 작업 중 read/write 일체 금지:
@@ -307,6 +494,32 @@ node -e "import('./harness/src/content-engine/brand-guardian.mjs').then(({inspec
 
 ## 9. 인계 전 사용자 한 줄 정리
 
-> "광고법 자동 검증 + dry-run safety + Chrome cookie 보존 — 이 3가지가 무너지면 사용자가 직접 손해. 다른 건 자유롭게 최적화 환영."
+> **설계 동결 (§0) 그대로 유지. 광고법 + dry-run + Chrome cookie 3가지 무너지면 사용자 직접 손해. 그 외 영역만 자유 최적화.**
+
+### 작업 시작 전 self-check
+
+- [ ] 이 작업은 **설계 변경**이 아니라 **최적화/리팩토링/버그 수정**이다
+- [ ] §0 동결 영역을 건드리지 않는다 (아키텍처 / 플러그인 구조 / data schema / API contract / 광고법 / dry-run / tonePreset ID / 외부 의존)
+- [ ] 동결 영역 변경 필요해 보이면 **PR 만들기 전에 사용자에게 묻는다**
+- [ ] sj-tech-lead 로 먼저 디스패치 → 영역 검토 → sub-agent 할당
+- [ ] 변경 후 §6 검증 절차 4단계 모두 통과
+
+### 동결 영역에 손대야 하는 상황이라면
+
+다음과 같이 사용자에게 보고:
+
+```
+[설계 변경 제안 — 동결 영역]
+
+영향 받는 항목: <§0-N>
+변경 이유: <왜 동결을 풀어야 하는지>
+변경 내용: <구체 diff>
+영향 범위: <어떤 컴포넌트가 영향 받는지>
+대안: <설계 안 바꾸고 우회할 수 있는 방법이 있는가>
+
+승인 요청합니다.
+```
+
+승인 받기 전까지 commit X.
 
 질문 있으면 `sj-tech-lead` 디스패치 → 영역별 sub-agent.
