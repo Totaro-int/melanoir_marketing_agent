@@ -82,3 +82,17 @@ company-profile.yaml         ← 회사 프로필 (gitignore)
 - `auth/`, `company-profile.yaml`, `.env.local` 은 `.gitignore` 대상. 절대 커밋하지 않는다.
 - 플러그인 업데이트 후 `/plugin reload` 필요.
 - 자세한 설치/운영: `harness/docs/INSTALL.md`, `harness/docs/OPERATIONS.md`
+
+## 개발자에게 인계할 때
+
+코드 최적화 / 리팩토링 / 신기능 작업 전 **반드시** 읽어야 할 문서:
+
+→ **`harness/docs/DEVELOPER-HANDOFF.md`**
+
+이 문서에는:
+- 절대 손대지 말 영역 (`auth/`, `posts/`, `company-profile.yaml`)
+- 신중하게 손댈 영역 (광고법 검증 / dry-run safety / Chrome cookie 보존)
+- `/s-skills` 각 sub-agent 별 작업 영역 분배
+- 회귀 금지 함정 7가지 (dry-run 누락, Chrome 강제 종료, Windows 경로, CRLF, fal sync, env placeholder, selector drift)
+- 최적화 추천 영역 (3200줄 dashboard 분할, brand-guardian 단위 테스트, browser-publish 채널별 분리)
+- 검증 절차 + 코드 리뷰 체크리스트
