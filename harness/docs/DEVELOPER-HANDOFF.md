@@ -183,7 +183,36 @@ relate-kr | b2b | informational | friendly | sales
 
 ID 자체가 brand-guardian / copywriter / parse-source 의 분기 키. 이름 바꾸면 톤 분기 깨짐. 새 프리셋 **추가 OK**.
 
-### 0-8. 환경/외부 의존 — 변경 금지
+### 0-8. Morning routine 의 새 탭 보존 패턴 — 변경 금지
+
+`browser-publish.mjs` 가 사용자 Chrome 9222 attach 또는 `--pre-publish` 모드에서
+**항상 새 탭** 을 열어야 합니다. **사용자 기존 탭 절대 덮어쓰기 X**.
+
+```javascript
+// browser-publish.mjs main 흐름
+const shouldOpenNewTab = attach || effectivePrePublish;
+let page;
+if (shouldOpenNewTab) {
+  page = await context.newPage();  // ★ 항상 새 탭
+  ui.dim(`  새 탭 열림 (기존 탭 ${context.pages().length - 1}개 보존)`);
+} else {
+  page = context.pages()[0] ?? (await context.newPage());
+}
+```
+
+**왜 동결**:
+- 사장님이 보던 화면 (대시보드 / 다른 작업 / 이전 채널 발행 직전 화면) 이 살아있어야 함
+- morning-routine 으로 N채널 처리 시 각 채널이 별도 탭에 발행 직전 상태로 유지
+- 회귀 시 → 사용자 다른 채널 발행 준비 화면 사라짐 → 처음부터 다시
+
+**회귀 금지 패턴**:
+```javascript
+// ❌ 금지 — 이전 동작
+const page = context.pages()[0] ?? (await context.newPage());
+// → 첫 탭 덮어씀
+```
+
+### 0-9. 외부 의존 — 변경 금지
 
 - Chrome 9222 attach 모드 (`--remote-debugging-port=9222 --user-data-dir=auth/chrome-attach-profile`) — 그대로
 - fal.ai **queue API 만 사용** (`queue.fal.run` — sync `fal.run` 은 401)
@@ -379,6 +408,19 @@ const editor = await waitForFirst(page, [
 ```
 
 `waitForFirst()` 헬퍼는 `browser-publish.mjs` 의 `gate()` 위에 정의됨. 새 publish 채널 추가 시 재사용.
+
+### 4-8. 새 탭 보존 — 사장님 기존 화면 덮어쓰기 금지
+
+```javascript
+// ❌ 금지 — 사장님 보던 첫 탭 덮어씀
+const page = context.pages()[0] ?? (await context.newPage());
+
+// ✓ 올바름 — attach / pre-publish 면 항상 새 탭
+const shouldOpenNewTab = attach || effectivePrePublish;
+const page = shouldOpenNewTab ? await context.newPage() : (context.pages()[0] ?? await context.newPage());
+```
+
+morning-routine 으로 N채널 처리 시 각 채널이 별도 탭. 사장님 검토 시 한 번에 4-5개 발행 직전 화면 보고 [공유] 클릭.
 
 ---
 
