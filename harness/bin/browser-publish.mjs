@@ -3,7 +3,7 @@
 // profile to compose a post on threads.net / linkedin.com, attach images, then
 // stop right before "Post" so the user confirms (or auto-clicks if --auto-click).
 //
-//   node bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click]
+//   node bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run | --pre-publish | --auto-click]
 //
 // First run: the persistent context (auth/browser-profile/) is empty, so the user
 // must log into the SNS once. Subsequent runs reuse the cookies.
@@ -11,7 +11,11 @@
 // Safety:
 //   · headless 강제 false. 사용자가 보면서 게이트 통과시켜야 함.
 //   · brief.status[<ch>] !== 'approved' 면 거부 (publish.mjs 와 동일).
-//   · --dry-run 이면 컴포저까지만 채우고 게시 직전에 멈춤. 결과는 dryRun=true 로 저장.
+//   · --dry-run    : 모달 열기 전에 종료. 가장 안전. 결과는 dryRun=true 로 저장.
+//   · --pre-publish: 모달 + 카피 paste + 이미지 첨부 완료까지. gate()에서 멈춤 (게시 클릭 X).
+//                   Chrome 탭 살려두고 disconnect — 사용자가 직접 [공유] 클릭.
+//                   morning-routine 의 핵심 모드.
+//   · --auto-click : gate()에서 자동 5초 카운트다운 후 [공유] 클릭. 진짜 LIVE 발행.
 //   · 셀렉터 실패 시 30초 사용자 수동 개입 대기 후 재시도.
 //
 // 지원 채널: threads, linkedin (사용자 비전 1차 채널).
@@ -32,7 +36,12 @@ const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
 const channel = argv.find((a) => a.startsWith('--channel='))?.split('=')[1];
 const dryRun = argv.includes('--dry-run');
+const prePublish = argv.includes('--pre-publish');
 const autoClick = argv.includes('--auto-click');
+
+// 우선순위: dryRun > prePublish > autoClick > 수동 prompt
+// dryRun 일 때는 prePublish 무시 (안전)
+const effectivePrePublish = prePublish && !dryRun;
 const attach = argv.includes('--attach') || argv.find((a) => a.startsWith('--attach='));
 const attachUrl = (typeof attach === 'string' ? attach.split('=')[1] : null) || 'http://localhost:9222';
 
@@ -98,31 +107,34 @@ const page = context.pages()[0] ?? (await context.newPage());
 let result;
 try {
   if (channel === 'threads') {
-    result = await publishThreads(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishThreads(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'linkedin') {
-    result = await publishLinkedin(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishLinkedin(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'naver-blog') {
-    result = await publishNaverBlog(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishNaverBlog(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'tistory') {
-    result = await publishTistory(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishTistory(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'brunch') {
-    result = await publishBrunch(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishBrunch(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'instagram') {
-    result = await publishInstagram(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishInstagram(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   }
-  // gate() 에서 사용자가 N 을 누른 경우 publish 함수가 cancelled=true 로 반환.
-  // 이 케이스는 brief.status 를 건드리지 않고 (approved 그대로 유지) result.json 만 기록.
+  // gate() 결과 분기
   const cancelled = result?.cancelled === true;
+  const isPrePublished = result?.prePublished === true;
   saveResult(dir, channel, brief, briefPath, {
     ok: !cancelled,
     via: 'browser',
     dryRun,
+    prePublished: isPrePublished || undefined,  // pre-publish 모드 — 사용자 손에 넘김
     cancelled,
     url: result?.url ?? null,
     publishedAt: nowKstIso(),
-  }, /* failed */ false, /* skipStatusPatch */ dryRun || cancelled);
+  }, /* failed */ false, /* skipStatusPatch */ dryRun || cancelled || isPrePublished);
   if (cancelled) {
     ui.warn(`[${channel}] 사용자 취소 — status 'approved' 유지`);
+  } else if (isPrePublished) {
+    ui.ok(`[${channel}] pre-publish 완료 — Chrome 탭에서 [공유] 클릭`);
   } else {
     ui.ok(`[${channel}] ${dryRun ? 'dry-run 완료' : '발행 완료'}${result?.url ? ' → ' + result.url : ''}`);
   }
@@ -213,10 +225,16 @@ async function gate(page, label) {
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   ui.warn(`  🛑 게시 직전 — ${label}`);
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  // dry-run safety — auto-click 보다 우선. 절대 게시 안 함.
+  // dry-run safety — pre-publish/auto-click 보다 우선. 절대 게시 안 함.
   if (dryRun) {
-    ui.info('  --dry-run — 게시 클릭 없이 종료 (auto-click 보다 우선)');
+    ui.info('  --dry-run — 게시 클릭 없이 종료 (다른 모드보다 우선)');
     return 'N';
+  }
+  // pre-publish — 사용자가 직접 [공유] 클릭하도록 Chrome 탭 살려두고 disconnect
+  if (effectivePrePublish) {
+    ui.info('  --pre-publish — 모달 + 카피 + 이미지 다 채워짐. Chrome 탭에서 사용자가 직접 [공유] 클릭하세요.');
+    ui.dim('  ★ Chrome 탭 유지 (Playwright disconnect 만) ★');
+    return 'PRE_PUBLISH';
   }
   if (autoClick) {
     ui.warn('  --auto-click 지정 — 5초 카운트다운 (Ctrl+C 로 중단)');
@@ -305,6 +323,7 @@ async function publishThreads(page, draft, cardPaths, opts) {
 
   ui.step(5, 5, '게시 직전 멈춤');
   const decision = await gate(page, 'Threads 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   const postBtn = page.getByRole('button', { name: /^Post$|^게시$/i }).last();
@@ -387,6 +406,7 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '게시 직전 멈춤');
   const decision = await gate(page, 'LinkedIn 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   const postBtn = page.locator(
@@ -689,6 +709,7 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
 
   ui.step(7, 7, '최종 발행 직전 멈춤');
   const decision = await gate(page, '네이버 블로그 발행');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // 최종 발행 버튼 — layer_btn_area__UzyKH > btn_area__fO7mp > button.confirm_btn__WEaBq
@@ -929,6 +950,7 @@ async function publishTistory(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '최종 발행 직전 멈춤');
   const decision = await gate(page, 'Tistory 발행');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   await page.click('#publish-btn').catch((e) => {
@@ -1284,6 +1306,7 @@ async function publishInstagram(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '게시 직전 멈춤');
   const decision = await gate(page, 'Instagram 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // Share 버튼
@@ -1471,6 +1494,7 @@ async function publishBrunch(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '최종 단계 — 발행 (작가 승인) / 작가신청 (미승인) / 그냥 종료');
   const decision = await gate(page, isApproved ? 'Brunch 발행' : 'Brunch — draft 저장만 (작가신청은 수동)');
+  if (decision === 'PRE_PUBLISH') return { url: page.url(), prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: page.url(), cancelled: !opts.dryRun };
 
   if (isApproved) {
