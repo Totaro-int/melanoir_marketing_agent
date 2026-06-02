@@ -122,8 +122,9 @@ function collectWork() {
     const status = brief.status || {};
     for (const [ch, st] of Object.entries(status)) {
       if (channelFilter && ch !== channelFilter) continue;
-      // pending / approved / failed 인 채널 작업 대상
-      if (['pending', 'approved', 'failed'].includes(st)) {
+      // drafting / pending / approved / failed 인 채널 작업 대상
+      // (drafting = 새 캠페인, generate 미실행 — routine 이 자동 generate)
+      if (['drafting', 'pending', 'approved', 'failed'].includes(st)) {
         work.push({ slug, channel: ch, status: st, topic: brief.topic || slug });
         if (work.length >= maxChannels) break;
       }

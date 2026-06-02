@@ -296,10 +296,19 @@ async function publishThreads(page, draft, cardPaths, opts) {
   }
   await page.waitForTimeout(1500);
 
-  // 컴포저 모달 안 textbox 대기
-  const composer = page.locator('[role="textbox"], div[contenteditable="true"]').first();
-  await composer.waitFor({ timeout: SELECTOR_TIMEOUT });
-  await composer.click();
+  // 컴포저 모달 안 textbox 대기 — visibility 보장 셀렉터 fallback chain
+  // Threads 2026 UI: 모달 안에 textbox 가 hidden 으로 nested 됨 → 더 정확한 셀렉터 필요
+  const composer = await waitForFirst(page, [
+    '[role="textbox"][contenteditable="true"][aria-label*="새 게시" i]',
+    '[role="textbox"][contenteditable="true"][aria-placeholder*="새로운 소식" i]',
+    '[role="textbox"][contenteditable="true"][aria-label*="텍스트 필드" i]',
+    'div[data-lexical-editor="true"][contenteditable="true"]',
+    'div[contenteditable="true"][role="textbox"]',
+    '[role="textbox"]',
+    'div[contenteditable="true"]',
+  ], SELECTOR_TIMEOUT);
+  // hidden 일 수도 — 강제 focus
+  await composer.click({ force: true });
   await page.waitForTimeout(500);
 
   ui.step(3, 5, '카피 입력');
