@@ -102,7 +102,17 @@ if (attach) {
   });
 }
 
-const page = context.pages()[0] ?? (await context.newPage());
+// attach 모드 + pre-publish 일 때는 항상 새 탭 — 사용자 기존 탭 보존.
+// 그 외 (--auto-click LIVE) 또는 launch 모드에서도 새 탭 안전 (기존 탭 덮어쓰기 방지).
+// 예외: 페이지가 하나도 없으면 새 페이지 (Chrome 빈 상태).
+const shouldOpenNewTab = attach || effectivePrePublish;
+let page;
+if (shouldOpenNewTab) {
+  page = await context.newPage();
+  ui.dim(`  새 탭 열림 (기존 탭 ${context.pages().length - 1}개 보존)`);
+} else {
+  page = context.pages()[0] ?? (await context.newPage());
+}
 
 let result;
 try {
