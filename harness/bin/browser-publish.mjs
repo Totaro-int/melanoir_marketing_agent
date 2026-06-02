@@ -296,26 +296,57 @@ async function publishThreads(page, draft, cardPaths, opts) {
   }
   await page.waitForTimeout(1500);
 
-  // 컴포저 모달 안 textbox 대기 — visibility 보장 셀렉터 fallback chain
-  // Threads 2026 UI: 모달 안에 textbox 가 hidden 으로 nested 됨 → 더 정확한 셀렉터 필요
-  const composer = await waitForFirst(page, [
-    '[role="textbox"][contenteditable="true"][aria-label*="새 게시" i]',
+  // 컴포저 모달 안 textbox 대기 — visibility 체크 우회 (attached 만)
+  // Threads 2026 UI: 모달 떴는데 textbox 자체는 hidden 으로 nested. waitForFirst 의 visibility 체크 우회.
+  const composerSelectors = [
+    'div[data-lexical-editor="true"][contenteditable="true"]',
     '[role="textbox"][contenteditable="true"][aria-placeholder*="새로운 소식" i]',
     '[role="textbox"][contenteditable="true"][aria-label*="텍스트 필드" i]',
-    'div[data-lexical-editor="true"][contenteditable="true"]',
+    '[role="textbox"][contenteditable="true"]',
     'div[contenteditable="true"][role="textbox"]',
-    '[role="textbox"]',
     'div[contenteditable="true"]',
-  ], SELECTOR_TIMEOUT);
-  // hidden 일 수도 — 강제 focus
-  await composer.click({ force: true });
+  ];
+  let composer = null;
+  for (const sel of composerSelectors) {
+    const loc = page.locator(sel).first();
+    try {
+      await loc.waitFor({ state: 'attached', timeout: 4000 });
+      composer = loc;
+      ui.dim(`  composer attached: ${sel}`);
+      break;
+    } catch {}
+  }
+  if (!composer) {
+    ui.warn('  composer 셀렉터 다 fail — 모달 placeholder 영역 click 으로 활성화 시도');
+    await page.click('[aria-label*="새로운 소식" i], [aria-placeholder*="새로운 소식" i]', { force: true, timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    composer = page.locator(composerSelectors.join(', ')).first();
+  }
+  // hidden 일 수도 — 강제 click + focus (visibility 무시)
+  await composer.click({ force: true }).catch(() => {});
+  await composer.focus({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(500);
 
-  ui.step(3, 5, '카피 입력');
-  await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
-  await page.waitForTimeout(150);
-  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
-  await page.waitForTimeout(800);
+  ui.step(3, 5, '카피 입력 — clipboard paste + keyboard.type fallback');
+  // 1차 — clipboard paste
+  let pasteOk = false;
+  try {
+    await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
+    await page.waitForTimeout(150);
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
+    await page.waitForTimeout(800);
+    // 검증 — composer 안에 내용이 들어갔는지
+    const got = await composer.evaluate((el) => (el.innerText || el.textContent || '').slice(0, 50)).catch(() => '');
+    if (got && got.trim().length > 0) pasteOk = true;
+  } catch (e) {
+    ui.dim(`  clipboard paste 실패: ${e.message.slice(0, 50)}`);
+  }
+  // 2차 — keyboard.type (focus 가 살아있으면 textbox 에 직접 입력)
+  if (!pasteOk) {
+    ui.dim('  paste 미반영 → keyboard.type fallback');
+    await page.keyboard.type(draft.text, { delay: 5 });
+    await page.waitForTimeout(800);
+  }
 
   if (cardPaths.length) {
     ui.step(4, 5, `이미지 ${cardPaths.length}장 첨부`);
