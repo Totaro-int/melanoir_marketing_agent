@@ -254,6 +254,66 @@ SNS 계정 연결이 완료되면 `.env.local`에서 dry-run을 해제합니다.
 
 자세한 운영 방법: `harness/docs/OPERATIONS.md`
 
+### 4-A. Morning Routine — 명령어 1개로 발행 직전까지
+
+매일 아침 컴퓨터 켜고 `npm run morning` 1줄이면:
+1. Chrome 9222 + 대시보드 자동 시작
+2. 오늘 캠페인의 각 채널 (status=approved) 발행 직전 자동 준비
+3. Chrome 새 탭 N개에 발행 직전 상태 (모달 + 카피 + 이미지)
+4. 사용자 검토 → 각 탭에서 [공유]/[발행] 클릭만
+
+**수동 실행**:
+
+```bash
+# macOS / Linux
+bash scripts/morning.sh
+
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts\morning.ps1
+```
+
+또는 npm:
+
+```bash
+npm run morning           # 실 발행 준비
+npm run morning:dry       # 시뮬레이션 (Chrome 모달 안 엶)
+```
+
+### 4-B. 매일 자동 실행 등록 (Task Scheduler / launchd)
+
+컴퓨터 켤 때 + 매일 정시 (default 09:00) 자동 실행 등록:
+
+**macOS / Linux**:
+
+```bash
+bash scripts/install-morning-cron.sh                   # 등록
+bash scripts/install-morning-cron.sh --time=08:00      # 시각 변경
+bash scripts/install-morning-cron.sh --status          # 상태 확인
+bash scripts/install-morning-cron.sh --uninstall       # 제거
+```
+
+macOS — `~/Library/LaunchAgents/com.marketing-agent.morning-routine.plist`
+Linux — systemd user timer 또는 crontab fallback (자동 감지)
+
+**Windows**:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\install-morning-cron.ps1
+powershell -ExecutionPolicy Bypass -File scripts\install-morning-cron.ps1 -Time "08:00"
+powershell -ExecutionPolicy Bypass -File scripts\install-morning-cron.ps1 -Status
+powershell -ExecutionPolicy Bypass -File scripts\install-morning-cron.ps1 -Uninstall
+```
+
+Task Scheduler 의 `MarketingAgentMorningRoutine` 작업으로 등록됨.
+
+**기본 트리거 2가지** (3 OS 동일):
+- 사용자 로그인 시 (30초 지연) — 컴퓨터 켤 때 자동
+- 매일 09:00 (시각 변경 가능) — 이미 켜져 있으면 그 시각
+
+**로그**: `logs/morning-routine.log` (시작 시간 + 결과 + 에러)
+
+⚠ **컴퓨터 자동 부팅** (BIOS Wake Timer 등) 은 OS 스케줄러 영역 밖. 매일 정시 발행 위해 컴퓨터가 그 시각에 켜져 있어야.
+
 ---
 
 ## Part 5. 업데이트
