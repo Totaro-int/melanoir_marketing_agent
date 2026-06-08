@@ -357,6 +357,39 @@ async function publishThreads(page, draft, cardPaths, opts) {
     await page.keyboard.type(draft.text, { delay: 5 });
     await page.waitForTimeout(800);
   }
+  // 3차 검증 — keyboard.type 후에도 비어있으면 Lexical beforeinput 강제 (Threads UI 2026)
+  const verify = await composer.evaluate((el) => (el.innerText || el.textContent || '').trim()).catch(() => '');
+  if (verify.length === 0) {
+    ui.warn('  paste + keyboard 둘 다 미반영 → Lexical beforeinput dispatch 강제');
+    await page.evaluate((txt) => {
+      const candidates = [...document.querySelectorAll('[contenteditable="true"], [role="textbox"]')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 200 && r.height > 30 && el.offsetWidth > 0;
+        })
+        .sort((a, b) => {
+          const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+          return rb.width * rb.height - ra.width * ra.height;
+        });
+      if (!candidates.length) return false;
+      const el = candidates[0];
+      el.focus(); el.click();
+      // Lexical editor 가 beforeinput 으로 입력 받음
+      const evt = new InputEvent('beforeinput', { inputType: 'insertText', data: txt, bubbles: true, cancelable: true });
+      el.dispatchEvent(evt);
+      // fallback: execCommand
+      document.execCommand('insertText', false, txt);
+      return true;
+    }, draft.text);
+    await page.waitForTimeout(800);
+    const verify2 = await composer.evaluate((el) => (el.innerText || el.textContent || '').trim()).catch(() => '');
+    if (verify2.length === 0) {
+      throw new Error('Threads paste 모든 방법 실패 — UI 셀렉터 또는 모달 상태 확인 필요');
+    }
+    ui.dim('  Lexical beforeinput 성공');
+  } else {
+    ui.dim(`  paste OK (${verify.length}자)`);
+  }
 
   if (cardPaths.length) {
     ui.step(4, 5, `이미지 ${cardPaths.length}장 첨부`);
