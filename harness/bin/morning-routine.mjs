@@ -24,7 +24,7 @@
 //   node harness/bin/morning-routine.mjs --skip-generate  # generate/finalize 스킵 (이미 draft 있다고 가정)
 
 import { resolve } from 'node:path';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
 import { spawnSync, spawn } from 'node:child_process';
 import YAML from 'yaml';
 import { ROOT, ui } from './_lib.mjs';
@@ -40,7 +40,7 @@ const NODE = process.execPath;
 
 // ─── 1. 환경 검증 ─────────────────────────────────────────
 async function ensureEnvironment() {
-  ui.step(1, 4, '환경 검증 — Chrome 9222 / 대시보드 7777');
+  ui.step(1, 5, '환경 검증 — Chrome 9222 / 대시보드 7777');
 
   // Chrome 9222 alive?
   let chromeAlive = false;
@@ -103,16 +103,99 @@ async function ensureEnvironment() {
   }
 }
 
+// ─── 1.5 사전 인증 검증 — 만료 채널 즉시 알림 (P0) ──────────
+// routine 본격 시작 전 /api/channels 로 각 채널 cookie 살아있는지 확인.
+// 만료된 채널은 (a) 데스크탑 알림 (b) 로그인 페이지 자동 오픈 (c) 처리 대상에서 제외.
+// → 5분 timeout stuck / 빈 탭 현상 원천 차단.
+async function preflightAuth(neededChannels) {
+  ui.step(2, 5, '사전 인증 검증 — 채널 cookie 확인');
+  let authMap = {};
+  try {
+    const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(20_000) });
+    const data = await r.json();
+    if (data.chrome && !data.chrome.ok) {
+      ui.warn('  Chrome attach 안 됨 — 인증 검증 skip (그대로 진행)');
+      return { ok: new Set(neededChannels), expired: new Set() };
+    }
+    for (const a of data.auth || []) {
+      if (a.configured) authMap[a.channel] = a.cookie || true;
+    }
+  } catch (e) {
+    ui.warn(`  인증 검증 실패 (${e.message.slice(0, 50)}) — 그대로 진행`);
+    return { ok: new Set(neededChannels), expired: new Set() };
+  }
+
+  const ok = new Set();
+  const expired = new Set();
+  for (const ch of neededChannels) {
+    if (authMap[ch]) ok.add(ch);
+    else expired.add(ch);
+  }
+
+  if (ok.size) ui.ok(`  인증 OK: ${[...ok].join(', ')}`);
+  if (expired.size) {
+    ui.warn(`  ⚠ 인증 만료: ${[...expired].join(', ')} — 로그인 필요`);
+    // 만료 채널 로그인 페이지 자동 오픈 + 데스크탑 알림
+    for (const ch of expired) {
+      try {
+        await fetch('http://localhost:7777/api/channels/connect', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: ch }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        ui.dim(`    → ${ch} 로그인 페이지 Chrome 새 탭에 오픈`);
+      } catch {}
+    }
+    notifyDesktop(
+      `로그인 필요: ${[...expired].join(', ')}`,
+      `${expired.size}개 채널 cookie 만료 — Chrome 탭에서 로그인 후 다시 실행`,
+    );
+  }
+  return { ok, expired };
+}
+
+// 데스크탑 알림 (Windows toast / macOS osascript / Linux notify-send)
+function notifyDesktop(title, body) {
+  try {
+    if (process.platform === 'win32') {
+      // PowerShell BurntToast 없이 — balloon tip
+      const ps = `[reflection.assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; ` +
+        `$n = New-Object System.Windows.Forms.NotifyIcon; ` +
+        `$n.Icon = [System.Drawing.SystemIcons]::Information; ` +
+        `$n.BalloonTipTitle = '${title.replace(/'/g, "''")}'; ` +
+        `$n.BalloonTipText = '${body.replace(/'/g, "''")}'; ` +
+        `$n.Visible = $true; $n.ShowBalloonTip(10000); Start-Sleep -Seconds 1`;
+      spawnSync('powershell', ['-NoProfile', '-Command', ps], { timeout: 8000 });
+    } else if (process.platform === 'darwin') {
+      spawnSync('osascript', ['-e', `display notification "${body}" with title "${title}"`], { timeout: 5000 });
+    } else {
+      spawnSync('notify-send', [title, body], { timeout: 5000 });
+    }
+  } catch {}
+}
+
 // ─── 2. 오늘 작업 list ────────────────────────────────────
 function collectWork() {
-  ui.step(2, 4, '오늘 작업 list 추출');
+  ui.step(3, 5, '오늘 작업 list 추출');
   const campDir = resolve(ROOT, 'posts/campaigns');
   if (!existsSync(campDir)) {
     ui.warn('  posts/campaigns/ 없음 — 새 캠페인 만들고 다시 실행');
     return [];
   }
   const work = [];
-  for (const slug of readdirSync(campDir).sort().reverse()) {  // 최신부터
+  // 오늘 날짜 우선 → 그 다음 가까운 미래 → 과거 순. (캘린더 자연 순서)
+  const today = new Date().toISOString().slice(0, 10);
+  const sortedSlugs = readdirSync(campDir).sort((a, b) => {
+    // slug 앞 YYYY-MM-DD 추출
+    const da = (a.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1] || '9999-99-99';
+    const db = (b.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1] || '9999-99-99';
+    // 오늘 이후 (오늘 포함) 를 먼저, 그 안에서 가까운 날짜 먼저. 과거는 뒤로.
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture !== bFuture) return aFuture ? -1 : 1;  // 미래/오늘 우선
+    if (aFuture) return da.localeCompare(db);            // 미래: 가까운 날 먼저
+    return db.localeCompare(da);                          // 과거: 최근 먼저
+  });
+  for (const slug of sortedSlugs) {
     if (slugFilter && slug !== slugFilter) continue;
     const briefPath = resolve(campDir, slug, 'brief.yaml');
     if (!existsSync(briefPath)) continue;
@@ -152,7 +235,7 @@ async function processWorkItem(item, idx, total) {
     readdirSync(channelDir).some((f) => /^\d{8}-\d{6}\.yaml$/.test(f));
 
   if (!hasDraft && !skipGenerate) {
-    ui.step(3, 4, `${tag} draft 없음 — generate + finalize`);
+    ui.step(4, 5, `${tag} draft 없음 — generate + finalize`);
     if (dryRun) {
       ui.dim('  --dry-run — generate skip');
     } else {
@@ -210,7 +293,7 @@ async function processWorkItem(item, idx, total) {
   }
 
   // 3-3. browser-publish --pre-publish
-  ui.step(4, 4, `${tag} browser-publish --pre-publish`);
+  ui.step(5, 5, `${tag} browser-publish --pre-publish`);
   if (dryRun) {
     ui.dim('  --dry-run — Chrome 모달 안 엶 (시뮬레이션만)');
     return { ...item, result: 'simulated' };
@@ -229,24 +312,44 @@ async function processWorkItem(item, idx, total) {
   return { ...item, result: 'pre-published' };
 }
 
-// ─── 4. 대시보드 알림 ─────────────────────────────────────
+// ─── 4. 결과 알림 (콘솔 + 데스크탑) ────────────────────────
 async function notifyDashboard(results) {
   const ready = results.filter((r) => r.result === 'pre-published');
   const blocked = results.filter((r) => r.result === 'guardian-block');
-  const failed = results.filter((r) => !['pre-published', 'simulated'].includes(r.result));
+  const authExpired = results.filter((r) => r.result === 'auth-expired');
+  const failed = results.filter((r) => !['pre-published', 'simulated', 'guardian-block', 'auth-expired'].includes(r.result));
 
   ui.info('\n━━━ 🌅 Morning routine 완료 ━━━');
   ui.ok(`  발행 대기 ${ready.length}개 (Chrome 탭 확인)`);
+  if (authExpired.length) ui.warn(`  인증 만료 ${authExpired.length}채널 (로그인 필요)`);
   if (blocked.length) ui.warn(`  guardian block ${blocked.length}개 (카피 수정 필요)`);
-  if (failed.length - blocked.length > 0) ui.err(`  실패 ${failed.length - blocked.length}개`);
+  if (failed.length) ui.err(`  실패 ${failed.length}개`);
   for (const r of ready) ui.dim(`    ✓ ${r.slug}/${r.channel}`);
+  for (const r of authExpired) ui.dim(`    🔑 ${r.channel} (로그인 필요)`);
   for (const r of blocked) ui.dim(`    ✗ ${r.slug}/${r.channel} (block)`);
-  for (const r of failed.filter((f) => f.result !== 'guardian-block')) {
-    ui.dim(`    ! ${r.slug}/${r.channel} (${r.result})`);
-  }
+  for (const r of failed) ui.dim(`    ! ${r.slug}/${r.channel} (${r.result})`);
 
-  // 대시보드에 알림 (선택 — dashboard.mjs 가 notification endpoint 가지면 POST)
-  // 현재는 client polling 의 _publishTasks 로 자동 노출됨. 별도 호출 X.
+  // 데스크탑 알림 — 클라이언트가 9시 결과 즉시 인지 (P0)
+  const parts = [`발행 대기 ${ready.length}개`];
+  if (authExpired.length) parts.push(`로그인 ${authExpired.length}`);
+  if (blocked.length) parts.push(`검수차단 ${blocked.length}`);
+  if (failed.length) parts.push(`실패 ${failed.length}`);
+  const title = ready.length > 0
+    ? `🌅 발행 대기 ${ready.length}개 준비 완료`
+    : (authExpired.length ? '🔑 로그인 필요 — 발행 대기 0' : '⚠ Morning routine — 처리 0');
+  notifyDesktop(title, parts.join(' · ') + ' · Chrome 탭 확인');
+
+  // 결과 JSON 로그 (사후 분석용)
+  try {
+    const logPath = resolve(ROOT, 'logs', 'morning-result.json');
+    mkdirSync(resolve(ROOT, 'logs'), { recursive: true });
+    writeFileSync(logPath, JSON.stringify({
+      at: new Date().toISOString(),
+      ready: ready.length, authExpired: authExpired.length,
+      blocked: blocked.length, failed: failed.length,
+      results,
+    }, null, 2), 'utf8');
+  } catch {}
 }
 
 // ─── main ─────────────────────────────────────────────────
@@ -256,16 +359,39 @@ try {
   if (channelFilter) ui.dim(`  channel=${channelFilter}`);
 
   await ensureEnvironment();
-  const work = collectWork();
+
+  let work = collectWork();
   if (!work.length) {
     ui.info('처리할 작업 없음. 종료.');
     process.exit(0);
+  }
+
+  // 사전 인증 검증 — 만료 채널 work 에서 제외 (dry-run 은 skip)
+  let expiredSet = new Set();
+  if (!dryRun) {
+    const neededChannels = [...new Set(work.map((w) => w.channel))];
+    const { expired } = await preflightAuth(neededChannels);
+    expiredSet = expired;
+    if (expired.size) {
+      const before = work.length;
+      work = work.filter((w) => !expired.has(w.channel));
+      ui.warn(`  만료 채널 제외: ${before - work.length}건 skip (로그인 후 재실행)`);
+    }
+    if (!work.length) {
+      ui.warn('\n모든 대상 채널 인증 만료. Chrome 탭에서 로그인 후 다시 실행하세요.');
+      notifyDesktop('Morning routine 중단', '모든 채널 로그인 필요 — Chrome 탭 확인');
+      process.exit(0);
+    }
   }
 
   const results = [];
   for (let i = 0; i < work.length; i++) {
     const r = await processWorkItem(work[i], i, work.length);
     results.push(r);
+  }
+  // 만료로 skip 한 채널도 결과에 포함 (리포트 정확성)
+  for (const ch of expiredSet) {
+    results.push({ channel: ch, result: 'auth-expired', slug: '(여러 캠페인)' });
   }
   await notifyDashboard(results);
   ui.ok('\n사용자 검토 → 각 Chrome 탭에서 [공유] 클릭하시면 됩니다.');

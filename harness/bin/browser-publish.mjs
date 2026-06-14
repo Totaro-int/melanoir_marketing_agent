@@ -428,27 +428,62 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
   await page.bringToFront();
   await ensureLoggedIn(page, 'linkedin');
 
-  ui.step(2, 6, 'Start a post 클릭 (한국어 "글쓰기")');
-  // LinkedIn 의 share trigger 는 button / a / div 다 가능 — 광범위 매칭
-  const startBtn = page.locator(
-    'button:has-text("Start a post"), button:has-text("글쓰기"), button:has-text("게시물 작성"), ' +
-    'a:has-text("글쓰기"), a:has-text("Start a post"), ' +
-    '[role="button"]:has-text("글쓰기"), [role="button"]:has-text("Start a post"), ' +
-    'button[aria-label*="Start a post"], button[aria-label*="글쓰기"]'
-  ).first();
-  await startBtn.waitFor({ timeout: SELECTOR_TIMEOUT });
-  await startBtn.click({ force: true });
+  // 로그인 redirect 감지 — li_at 만료 시 빈 작업 방지
+  if (/\/login|\/uas\/login|\/checkpoint/i.test(page.url())) {
+    ui.err('  LinkedIn 로그인 필요 — li_at cookie 만료');
+    throw new Error('LinkedIn 인증 만료 — 로그인 후 재시도');
+  }
 
-  ui.step(3, 6, '컴포저 열림 대기 (selector fallback chain)');
+  ui.step(2, 6, '일반 post 모달 열기 (글쓰기 / Start a post)');
+  // ⚠ article 작성 링크 (긴 글) 가 아니라 피드 일반 post 모달이어야 함.
+  // "글 작성하기" / "Write article" 류는 제외 — :not 으로 거름.
+  // 우선순위: share-box 의 명시적 start-post 버튼 → 일반 버튼 텍스트.
+  const postTriggerSelectors = [
+    'button.share-box-feed-entry__trigger',                              // 가장 안정적 (피드 share-box)
+    'button[aria-label="게시물 작성을 시작합니다" i]',
+    'button[aria-label*="Start a post" i]:not([aria-label*="article" i])',
+    'button:has-text("게시물 작성"):not(:has-text("아티클")):not(:has-text("article"))',
+    'button:has-text("Start a post"):not(:has-text("article"))',
+    '[role="button"]:has-text("글쓰기"):not(:has-text("아티클"))',
+  ];
+  let triggered = false;
+  for (const sel of postTriggerSelectors) {
+    const b = page.locator(sel).first();
+    if (await b.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await b.click({ force: true });
+      ui.dim(`  post trigger: ${sel.slice(0, 50)}`);
+      triggered = true;
+      break;
+    }
+  }
+  if (!triggered) {
+    ui.warn('  post trigger 못 찾음 — share-box 영역 직접 click 시도');
+    await page.locator('.share-box-feed-entry__top-bar, div.feed-shared-news-module').first().click({ force: true }).catch(() => {});
+  }
+  await page.waitForTimeout(1500);
+
+  // article 페이지로 잘못 튀었으면 복구 — 뒤로 가서 다시 /feed/
+  if (/\/article\//i.test(page.url())) {
+    ui.warn('  article 작성 페이지로 감 — 피드로 복구 후 모달 재시도');
+    await page.goto('https://www.linkedin.com/feed/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+    // 모달 전용 셀렉터로 재시도
+    const retry = page.locator('button.share-box-feed-entry__trigger').first();
+    if (await retry.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await retry.click({ force: true });
+      await page.waitForTimeout(1500);
+    }
+  }
+
+  ui.step(3, 6, '컴포저 모달 열림 대기 (selector fallback chain)');
   const editor = await waitForFirst(page, [
+    '.share-creation-state__text-editor div.ql-editor[contenteditable="true"]',  // 모달 안 quill (최우선)
+    'div.editor-content div.ql-editor[contenteditable="true"]',
     'div.ql-editor[contenteditable="true"]',                    // 기존 Quill (2024-)
     '[role="textbox"][contenteditable="true"][aria-label*="텍스트 편집기" i]',
     '[role="textbox"][contenteditable="true"][aria-label*="Text editor" i]',
     '.share-creation-state__text-editor [contenteditable="true"]',
-    '.editor-content [contenteditable="true"]',
-    '[data-test-id*="editor"] [contenteditable="true"]',
     'div[contenteditable="true"][role="textbox"]',
-    'div.share-box-feed-entry__top-bar ~ * [contenteditable="true"]',
   ], SELECTOR_TIMEOUT);
   await page.waitForTimeout(800);
 
@@ -883,6 +918,15 @@ async function publishTistory(page, draft, cardPaths, opts) {
   ui.dim(`  blog: ${blogName}.tistory.com`);
   await page.goto(`https://${blogName}.tistory.com/manage/newpost`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(3000);
+
+  // 로그인 redirect 감지 — TSSESSION cookie 가 글쓰기 페이지엔 부족할 수 있음.
+  // 빈 작업 (셀렉터 0개) 하지 않고 명확히 인증 실패로 종료 → 빈 탭 방지.
+  const curUrl = page.url();
+  if (/\/auth\/login|accounts\.kakao\.com|\/login/i.test(curUrl)) {
+    ui.err('  Tistory 로그인 필요 — 글쓰기 페이지 접근 권한 부족 (TSSESSION 만료/불충분)');
+    ui.dim('  → Chrome 에서 Tistory 로그인 (카카오 계정 연동) 후 다시 실행');
+    throw new Error('Tistory 인증 부족 — 로그인 후 재시도 (글쓰기 페이지 redirect 됨)');
+  }
 
   // 임시저장 복원 dialog dismiss (네이버처럼 자동 복원할 수 있음)
   await page.evaluate(() => {
