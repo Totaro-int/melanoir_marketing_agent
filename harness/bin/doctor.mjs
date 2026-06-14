@@ -78,14 +78,17 @@ if (!enabled.length) {
   add('channels', 'enabled in profile', 'fail', '/sns-onboard 또는 /sns-onboard update channels — 1개 이상 필요');
 } else {
   add('channels', 'enabled in profile', 'ok', enabled.join(', '));
+  // browser-publish (cookie) 채널은 아래 'cookie-auth' 섹션이 실제 상태를 보여줌.
+  // 여기선 API 토큰 발행만 쓰는 채널 (facebook/x/bluesky/mastodon/pinterest 등) 만 점검.
+  const COOKIE_CHANNELS = ['naver-blog', 'tistory', 'brunch', 'instagram', 'threads', 'linkedin'];
   for (const ch of enabled) {
     const known = knownChannels().includes(ch);
     if (!known) { add('channels', `[${ch}] adapter`, 'fail', '등록되지 않은 채널 ID'); continue; }
+    if (COOKIE_CHANNELS.includes(ch)) continue; // cookie-auth 섹션이 담당 — 중복 경고 제거
     const hasAuth = authFiles.includes(`${ch}.json`);
     const meta = CHANNEL_META[ch];
-    // 토큰 미등록은 warn (자동 dry-run fallback). 사용자가 의도적으로 미등록일 수 있음.
     add('channels', `[${ch}] auth/${ch}.json`, hasAuth ? 'ok' : 'warn',
-      hasAuth ? meta?.media ?? '' : `없음 — /sns-auth add ${ch} (${meta?.auth ?? ''})`);
+      hasAuth ? meta?.media ?? '' : `없음 — API 발행 시 /sns-auth add ${ch} (${meta?.auth ?? ''})`);
   }
 }
 
