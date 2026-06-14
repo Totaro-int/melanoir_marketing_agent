@@ -102,6 +102,16 @@ E2E 검증 통과 (2026-06-02):
 
 자세한 작업 지시: **`harness/docs/DEVELOPER-WORKORDER.md`** (P0/P1/P2/P3 우선순위)
 
+## 📦 신규 회사 설치 (납품)
+
+설치 당일 runbook: **`harness/docs/ONBOARDING.md`** — 8단계 (설치 → 키 → 브랜드 DNA → 채널 로그인 → 캘린더 → cron → 리허설).
+
+브랜드 DNA → 캘린더 자동 생성:
+```
+node harness/bin/seed-calendar.mjs --topics topics.txt --start <날짜> --channels naver-blog,instagram,threads,linkedin --status approved
+```
+company-profile.yaml (브랜드명·해시태그·톤·채널) 자동 주입. 어느 회사든 재사용.
+
 ## 개발자에게 인계할 때
 
 코드 최적화 / 리팩토링 / 신기능 작업 전 **반드시** 읽어야 할 문서:
