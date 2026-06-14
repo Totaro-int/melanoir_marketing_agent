@@ -28,7 +28,7 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
    - 이어서 **차별점 1개** 추출: "경쟁사·대안이랑 딱 하나만 다른 점을 꼽으면?" → 카피 O(Offer)의 핵심. **`tone.voiceNotes`에 한 줄로 적는다.** (⚠ `competitors` 필드는 copywriter spec에 전달 안 됨 — 카피에 반영되려면 voiceNotes나 painPoints에 있어야 함)
 
 3. **industry** — "산업/카테고리는? (예: 'B2B SaaS - 결제 인프라')"
-   - ⚠ 답이 **뷰티·반영구(PMU)·화장품·피부/병의원·헬스/식품** 계열이면 → 아래 **"업종 심화 인터뷰"** 섹션의 추가 질문을 4·6단계에 끼워넣는다. (광고법 리스크가 큰 업종이라 통점·금기어를 더 깊게 받아야 함)
+   - ⚠ 답이 **뷰티·반영구(PMU)·화장품·피부/병의원·헬스/식품** 계열이면 → 아래 **"업종 심화 인터뷰"** 섹션의 추가 질문을 4·6단계에 끼워넣는다. (광고법 리스크가 큰 업종이라 통점·금기어를 더 깊게 받아야 함). 채울 깊이의 골드 스탠다드: `examples/company-profile.beauty-pmu.example.yaml`
 
 4. **targetAudience** (1명 이상) — 페르소나는 한 줄로 받되, **통점은 아래 4겹으로 파고든다** (한 번에 하나씩). 이게 전체 카피 품질의 1순위 입력이다.
 
@@ -47,7 +47,8 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 6. **banned.words / topics / claims** — 2단계로 받는다:
 
-   **(1) 자동 차단은 이미 됨 — 다시 안 받아도 됨.** 한국 광고법 7패턴(치료 단정·의학적 효능·효과 보장·부작용 없음·100% 안전·최고/유일/완벽/기적/영구 같은 절대표현·즉각 효과)은 `brand-guardian`이 **모든 캠페인에 자동 block** 한다. 이건 안내만 하고 넘어간다.
+   **(1) 자동 차단은 이미 됨 — 다시 안 받아도 됨.** 한국 광고법 7패턴(치료 단정·의학적 효능·효과 보장·부작용 없음·100% 안전·최고/유일/완벽/기적/영구 같은 절대표현·즉각 효과)은 `brand-guardian`이 **모든 캠페인 카피에 자동 block** 한다. 이건 안내만 하고 넘어간다.
+   > profile-validate 가 "최고의·1위·100% 누락" 소프트 경고를 띄울 수 있다 — 카피는 어차피 자동 차단되니 무시해도 발행은 막힌다. 단 banned 에 명시하면 카드 **이미지 텍스트**까지 검사가 넓어지므로, 넣어도 손해는 없다.
 
    **(2) 브랜드·업종 추가분만 받는다**:
    - `words` — "브랜드 가이드상 절대 안 쓰는 단어는?" (예: 특정 경쟁사명, 옛 브랜드명, 비속어)
@@ -148,6 +149,9 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 industry가 이 계열이면 4·6단계에 아래를 끼워넣는다. 표시광고법·화장품법·의료법 리스크가 커서 통점·금기어를 일반 업종보다 깊게 받아야 발행 사고가 안 난다. (브랜드명은 1단계 `brand.name`에서 이미 받았으므로 여기선 업종 패턴만 다룬다.)
 
+> 완성 예시(채울 깊이 참고): [`examples/company-profile.beauty-pmu.example.yaml`](../examples/company-profile.beauty-pmu.example.yaml) — 4겹 통점·dailyVocab·voiceNotes 3축·claims 라이브러리가 어떻게 채워지는지 그대로 보여준다.
+> ⚠ 블로그 채널(naver-blog 등)은 schema `channels.enabled` enum 에 없다. 블로그가 주력이면 `channels.enabled`엔 instagram/threads/linkedin 만 넣고, 블로그 발행은 `seed-calendar`/`campaign-new`의 `--channels naver-blog`로 캠페인 레벨에서 지정한다.
+
 ### A. 판매 구조 먼저 (B2B / B2C 갈림)
 
 "제품을 **시술하는 전문가(원장·샵)** 에게 파나요, **시술받는 일반 고객** 에게 파나요, 둘 다인가요?"
@@ -247,7 +251,7 @@ meta:
 
 ## Guardrails
 
-- 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 `examples/company-profile.example.yaml`의 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓)
+- 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓). 일반 업종은 `examples/company-profile.example.yaml`, 뷰티·반영구·화장품 계열은 `examples/company-profile.beauty-pmu.example.yaml`.
 - `company-profile.yaml`은 **gitignore 대상**임을 안내하고, 저장 후 `git status`에 빨간색으로 안 보이는지 확인하라고 한 줄로 안내
 - 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 별도 명령(`/sns-auth add <channel>`, Phase 4)에서 OS 키체인으로 처리
 

@@ -1,0 +1,127 @@
+# 예시: 가상의 반영구(PMU) 색소 브랜드 "샘플퍼마" 프로필
+# 뷰티·반영구·화장품 업종 심화 인터뷰가 어떤 깊이로 채워지는지 보여주는 레퍼런스.
+# (브랜드명은 가상 — 실제 온보딩 때 brand.name 에서 받음)
+version: 1
+
+brand:
+  name: 샘플퍼마
+  legalName: SamplePerma Co., Ltd.
+  websites:
+    - https://example.com
+
+taglineOneLine: "공인기관 시험성적서로 증명하는 반영구 색소 — 변색 없이 오래가는 발색."
+
+industry: "뷰티 - 반영구(PMU) 색소 제조"
+
+targetAudience:
+  # B2B — 색소를 사서 시술하는 전문가 (주 고객)
+  - persona: "반영구 시술 원장 / 샵 운영자 (개인샵~중소 아카데미)"
+    painPoints:
+      - "결정적 순간: 고객 시술 후 몇 달 뒤 색이 붉게/푸르게 변했다는 클레임을 받을 때"
+      - "실패한 대안: 저가 수입 색소를 썼다가 발색 편차가 커서 재시술·환불로 손해 본 경험"
+      - "두려움: 색소 안전성(유해물질)을 고객이 물어봐도 근거를 제시 못 하는 상황"
+    dailyVocab: ["발색", "잔여", "리터치", "변색", "정착", "농도", "니들", "컬러 빠짐"]
+    channelsTheyUse: [naver-blog, instagram, threads]
+  # B2C — 시술을 받을 일반 고객 (인지·신뢰 형성)
+  - persona: "눈썹·아이라인 반영구를 처음 고민하는 30~40대"
+    painPoints:
+      - "두려움: 시간이 지나 색이 변하거나 부자연스러워질까 봐 결정을 미룸"
+      - "실패한 대안: 후기만 보고 갔다가 색·모양이 마음에 안 들었던 경험"
+      - "결정적 순간: 흐려진 기존 반영구를 리터치할지 새로 받을지 검색할 때"
+    dailyVocab: ["자연스럽게", "티 안 나게", "오래가는", "안 아픈", "붉게 변하는", "지속력"]
+    channelsTheyUse: [naver-blog, instagram]
+
+tone:
+  preset: calm
+  voiceNotes: |
+    - '~합니다' 체 기본. 신뢰가 핵심인 업종이라 단정 광고톤 금지, 수치·근거 우선.
+    - 금지 말투: 느낌표 남발, "지금 바로!", 과장 형용사, 시술 통증 단정("안 아파요").
+    - 차별점(Offer): 공인기관 유해물질 시험성적서 N.D. 판정 + 색 안정성 시험 = 안심 근거.
+    - 효능·안전은 항상 '시험 결과 수치'로 (단정 X). 예: "적합 판정", "N.D. 불검출".
+  sampleSentences:
+    - "공인기관 28종 유해물질 시험에서 전 항목 N.D.(불검출) 판정을 받았습니다."
+    - "색 안정성 시험에서 변색 폭이 같은 종류 평균 대비 낮게 측정됐습니다."
+    - "시험성적서 PDF에서 항목별 수치를 직접 확인하실 수 있습니다."
+
+writing:
+  formats: [data_driven, narrative_thread]
+  sentenceLength: medium
+  ctaStyle: soft
+  emojiUsage: minimal
+  referencePosts:
+    - "반영구 색소를 고를 때 가장 먼저 봐야 할 건 발색이 아니라 '시간이 지난 뒤의 색'입니다. 저희가 색 안정성 시험을 공개하는 이유입니다."
+
+imageStyle:
+  aesthetic: minimal_editorial
+  colorMood: neutral
+  preferAbstract: false
+  avoidElements: ["stock photo feel", "과장된 비포애프터", "시술 장면 클로즈업", "busy background"]
+  referencesBrands: ["Aesop", "Tamburins"]
+
+visual:
+  colors:
+    primary:    "#1A1A1A"
+    accent:     "#8B6F4E"
+    background: "#FAFAF8"
+  fontFamily: "Pretendard"
+
+hashtags:
+  always:
+    - "#샘플퍼마"
+  pool:
+    - "#반영구색소"
+    - "#눈썹문신"
+    - "#아이라인"
+    - "#시험성적서"
+    - "#색안정성"
+    - "#PMU"
+
+legal:
+  adDisclosureRequired: true
+  adHashtag: "#광고"
+
+channels:
+  # ⚠ 현재 스키마 channels.enabled enum 에는 블로그 채널(naver-blog 등)이 빠져 있다.
+  # 블로그가 주력이면 campaign-new --channels 로 지정하거나 schema 보강 필요 (아래 검증 결과 참조).
+  enabled: [instagram, threads, linkedin]
+
+campaigns:
+  defaultGoals: [awareness, lead]
+  cadencePerWeek: 4
+
+competitors:
+  - name: "예시색소A"
+    url: https://example.com/colorA
+    notes: "저가 수입, 발색 편차·변색 클레임 많음 — 우리는 시험성적서로 차별화"
+  - name: "예시색소B"
+    url: https://example.com/colorB
+    notes: "마케팅 강하나 안전성 데이터 비공개"
+
+# 반영구·화장품 광고법 추가 금기 (자동 7패턴 위에 더해지는 업종 특화분)
+banned:
+  words:
+    - "반영구 시술 부작용 사례"
+    - "타사 색소 직접 비교 비방"
+  topics:
+    - "경쟁사 비방"
+    - "의료 행위로 오인될 표현"
+    - "특정인 시술 부작용 사례 공개"
+  claims:
+    # 자동 차단되는 7패턴(치료·의학효능·효과보장·부작용없음·100%안전·절대표현·즉각효과)은 제외.
+    # 아래는 반영구·화장품 업종에서 추가로 위험한 표현.
+    - "영구"
+    - "평생 지속"
+    - "무통 시술"
+    - "통증 없는"
+    - "1회 완성"
+    - "식약처 인증 색소"
+    - "식약처 승인"
+    - "미백"
+    - "주름 개선"
+    - "의료용"
+    - "병원급"
+
+meta:
+  createdAt: "2026-06-14T10:00:00+09:00"
+  updatedAt: "2026-06-14T10:00:00+09:00"
+  filledBy: interview
