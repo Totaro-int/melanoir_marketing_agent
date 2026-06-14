@@ -164,8 +164,12 @@ let _chromeAuthCache = { at: 0, data: null };
 const _publishTasks = new Map();  // taskKey ('slug::channel') → { running, pid, exitCode, logPath, ... }
 
 async function readChromeCookieAuth() {
-  // 5분 캐시 — browser-publish 와 race 안 나도록 길게
-  if (Date.now() - _chromeAuthCache.at < 5 * 60_000 && _chromeAuthCache.data) {
+  // 적응형 TTL: browser-publish 가 CDP 점유 중일 때만 5분 캐시(race 방지).
+  // 평소엔 20초 — 채널 로그인/재로그인이 대시보드 30초 자동 폴링에 바로 반영되도록.
+  // (예전엔 항상 5분이라 로그인해도 최대 5분간 옛 상태로 표시되는 문제가 있었음.)
+  const publishActive = [..._publishTasks.values()].some((t) => t.running);
+  const ttl = publishActive ? 5 * 60_000 : 20_000;
+  if (Date.now() - _chromeAuthCache.at < ttl && _chromeAuthCache.data) {
     return _chromeAuthCache.data;
   }
   let browser = null;
