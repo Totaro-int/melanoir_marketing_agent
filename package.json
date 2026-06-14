@@ -22,6 +22,7 @@
     "publish": "node harness/bin/publish.mjs",
     "publish:dry": "PUBLISHER_DRY_RUN=true node harness/bin/publish.mjs",
     "auth": "node harness/bin/auth.mjs",
+    "cookies": "node harness/bin/cookie-store.mjs",
     "status": "node harness/bin/board.mjs",
     "status:watch": "node harness/bin/board.mjs --watch",
     "doctor": "node harness/bin/doctor.mjs",

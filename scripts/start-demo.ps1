@@ -53,6 +53,11 @@ if ($chromeAlive) {
   Write-Host "  [OK] Chrome 9222 started" -ForegroundColor Green
 }
 
+# 1.5 Restore saved cookies into Chrome (missing-only; never overwrites current login)
+Push-Location -LiteralPath $ROOT
+& node "harness\bin\cookie-store.mjs" restore 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+Pop-Location
+
 # 2. Dashboard check + start
 $dashAlive = $false
 try {

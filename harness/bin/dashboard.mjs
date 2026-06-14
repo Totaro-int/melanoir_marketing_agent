@@ -350,6 +350,13 @@ const handlers = {
       return { channel, connected: false, chromeError: chrome._error, recommendation: 'Chrome 9222 모드로 실행 안 됨 — start-demo.ps1 또는 doctor 확인' };
     }
     const info = chrome[channel];
+    // 로그인 감지 시 쿠키 스냅샷 (fire-and-forget) — 강제종료/다음 시작 대비
+    if (info) {
+      try {
+        const p = spawn(process.execPath, [resolve(ROOT, 'harness/bin/cookie-store.mjs'), 'save', `--channel=${channel}`], { detached: true, stdio: 'ignore', cwd: ROOT });
+        p.unref();
+      } catch { /* non-fatal */ }
+    }
     return {
       channel,
       connected: !!info,

@@ -60,6 +60,9 @@ else
   echo "  [OK] Chrome 9222 started"
 fi
 
+# 1.5 Restore saved cookies into Chrome (missing-only; never overwrites current login)
+( cd "$ROOT" && node harness/bin/cookie-store.mjs restore 2>&1 | sed 's/^/  /' ) || true
+
 # 2. Dashboard alive?
 dash_alive=false
 if curl -s -o /dev/null -w "%{http_code}" http://localhost:7777/api/today 2>/dev/null | grep -q "^200$"; then

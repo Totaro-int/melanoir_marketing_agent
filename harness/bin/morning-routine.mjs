@@ -112,6 +112,10 @@ async function ensureEnvironment() {
 // → 5분 timeout stuck / 빈 탭 현상 원천 차단.
 async function preflightAuth(neededChannels) {
   ui.step(2, 5, '사전 인증 검증 — 채널 cookie 확인');
+  // 저장된 쿠키 복원 — 강제종료/프로필 손상으로 잃은 로그인 되살림 (없는 것만, 현재 로그인 안 건드림)
+  if (!dryRun) {
+    try { spawnSync(NODE, [resolve(ROOT, 'harness/bin/cookie-store.mjs'), 'restore'], { cwd: ROOT, stdio: 'inherit', timeout: 20_000 }); } catch { /* non-fatal */ }
+  }
   let authMap = {};
   try {
     const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(20_000) });
