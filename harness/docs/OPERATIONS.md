@@ -14,15 +14,15 @@ drafting  →  preview  →  approved  →  scheduled / published / failed
 
 | 내부 단계 | bin 스크립트 (4개 스킬이 자동 호출) | 결과물 |
 |------|------|--------|
-| 브리프 | `bin/campaign-new.mjs "<주제>" [--cadence=...] [--slot-topic=...]` | `posts/campaigns/<slug>/brief.yaml` |
-| 생성 | `bin/generate.mjs <slug> [--channel=... --images=N]` | `<채널>/copy-spec.json`, `slide-spec.json` (학습 가이드 주입됨) |
+| 브리프 | `harness/bin/campaign-new.mjs "<주제>" [--cadence=...] [--slot-topic=...]` | `posts/campaigns/<slug>/brief.yaml` |
+| 생성 | `harness/bin/generate.mjs <slug> [--channel=... --images=N]` | `<채널>/copy-spec.json`, `slide-spec.json` (학습 가이드 주입됨) |
 | 에이전트 처리 | `copywriter` / `image-director` 서브에이전트 | `<채널>/copy-output.json`, `agent-output.json`, `card*.png` |
-| 최종 통합 | `bin/generate.mjs <slug> --finalize` | `<채널>/<TS>.md` 합본 + `agent-output.json` |
-| 검토 | `bin/preview.mjs <slug>` / `bin/inspect-guidelines.mjs <slug>` | 콘솔 렌더링 (가디언 색상) + 가이드라인 정합성 리포트 |
-| 승인 | `bin/approve.mjs <slug> --channel=<ch>` | `status: approved` + **`posts/preferences.yaml` 학습 누적** |
-| 거절 | `bin/reject.mjs <slug> --channel=<ch> --reason="..."` | `status: drafting`, `feedback[<ch>]` 누적 + 거절 사유 학습 |
-| 발행 | `bin/publish.mjs <slug> --channel=<ch> [--dry-run]` 또는 `bin/browser-publish.mjs ...` | `<채널>/result.json`, `status: published \| failed` |
-| 동기화 | `bin/sync-posts.mjs [--prune]` (자동 호출) | `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` symlink 갱신 |
+| 최종 통합 | `harness/bin/generate.mjs <slug> --finalize` | `<채널>/<TS>.md` 합본 + `agent-output.json` |
+| 검토 | `harness/bin/preview.mjs <slug>` / `harness/bin/inspect-guidelines.mjs <slug>` | 콘솔 렌더링 (가디언 색상) + 가이드라인 정합성 리포트 |
+| 승인 | `harness/bin/approve.mjs <slug> --channel=<ch>` | `status: approved` + **`posts/preferences.yaml` 학습 누적** |
+| 거절 | `harness/bin/reject.mjs <slug> --channel=<ch> --reason="..."` | `status: drafting`, `feedback[<ch>]` 누적 + 거절 사유 학습 |
+| 발행 | `harness/bin/publish.mjs <slug> --channel=<ch> [--dry-run]` 또는 `harness/bin/browser-publish.mjs ...` | `<채널>/result.json`, `status: published \| failed` |
+| 동기화 | `harness/bin/sync-posts.mjs [--prune]` (자동 호출) | `posts/by-channel/<채널>/<슬롯-슬러그>/<캠페인>/` symlink 갱신 |
 
 ## cadence → 카드 수
 
@@ -40,19 +40,19 @@ drafting  →  preview  →  approved  →  scheduled / published / failed
 저장 위치: `auth/<channel>.json` (mode 0600, gitignored)
 
 ```bash
-echo '{"accessToken":"...","userId":"..."}' | node bin/auth.mjs add threads
-node bin/auth.mjs show threads      # 마스킹된 출력
-node bin/auth.mjs check threads     # 어댑터 healthcheck
-node bin/auth.mjs remove threads
-node bin/auth.mjs list
+echo '{"accessToken":"...","userId":"..."}' | node harness/bin/auth.mjs add threads
+node harness/bin/auth.mjs show threads      # 마스킹된 출력
+node harness/bin/auth.mjs check threads     # 어댑터 healthcheck
+node harness/bin/auth.mjs remove threads
+node harness/bin/auth.mjs list
 ```
 
 ### 토큰 회전 절차
 
 1. 채널 콘솔에서 새 토큰 발급
-2. `node bin/auth.mjs add <channel>` 으로 덮어쓰기 (덮어쓰기는 자동)
-3. `/sns-doctor` 또는 `node bin/auth.mjs check <channel>` 으로 확인
-4. (사고 시) `node bin/auth.mjs remove <channel>` + 채널에서 즉시 revoke
+2. `node harness/bin/auth.mjs add <channel>` 으로 덮어쓰기 (덮어쓰기는 자동)
+3. `/sns-doctor` 또는 `node harness/bin/auth.mjs check <channel>` 으로 확인
+4. (사고 시) `node harness/bin/auth.mjs remove <channel>` + 채널에서 즉시 revoke
 
 ### BYO API 키 노출 시
 
@@ -71,7 +71,7 @@ node bin/auth.mjs list
 
 ## 사용자 선호도 학습
 
-`bin/approve.mjs` / `bin/reject.mjs` 종료 시 자동으로 `posts/preferences.yaml` 갱신:
+`harness/bin/approve.mjs` / `harness/bin/reject.mjs` 종료 시 자동으로 `posts/preferences.yaml` 갱신:
 
 | 명령 | 용도 |
 |---|---|
@@ -96,8 +96,8 @@ node bin/auth.mjs list
 - `assetUrls` 가 https public URL 인지 확인 (fal CDN 은 자동으로 OK, mock SVG 는 안 됨)
 
 ### 칸반이 갱신 안 됨
-- `bin/board.mjs --watch` 가 `posts/campaigns/` 의 fs.watch 의존. macOS 외 플랫폼은 1s 폴링 폴백
-- 그래도 안 되면 다시 `bin/board.mjs` 1회 호출
+- `harness/bin/board.mjs --watch` 가 `posts/campaigns/` 의 fs.watch 의존. macOS 외 플랫폼은 1s 폴링 폴백
+- 그래도 안 되면 다시 `harness/bin/board.mjs` 1회 호출
 
 ### by-channel 폴더가 어긋남
 - 슬롯 추가/삭제·이름변경 시 `node harness/bin/sync-posts.mjs --prune` 으로 강제 재빌드
