@@ -253,15 +253,17 @@ bin 스크립트 (25개)   generate.mjs / publish.mjs / board.mjs ...
 
 `.env.local`에서 `CONTENT_ENGINE_PROVIDER`로 선택합니다.
 
-| Provider | 방식 | 필요 키 | API 키 필수 |
-|----------|------|--------|-----------|
-| `inhouse-slides` | Claude HTML 슬라이드 → Playwright 스크린샷 | `ANTHROPIC_API_KEY` | ✓ 필수 (이미 있음) |
-| `fal` | fal.ai 이미지 생성 | `FAL_KEY` | ✓ 필요 |
-| `openai` | OpenAI DALL-E | `OPENAI_API_KEY` | ✓ 필요 |
+| Provider | 방식 | 필요 키 |
+|----------|------|--------|
+| `inhouse-slides` | Claude Code 가 HTML 슬라이드 → Playwright 스크린샷 | **없음** |
+| `fal` | fal.ai 이미지 생성 | `FAL_KEY` |
+| `openai` | OpenAI DALL-E | `OPENAI_API_KEY` |
 
 ### inhouse-slides (기본값·권장)
 
-**API 키 없이도 동작합니다.** `ANTHROPIC_API_KEY`만 있으면 됩니다.
+**API 키 0개로 동작합니다.** 카피·슬라이드는 Claude Code 서브에이전트
+(copywriter / image-director) 가 직접 만듭니다 — 외부 API 호출 없음.
+(`ANTHROPIC_API_KEY` 는 쓰지 않습니다. anthropic provider 도 `byok: false`.)
 
 외부 이미지 API 없이 브랜드 컬러·카피가 정확하게 반영된 슬라이드를 생성합니다.
 소재 이미지(제품 사진 등)를 Claude가 실제로 보고 슬라이드에 배치합니다.
@@ -271,9 +273,8 @@ bin 스크립트 (25개)   generate.mjs / publish.mjs / board.mjs ...
 npm install playwright
 npx playwright install chromium
 
-# .env.local
+# .env.local — 키 없이
 CONTENT_ENGINE_PROVIDER=inhouse-slides
-ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 `/sns-start` 실행 시 제품 사진 경로를 입력하면 슬라이드에 자동 삽입됩니다.

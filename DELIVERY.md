@@ -58,15 +58,19 @@ cp .env.example .env.local
 
 ```dotenv
 # 이미지 생성 방식 선택
-CONTENT_ENGINE_PROVIDER=inhouse-slides   # 외부 API 없이 Claude로 슬라이드 생성 (권장)
-# CONTENT_ENGINE_PROVIDER=fal           # fal.ai AI 이미지 생성
+CONTENT_ENGINE_PROVIDER=inhouse-slides   # 기본 — 외부 API 키 0개 (Claude Code 가 카피·슬라이드 직접 생성)
+# CONTENT_ENGINE_PROVIDER=fal           # fal.ai AI 이미지 생성 (FAL_KEY 필요)
 # CONTENT_ENGINE_PROVIDER=mock          # 오프라인 테스트용
 
-ANTHROPIC_API_KEY=sk-ant-...            # 필수 (카피 생성 + inhouse-slides)
-# FAL_KEY=fal_...                       # fal 선택 시 필수
+# FAL_KEY=fal_...                       # fal provider 선택 시에만 필요
+# OPENAI_API_KEY=sk-...                 # openai provider 선택 시에만 필요
 
 PUBLISHER_DRY_RUN=true                  # 납품 전까지 반드시 true 유지
 ```
+
+> **API 키 없이 동작합니다.** 기본 inhouse-slides 는 카피·슬라이드를
+> Claude Code 서브에이전트 (copywriter / image-director) 가 만듭니다.
+> `ANTHROPIC_API_KEY` 는 코드에서 쓰지 않습니다 (anthropic provider 도 byok:false).
 
 ### 1-5. 설치 및 진단
 
@@ -363,7 +367,7 @@ Claude Code 안에서:
 |------|---------|
 | `/help`에 sns- 명령 없음 | `/plugin reload` 실행 |
 | `company-profile.yaml not found` | 파일을 프로젝트 루트에 놓았는지 확인 |
-| 이미지 생성 실패 | `CONTENT_ENGINE_PROVIDER` 값 확인, `ANTHROPIC_API_KEY` 유효성 확인 |
+| 이미지 생성 실패 | `CONTENT_ENGINE_PROVIDER` 값 확인. fal 쓰면 `FAL_KEY` 유효성. inhouse-slides 면 Playwright 설치 확인 (`node harness/bin/doctor.mjs`) |
 | SNS 발행 실패 | `/sns-doctor` 실행 → 빨간 항목 확인 |
 | 카피가 브랜드 톤과 다름 | `company-profile.yaml`의 `tone.voiceNotes`, `sampleSentences` 보강 |
 

@@ -228,7 +228,7 @@ const page = context.pages()[0] ?? (await context.newPage());
 ```
 auth/                     ← SNS 자격증명 (NID_AUT 등 cookie / chrome-attach-profile/)
 company-profile.yaml      ← 회사 프로필 (브랜드 DNA + banned + tone)
-.env.local                ← API 키 (FAL_KEY / ANTHROPIC_API_KEY)
+.env.local                ← 선택 키 (FAL_KEY — fal provider 쓸 때만. ANTHROPIC_API_KEY 안 씀)
 posts/campaigns/*/        ← 생성된 캠페인 데이터 (brief.yaml/draft yaml/이미지)
 posts/sources/            ← 사용자 던진 원본 자료 (md/pdf)
 ```

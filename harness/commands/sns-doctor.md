@@ -49,10 +49,10 @@ description: 환경 진단 + 자격증명(auth) 관리 + 회사 프로필 업데
 ### `/sns-doctor fix`
 진단 결과의 자동 수정 가능 항목을 순서대로 처리:
 - `node_modules` 없음 → `npm install`
-- `.env.local` 없음 → `.env.example` 복사 후 API 키 입력 안내:
-  - `ANTHROPIC_API_KEY`: https://console.anthropic.com/settings/keys
-  - `FAL_KEY`: https://fal.ai/dashboard/keys
-  - `OPENAI_API_KEY`: https://platform.openai.com/api-keys
+- `.env.local` 없음 → `.env.example` 복사. **기본(inhouse-slides)은 API 키 0개로 동작** — 카피·슬라이드는 Claude Code 서브에이전트가 생성. 아래는 선택 provider 쓸 때만:
+  - `FAL_KEY` (AI 이미지 생성, provider=fal): https://fal.ai/dashboard/keys
+  - `OPENAI_API_KEY` (provider=openai): https://platform.openai.com/api-keys
+  - ⚠ `ANTHROPIC_API_KEY` 는 사용 안 함 (anthropic provider 도 byok:false)
 - `auth/` 디렉터리 없음 → 생성 + `chmod 0700`
 - 자격증명 파일 모드 != 0600 → `chmod 0600`
 

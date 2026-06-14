@@ -2240,7 +2240,6 @@ async function loadEnvOnce() {
       return;
     }
     const fal = data.keys?.FAL_KEY;
-    const ant = data.keys?.ANTHROPIC_API_KEY;
     const eng = data.keys?.CONTENT_ENGINE_PROVIDER;
     const mdl = data.keys?.FAL_IMAGE_MODEL;
     const statusOf = (k) => !k ? 'missing' : (k.is_placeholder ? 'placeholder' : 'set');
@@ -2252,8 +2251,6 @@ async function loadEnvOnce() {
     let html = '<div class="grid">';
     html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">FAL_KEY</div>' + badge(statusOf(fal)) + '</div>';
     html += '<div class="card-meta">' + (fal?.value || '—') + '</div></div>';
-    html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">ANTHROPIC_API_KEY</div>' + badge(statusOf(ant)) + '</div>';
-    html += '<div class="card-meta">' + (ant?.value || '—') + '</div></div>';
     html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">CONTENT_ENGINE_PROVIDER</div>' + badge(statusOf(eng)) + '</div>';
     html += '<div class="card-meta">' + (eng?.value || '—') + '</div></div>';
     html += '<div class="card"><div class="card-row" style="margin-bottom:6px;"><div class="card-title">FAL_IMAGE_MODEL</div>' + badge(statusOf(mdl)) + '</div>';
@@ -2267,12 +2264,10 @@ async function loadEnvOnce() {
 
 async function saveEnvForm() {
   const fal = document.getElementById('env-fal').value.trim();
-  const ant = document.getElementById('env-anthropic').value.trim();
   const eng = document.getElementById('env-provider').value;
   const mdl = document.getElementById('env-model').value.trim();
   const keys = {};
   if (fal) keys.FAL_KEY = fal;
-  if (ant) keys.ANTHROPIC_API_KEY = ant;
   if (eng) keys.CONTENT_ENGINE_PROVIDER = eng;
   if (mdl) keys.FAL_IMAGE_MODEL = mdl;
   if (Object.keys(keys).length === 0) { alert('변경된 키 없음'); return; }
@@ -2287,7 +2282,6 @@ async function saveEnvForm() {
       loadEnvOnce();
       // 입력 폼 비우기
       document.getElementById('env-fal').value = '';
-      document.getElementById('env-anthropic').value = '';
       document.getElementById('env-model').value = '';
     } else {
       status.textContent = '실패: ' + (data.error || '?');
@@ -2299,22 +2293,18 @@ async function saveEnvForm() {
 
 async function verifyEnv() {
   const fal = document.getElementById('env-fal').value.trim();
-  const ant = document.getElementById('env-anthropic').value.trim();
   const status = document.getElementById('env-verify-status');
-  if (!fal && !ant) { status.textContent = '검증할 키 입력 필요'; return; }
+  if (!fal) { status.textContent = '검증할 키 입력 필요 (FAL_KEY)'; return; }
   status.textContent = '검증 중 (API 호출)...';
   try {
     const r = await fetch('/api/env/verify', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ fal: fal || undefined, anthropic: ant || undefined }),
+      body: JSON.stringify({ fal: fal || undefined }),
     });
     const data = await r.json();
     const lines = [];
     if (data.results?.fal) {
       lines.push(data.results.fal.ok ? '✓ FAL 통과 (balance: ' + data.results.fal.balance + ')' : '✗ FAL 실패: ' + data.results.fal.error);
-    }
-    if (data.results?.anthropic) {
-      lines.push(data.results.anthropic.ok ? '✓ Anthropic 통과' : '✗ Anthropic 실패: ' + data.results.anthropic.error);
     }
     status.textContent = lines.join(' / ');
   } catch (e) {
@@ -2337,9 +2327,7 @@ function renderEnv() {
   html += '<input id="env-fal" type="password" placeholder="32fb11d5-...-...-...:abc123..." style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:monospace; font-size:12px;">';
   html += '<div style="font-size:11px; color:var(--text-mute); margin-top:4px;">https://fal.ai/dashboard/keys 에서 발급</div></div>';
 
-  html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">ANTHROPIC_API_KEY</label>';
-  html += '<input id="env-anthropic" type="password" placeholder="sk-ant-..." style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:monospace; font-size:12px;">';
-  html += '<div style="font-size:11px; color:var(--text-mute); margin-top:4px;">https://console.anthropic.com/settings/keys</div></div>';
+  html += '<div style="font-size:12px; color:var(--text-mute); background:rgba(122,138,255,0.06); border-radius:6px; padding:10px 12px;">기본 <code>inhouse-slides</code> 는 API 키가 필요 없습니다. 카피·슬라이드는 Claude Code 서브에이전트가 생성합니다. (ANTHROPIC_API_KEY 안 씀)</div>';
 
   html += '<div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px;">CONTENT_ENGINE_PROVIDER</label>';
   html += '<select id="env-provider" style="width:100%; padding:10px 12px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text);">';

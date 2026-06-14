@@ -9,10 +9,14 @@
 
 | 항목 | 내용 |
 |------|------|
-| `.env.local` 키 | `ANTHROPIC_API_KEY` (필수) + 선택 `FAL_KEY` |
 | `company-profile.yaml` | 고객사 브랜드 DNA (brand / industry / tone / hashtags / channels) |
 | `topics.txt` | 30일 캘린더 주제 (Claude 가 브랜드 DNA 보고 생성) |
 | SNS 계정 | 고객사가 직접 로그인할 ID/PW (담당자가 대신 X) |
+| (선택) `FAL_KEY` | **AI 이미지** 를 fal.ai 로 생성할 때만. 기본 inhouse-slides 면 불필요 |
+
+> **API 키 없이 동작합니다.** 기본 `CONTENT_ENGINE_PROVIDER=inhouse-slides` 는
+> 카피·슬라이드를 Claude Code 가 직접 생성 (서브에이전트). 외부 API 키 0개.
+> `ANTHROPIC_API_KEY` 는 쓰지 않습니다 (코드에 참조 없음).
 
 ---
 
@@ -27,14 +31,14 @@ node harness/bin/setup.mjs
 
 ---
 
-## 2. API 키 입력
+## 2. 환경 설정 (키 선택)
 
-`.env.local` 편집 (또는 대시보드 ⚙ 환경 설정 탭):
+`.env.local` 편집 (또는 대시보드 ⚙ 환경 설정 탭). 기본은 키 없이 동작:
 
 ```dotenv
-CONTENT_ENGINE_PROVIDER=inhouse-slides
-ANTHROPIC_API_KEY=sk-ant-...
-# FAL_KEY=...            # 이미지 AI 쓸 때만
+CONTENT_ENGINE_PROVIDER=inhouse-slides   # 기본 — 키 불필요
+# FAL_KEY=fal_...        # AI 이미지(fal) 쓸 때만
+# OPENAI_API_KEY=sk-...  # OpenAI 이미지 쓸 때만
 ```
 
 검증:

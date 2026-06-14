@@ -869,6 +869,8 @@ const server = createServer(async (req, res) => {
           } catch (e) { results.fal = { ok: false, error: e.message }; }
         }
 
+        // NOTE: vestigial — ANTHROPIC_API_KEY 는 더는 쓰지 않음 (카피/슬라이드는 서브에이전트가 생성).
+        // 프론트(verifyEnv)가 anthropic 을 보내지 않으므로 이 가드는 실행되지 않음. 응답 형태 유지를 위해 남겨둠.
         if (anthropic) {
           try {
             const r = await fetch('https://api.anthropic.com/v1/models', {
