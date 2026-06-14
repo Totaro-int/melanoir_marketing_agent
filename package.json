@@ -33,7 +33,8 @@
     "queue:tick": "node harness/bin/queue-tick.mjs",
     "queue:dry": "node harness/bin/queue-tick.mjs --dry-run",
     "queue:install": "node harness/bin/install-cron.mjs install",
-    "sync-posts": "node harness/bin/sync-posts.mjs"
+    "sync-posts": "node harness/bin/sync-posts.mjs",
+    "seed-calendar": "node harness/bin/seed-calendar.mjs"
   },
   "dependencies": {
     "ajv": "^8.17.1",
