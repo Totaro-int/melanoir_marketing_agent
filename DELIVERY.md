@@ -314,6 +314,30 @@ Task Scheduler 의 `MarketingAgentMorningRoutine` 작업으로 등록됨.
 
 ⚠ **컴퓨터 자동 부팅** (BIOS Wake Timer 등) 은 OS 스케줄러 영역 밖. 매일 정시 발행 위해 컴퓨터가 그 시각에 켜져 있어야.
 
+### 4-C. 채널별 작동 상태 (정직한 납품 기준)
+
+morning routine 이 **발행 직전까지 자동** 처리하는 채널:
+
+| 채널 | 자동화 | 인증(cookie) 정책 | 비고 |
+|------|--------|------------------|------|
+| **Instagram** | ✅ 완전 자동 | sessionid — 장기 유지 (수주~수개월) | 모달 + 이미지 + 캡션 |
+| **Threads** | ✅ 완전 자동 | sessionid — 장기 유지 | 컴포저 + 텍스트 (3단계 paste 검증) |
+| **Naver Blog** | ✅ 자동 (인증 시) | NID_AUT — **세션 만료 잦음** | SmartEditor segment paste + 발행 모달 |
+| **LinkedIn** | ✅ 자동 (인증 시) | li_at — 약 5일 유지 | 피드 일반 post 모달 |
+| **Tistory** | ⚠ 인증 불안정 | TSSESSION — 글쓰기 페이지 추가 인증 필요 | 인증 부족 시 명확히 skip + 알림 |
+| Brunch | ⚠ 작가 승인 필요 | 계정 자격 이슈 | draft 저장만 |
+
+**핵심 동작 — 인증 만료 자동 처리** (P0 안정성):
+- routine 시작 시 모든 대상 채널의 cookie 를 자동 검증
+- 만료된 채널은 (1) 데스크탑 알림 (2) 로그인 페이지 자동 오픈 (3) 그 채널만 skip
+- → **만료 채널 때문에 전체 routine 이 멈추거나 빈 탭이 뜨는 일 없음**
+
+**인증 만료 시 사용자 액션** (30초):
+1. 데스크탑 알림 확인 → Chrome 의 로그인 탭에서 로그인
+2. `npm run morning` 다시 실행 (또는 다음날 자동)
+
+**결과 알림**: routine 완료 시 "발행 대기 N · 로그인 필요 M · 실패 K" 데스크탑 알림 + `logs/morning-result.json` 기록. 9시 자동 실행이 깨져도 즉시 인지 가능.
+
 ---
 
 ## Part 5. 업데이트
