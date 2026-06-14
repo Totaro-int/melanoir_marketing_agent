@@ -35,6 +35,9 @@ const channelFilter = argv.find((a) => a.startsWith('--channel='))?.split('=')[1
 const maxChannels  = Number(argv.find((a) => a.startsWith('--max='))?.split('=')[1] || '5');
 const dryRun       = argv.includes('--dry-run');
 const skipGenerate = argv.includes('--skip-generate');
+const noWaitLogin  = argv.includes('--no-wait-login');
+// 만료 채널 로그인 대기 시간 (초). --wait-login=N 으로 조정. 0 이면 대기 안 함.
+const WAIT_LOGIN_SEC = Number(argv.find((a) => a.startsWith('--wait-login='))?.split('=')[1] || '180');
 
 const NODE = process.execPath;
 
@@ -148,8 +151,31 @@ async function preflightAuth(neededChannels) {
     }
     notifyDesktop(
       `로그인 필요: ${[...expired].join(', ')}`,
-      `${expired.size}개 채널 cookie 만료 — Chrome 탭에서 로그인 후 다시 실행`,
+      `${expired.size}개 채널 cookie 만료 — Chrome 탭에서 로그인하시면 자동 진행됩니다`,
     );
+
+    // 로그인 대기 + 자동 재검증 (--no-wait-login 으로 끄기)
+    // 사용자가 그 자리에서 로그인하면 재실행 없이 한 번에 진행됨.
+    if (!noWaitLogin) {
+      ui.info(`  로그인 대기 중... (최대 ${WAIT_LOGIN_SEC}초, 로그인되면 자동 진행)`);
+      const deadline = Date.now() + WAIT_LOGIN_SEC * 1000;
+      while (Date.now() < deadline && expired.size > 0) {
+        await new Promise((r) => setTimeout(r, 5000));
+        try {
+          const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(15_000) });
+          const data = await r.json();
+          const live = {};
+          for (const a of data.auth || []) if (a.configured) live[a.channel] = true;
+          for (const ch of [...expired]) {
+            if (live[ch]) {
+              expired.delete(ch); ok.add(ch);
+              ui.ok(`    ✓ ${ch} 로그인 감지 — 진행 대상에 추가`);
+            }
+          }
+        } catch {}
+      }
+      if (expired.size) ui.warn(`  여전히 미로그인: ${[...expired].join(', ')} — 이번엔 skip`);
+    }
   }
   return { ok, expired };
 }
