@@ -1,0 +1,33 @@
+# Melanoir 30일 캘린더 주제 (반영구 색소 / PMU / B2B 아티스트)
+# 한 줄 = 한 캠페인. brand DNA(톤·해시태그·채널)는 company-profile.yaml 에서 자동 주입.
+
+safety-test-report : 반영구 색소 안전성, 시험성적서로 확인하는 법
+color-fade : 시간이 지나도 변색되지 않는 색소의 조건
+sterile-pigment : 무균 포장 색소가 시술 클레임을 줄이는 이유
+pigment-pick-guide : 처음 색소 고를 때 꼭 봐야 할 5가지
+heavy-metal : 색소 중금속 검출, 왜 시험 데이터를 봐야 하나
+embo-color : 엠보 시술 발색, 색소가 좌우하는 부분
+eyebrow-retouch : 눈썹 반영구 리터치 주기, 색소별 차이
+ad-law-safe : 반영구 마케팅 광고법, 안전하게 표현하는 법
+artist-claim : 시술 후 색 변색 클레임, 원인과 예방
+pigment-viscosity : 점도가 일정한 색소가 시술 정밀도를 높이는 이유
+nd-test : 28종 유해물질 N.D.(불검출)가 의미하는 것
+scalp-mp : 두피 문신(SMP) 색소 선택 기준
+lip-pmu : 입술 반영구 색소, 발색과 지속력
+melanin-pigment : 순수 멜라닌 기반 색소란 무엇인가
+disposable : 일회용 멸균 포장이 위생에 중요한 이유
+color-stability : 색 안정성 시험, 어떻게 읽나
+beginner-artist : 입문 아티스트가 색소에서 자주 하는 실수
+academy-standard : PMU 학원이 표준 색소를 정해야 하는 이유
+irritation-factor : 자극 유발 인자 측정, 대조군 비교 읽는 법
+brand-trust : 색소 브랜드 신뢰, 데이터로 검증하는 기준
+oem-pigment : 색소 정품 보증과 이력 추적
+pigment-storage : 색소 보관, 발색 유지하는 법
+before-after : 비포애프터 없이 신뢰 주는 콘텐츠 만들기
+clinic-grade : 위생용품 관리법 기준, 색소가 지켜야 할 것
+color-theory : 반영구 색 이론, 피부톤별 색소 선택
+healing-process : 시술 후 정착 과정, 색소가 미치는 영향
+season-color : 계절별 반영구 색감 트렌드
+consult-guide : 고객 상담 시 색소 안전성 설명하는 법
+portfolio : 아티스트 포트폴리오에 색소 데이터 활용
+faq-safety : 고객이 가장 많이 묻는 반영구 안전 질문 정리
