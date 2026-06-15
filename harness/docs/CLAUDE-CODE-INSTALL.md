@@ -105,27 +105,40 @@ node harness/bin/profile-validate.mjs
 
 ---
 
-## PHASE 4 — (선택) AI 이미지 키 FAL_KEY  🧑
+## PHASE 4 — 이미지 생성 API 키 (블로그 인라인 이미지)  🧑
 
-> 기본 카드뉴스(inhouse-slides)만 쓸 거면 **이 PHASE 건너뛴다 — 키 불필요.**
-> 배경에 AI 가 그린 사진/일러스트를 섞고 싶을 때만.
+> 카드(인스타·스레드·링크드인)는 Claude HTML 카드라 **키 불필요**.
+> 단 **블로그(naver-blog) 본문 인라인 이미지는 AI 이미지 API**로 만든다 → 키 1개 필요.
 
-🧑 https://fal.ai/dashboard/keys 에서 키 발급(사람이). 입력 방법 둘:
+### 4-1. 어떤 API 쓸지 결정 (설치 직전)
 
-**대시보드(권장, PHASE 5 이후)**: http://localhost:7777 → ⚙ 환경 설정 →
-`FAL_KEY` 입력 → [검증] → [저장]. (`.env.local.bak` 자동 백업)
+| provider | 발급 콘솔 | 비고 |
+|---|---|---|
+| **fal.ai** (권장·검증됨) | https://fal.ai/dashboard/keys | 가입 즉시 키. abstract/editorial 이미지 — 멜라누아 모노톤에 적합 |
+| openai | https://platform.openai.com/api-keys | gpt-image-1 / DALL-E |
+| google (Gemini) | https://aistudio.google.com/apikey | ⚠ 이미지 provider 추가 필요 (현재 fal/openai 만 내장) |
 
-**또는 `.env.local` 직접**:
+### 4-2. Chrome MCP로 발급 (Claude Code 안에서)
+
+Claude 가 위 발급 콘솔을 Chrome 새 탭에 연다 → 🧑 클라이언트가 로그인 →
+[Create API key] 클릭 → 키 복사. (자동 클릭이 막히면 클라이언트가 직접 생성)
+
+### 4-3. 키 저장 + 검증
+
+대시보드(PHASE 5 이후) http://localhost:7777 → ⚙ 환경 설정 → 키 입력 →
+**[검증]** (실 API 호출로 잔액 확인) → **[저장]** (`.env.local` + `CONTENT_ENGINE_PROVIDER` 자동, `.env.local.bak` 백업).
+
+또는 `.env.local` 직접:
 ```dotenv
 CONTENT_ENGINE_PROVIDER=fal
-FAL_KEY=fal_...
-# FAL_IMAGE_MODEL 값에는 인라인 주석(  # ...) 붙이지 말 것
+FAL_KEY=...
+# FAL_IMAGE_MODEL 값에 인라인 주석(  # ...) 붙이지 말 것
 ```
 
-주의: AI 이미지 모델엔 한글 타이포를 그리게 하면 깨진다. 텍스트 오버레이는
-inhouse-slides 레이어가 담당하므로, fal 은 **배경 비주얼 용도**로만.
+> 한글 타이포는 AI 이미지에 그리지 않는다 (깨짐). 텍스트는 글 본문에, 이미지는
+> abstract/editorial 비주얼로 — 블로그 **섹션마다 인라인 배치**된다 (한꺼번에 위에 X).
 
-**✅ 검증 게이트**: (이 PHASE 를 했다면) 대시보드 [검증] 에서 `✓ FAL 통과`.
+**✅ 검증 게이트**: 대시보드 [검증] `✓ FAL 통과` 또는 `node harness/bin/doctor.mjs` 의 content-engine fal green.
 
 ---
 
