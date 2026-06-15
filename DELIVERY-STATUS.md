@@ -56,7 +56,7 @@
 ## 알려진 한계 / 주의
 
 - **이미지**: 카드(인스타·스레드·링크드인)=Claude HTML(키 0). 블로그=AI 이미지 API(fal). 한글은 이미지에 안 그림 → 본문 텍스트로.
-- **⚠ 블로그 이미지는 `/sns-start` 정상 플로우로 생성** — copywriter(본문+imageSlots) → image-director Blog Mode(슬롯별 fal 생성 + 본문 인라인 치환). 기존 블로그가 fal 이미지 4장 섹션별 인라인 = 검증됨. 슬롯별 생성 코어(`gen-image.mjs` + fal, 기본 nano-banana-2)도 실생성 확인(188KB PNG, EXIT 0). **수동 `--provider=fal --finalize` 는 소셜카드 경로라 블로그엔 부적합**(이미지 1장·인터리브 X). 검수 시 블로그는 /sns-start 로 생성해 인라인 배치 최종 확인.
+- ✅ **블로그 인라인 이미지 — 풀 파이프라인 실행 검증 완료**: copywriter(AEO 본문 + 5슬롯) → image-director Blog Mode → fal 5장 생성(`gen-image.mjs`, nano-banana-2) → **본문 섹션마다 인라인 치환**(img1 도입후 → §02뒤 → §03뒤 → §04뒤 → 끝, **맨 위 몰림 0·잔여 placeholder 0**) + 에이전트가 육안 품질게이트로 저품질(가짜텍스트·과한 광택) 4장 자동 재생성. 한글은 이미지에 안 그림(본문 텍스트로). → "이미지 쭉 나열" 문제 해소 확인. ⚠ 생성은 `/sns-start` 정상 플로우로 (수동 `--provider=fal --finalize` 는 소셜카드 경로라 블로그 부적합).
 - **copywriter 가디언 정합 확인됨**: 절대표현("유일한 근거")·자가검열 메모("100%안전 미사용")를 본문에서 빼면 가디언 block→warn 으로 통과 (실행 확인). 두 규칙 copywriter.md §5 반영 완료.
 - **네이버 쿠키**: 세션 만료 잦음 → morning preflight 가 만료 시 로그인창 자동 + 알림.
 - **Chrome 먹통 시**: stop-demo → start-demo (쿠키 보존 + 복원).
