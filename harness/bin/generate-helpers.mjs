@@ -173,7 +173,7 @@ export function imagesFor(cadence, override) {
   switch (cadence) {
     case 'series-3': return 3;
     case 'series-5': return 5;
-    case 'thread':   return 0; // text series — copywriter handles continuation
+    case 'thread':   return 1; // text series + 리드 카드 1장 (스레드 이미지 첨부용)
     case 'single':
     default:         return 1;
   }

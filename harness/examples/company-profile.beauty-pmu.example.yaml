@@ -81,9 +81,8 @@ legal:
   adHashtag: "#광고"
 
 channels:
-  # ⚠ 현재 스키마 channels.enabled enum 에는 블로그 채널(naver-blog 등)이 빠져 있다.
-  # 블로그가 주력이면 campaign-new --channels 로 지정하거나 schema 보강 필요 (아래 검증 결과 참조).
-  enabled: [instagram, threads, linkedin]
+  # 블로그(naver-blog)도 enabled 에 직접 포함 가능 (schema enum 에 추가됨).
+  enabled: [naver-blog, instagram, threads, linkedin]
 
 campaigns:
   defaultGoals: [awareness, lead]

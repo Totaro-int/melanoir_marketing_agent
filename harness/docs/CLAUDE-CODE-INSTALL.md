@@ -67,7 +67,22 @@ node harness/bin/doctor.mjs
 
 ## PHASE 3 — 브랜드 DNA (company-profile.yaml)  🧑
 
-회사 프로필이 카피·해시태그·톤·금기어·캘린더 전부의 입력이다. 두 경로:
+회사 프로필이 카피·해시태그·톤·금기어·캘린더 전부의 입력이다.
+
+**🎨 브랜드북(PDF) 있으면 먼저 — 시각/톤이 자동으로 잡힌다:**
+브랜드북을 `posts/sources/` 에 두고 텍스트 추출:
+```bash
+node harness/bin/parse-pdf.mjs "<브랜드북.pdf>" --out=posts/sources/brandbook.md
+```
+추출된 텍스트(태그라인·컬러 HEX·폰트·보이스·미학)를 인터뷰가 읽고 `company-profile.yaml` 의 아래를 자동으로 채운다 (🧑 사람은 확인·보정만):
+- `taglineOneLine` ← 브랜드 태그라인
+- `tone.preset`/`voiceNotes` ← 브랜드 보이스 (예: Professional·Scientific·Precise → preset `premium`/`professional` + voiceNotes)
+- `visual.colors`/`visual.fonts` ← 컬러 팔레트 HEX + 타이포 (예: `#0A0A0C`·`#FFFFFF`, Pretendard)
+- `imageStyle.aesthetic`/`colorMood` ← 미학 (예: monochromatic scientific minimalism → `custom` + `high_contrast`)
+
+→ 이렇게 잡힌 `visual`/`imageStyle` 을 image-director 가 카드에 그대로 반영해서 **브랜드북과 일치하는 카드뉴스**가 나온다. (멜라누아 = "Safest Black", jet black + Pretendard 모노톤이 이 경로로 들어옴.)
+
+그 다음 두 경로 중 하나로 나머지 필드:
 
 **경로 A (권장) — Claude Code 인터뷰**: Claude Code 안에서 `/sns-start` 실행.
 첫 사용이면 회사 프로필 인터뷰부터 자동 진행된다. 🧑 사장님이 질문(브랜드명,
@@ -78,7 +93,7 @@ node harness/bin/doctor.mjs
 cp harness/examples/company-profile.example.yaml company-profile.yaml
 ```
 🧑 핵심 필드를 채운다: `brand.name`/`brand.korName`, `industry`,
-`tone.preset`(relate-kr|b2b|informational|friendly|sales),
+`tone.preset`(professional|friendly|witty|bold|calm|premium|custom),
 `hashtags.always`+`hashtags.pool`, `channels.enabled`, `banned`.
 
 검증:

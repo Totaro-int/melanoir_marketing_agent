@@ -23,6 +23,8 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 스키마의 `required` 필드를 **이 순서**로 진행한다. 각 단계는 한 번에 하나의 질문만 하고, 사용자가 답한 즉시 다음 질문으로 넘어간다.
 
+0. **(브랜드북 PDF 있으면 먼저)** "브랜드북·브랜드 가이드 PDF 있나요?" → 있으면 `node harness/bin/parse-pdf.mjs <pdf> --out=posts/sources/brandbook.md` 로 텍스트 추출 → 거기서 **태그라인·컬러 HEX·폰트·브랜드 보이스·미학**을 읽어 `taglineOneLine`·`tone.preset`+`voiceNotes`·`visual.colors`/`fonts`·`imageStyle.aesthetic`/`colorMood` 를 **미리 채운다**. 이후 단계는 빈 칸만 묻고, 채워진 건 "이렇게 맞나요?"로 확인만 받는다. (예: "Professional·Scientific" 보이스 → `preset: premium`, "monochromatic" → `colorMood: high_contrast`, "Pretendard #0A0A0C" → visual 에 그대로.)
+
 1. **brand.name** — "회사명이 어떻게 됩니까?"
 2. **taglineOneLine** — "회사를 한 문장으로 소개한다면?" (5~120자, 카피 생성에 직접 사용됨을 안내)
    - 이어서 **차별점 1개** 추출: "경쟁사·대안이랑 딱 하나만 다른 점을 꼽으면?" → 카피 O(Offer)의 핵심. **`tone.voiceNotes`에 한 줄로 적는다.** (⚠ `competitors` 필드는 copywriter spec에 전달 안 됨 — 카피에 반영되려면 voiceNotes나 painPoints에 있어야 함)
@@ -150,7 +152,7 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 industry가 이 계열이면 4·6단계에 아래를 끼워넣는다. 표시광고법·화장품법·의료법 리스크가 커서 통점·금기어를 일반 업종보다 깊게 받아야 발행 사고가 안 난다. (브랜드명은 1단계 `brand.name`에서 이미 받았으므로 여기선 업종 패턴만 다룬다.)
 
 > 완성 예시(채울 깊이 참고): [`examples/company-profile.beauty-pmu.example.yaml`](../examples/company-profile.beauty-pmu.example.yaml) — 4겹 통점·dailyVocab·voiceNotes 3축·claims 라이브러리가 어떻게 채워지는지 그대로 보여준다.
-> ⚠ 블로그 채널(naver-blog 등)은 schema `channels.enabled` enum 에 없다. 블로그가 주력이면 `channels.enabled`엔 instagram/threads/linkedin 만 넣고, 블로그 발행은 `seed-calendar`/`campaign-new`의 `--channels naver-blog`로 캠페인 레벨에서 지정한다.
+> 블로그 채널(naver-blog/tistory/brunch)도 `channels.enabled` 에 직접 넣을 수 있다 (schema enum 에 포함됨). 블로그가 주력이면 enabled 에 naver-blog 를 추가한다.
 
 ### A. 판매 구조 먼저 (B2B / B2C 갈림)
 

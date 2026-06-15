@@ -169,8 +169,8 @@ properties:
         minItems: 1
         items:
           type: string
-          enum: [threads, linkedin, instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube]
-        description: "활성 채널 ID. 토큰은 /sns-auth add <ch> 로 별도."
+          enum: [naver-blog, tistory, brunch, threads, linkedin, instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube]
+        description: "활성 채널 ID (블로그 naver-blog/tistory/brunch 포함). 토큰은 /sns-auth add <ch> 로 별도."
 
   campaigns:
     type: object

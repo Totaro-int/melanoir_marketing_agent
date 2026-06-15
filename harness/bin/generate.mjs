@@ -105,10 +105,8 @@ if (flags.finalize) {
 }
 
 if (provider.id === 'inhouse-slides') {
-  if (brief.cadence === 'thread') {
-    ui.err('inhouse-slides 프로바이더는 thread cadence를 지원하지 않습니다. brief.cadence를 single/series-3/series-5 로 변경하거나 다른 프로바이더를 사용하세요.');
-    process.exit(2);
-  }
+  // thread cadence: 본문은 연속 텍스트지만 리드 카드 1장은 생성 (imagesFor('thread')=1).
+  // 스레드도 이미지가 붙도록 — 예전엔 여기서 거부했음.
   await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages });
   process.exit(0);
 }

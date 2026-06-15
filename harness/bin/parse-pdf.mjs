@@ -81,7 +81,8 @@ for (let p = 1; p <= pageCount; p++) {
 }
 
 await pdf.cleanup();
-await pdf.destroy();
+// pdfjs v6: PDFDocumentProxy.destroy() 제거됨 — loadingTask.destroy() 로 해제
+await loadingTask.destroy();
 
 // md 조립 — 페이지 구분, 빈 줄 정리
 const mdLines = [];
