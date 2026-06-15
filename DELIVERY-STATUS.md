@@ -10,6 +10,22 @@
 
 ---
 
+## ⚠ 내일 반드시 — 블로그는 `--provider=fal` 로 생성 (밤중 핵심 발견, 실행 확인)
+
+**기본 provider(inhouse-slides)로 블로그를 생성하면 카드(slide-spec)가 나온다 — 블로그 article(Blog Mode)이 아님.** 실행 확인: `generate.mjs <blog> --channel=naver-blog`(기본) → `slide-spec.json`(카드). generate·finalize 가 채널 **kind 가 아니라 provider 로만 분기**하기 때문. (= "이미지 쭉 나열" 불만이 기본 플로우에서 재현될 수 있는 지점.)
+
+- ✅ **올바른 블로그 생성**: `--provider=fal` → copy-path → copywriter Blog Mode → image-director Blog Mode → fal 이미지 **섹션별 인라인**. (내 풀 파이프라인 테스트가 이 경로 = 검증됨.)
+- 소셜(IG/스레드/링크드인)은 inhouse-slides(카드)가 맞음.
+- ⚠ **혼합 캠페인 주의**: 멜라누아 캠페인은 1개에 blog+social 다 포함 → 단일 env provider 로 둘 다 못 맞춤(블로그=fal, 소셜=inhouse).
+
+**결정 필요 (둘 중 하나):**
+1. **운영 분리(즉시·코드0)** — 블로그 채널은 `--provider=fal`, 소셜은 inhouse 로 따로 generate.
+2. **kind-aware 라우팅 fix(정석)** — generate.mjs + generate-finalize.mjs 가 kind:blog 를 provider 무관 copy-path 로. core 변경이라 §0 인접 → 네 승인 후 내가 작업.
+
+→ **검수 때 블로그는 fal 경로로 생성해서 인라인 이미지 확인.** 추천: 우선 1번으로 검수 통과 → 이후 2번으로 자동화 깔끔하게.
+
+---
+
 ## ✅ 자율로 실행 검증 완료
 
 | 항목 | 검증 방법 | 결과 |
