@@ -181,7 +181,9 @@ ui.ok(`\n캘린더 시드 완료: ${created}개 캠페인`);
 if (!dryRun && created > 0) {
   const last = new Date(start);
   last.setDate(last.getDate() + topics.length - 1);
-  ui.dim(`  ${start.toISOString().slice(0, 10)} ~ ${last.toISOString().slice(0, 10)}`);
+  // dir 날짜와 동일하게 local(KST) 컴포넌트로 — toISOString(UTC)은 KST 자정에서 -1일 됨
+  const fmtDate = (x) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+  ui.dim(`  ${fmtDate(start)} ~ ${fmtDate(last)}`);
   ui.dim('  다음: 카피/이미지 채우기 (copywriter + image-director) 또는 morning routine');
   ui.dim('  대시보드 캘린더: http://localhost:7777');
 }
