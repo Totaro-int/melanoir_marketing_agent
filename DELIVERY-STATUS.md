@@ -56,6 +56,8 @@
 ## 알려진 한계 / 주의
 
 - **이미지**: 카드(인스타·스레드·링크드인)=Claude HTML(키 0). 블로그=AI 이미지 API(fal). 한글은 이미지에 안 그림 → 본문 텍스트로.
+- **⚠ 블로그 이미지는 `/sns-start` 정상 플로우로 생성** — copywriter(본문+imageSlots) → image-director Blog Mode(슬롯별 fal 생성 + 본문 인라인 치환). 기존 블로그가 fal 이미지 4장 섹션별 인라인 = 검증됨. **수동 `--provider=fal --finalize` 는 소셜카드 경로라 블로그엔 부적합**(이미지 1장·인터리브 X). 검수 시 블로그는 /sns-start 로 생성해 인라인 배치 확인.
+- **copywriter 가디언 정합 확인됨**: 절대표현("유일한 근거")·자가검열 메모("100%안전 미사용")를 본문에서 빼면 가디언 block→warn 으로 통과 (실행 확인). 두 규칙 copywriter.md §5 반영 완료.
 - **네이버 쿠키**: 세션 만료 잦음 → morning preflight 가 만료 시 로그인창 자동 + 알림.
 - **Chrome 먹통 시**: stop-demo → start-demo (쿠키 보존 + 복원).
 - 자율 점검은 생성/구조/설정까지. 실발행 10회 반복은 현장에서.
