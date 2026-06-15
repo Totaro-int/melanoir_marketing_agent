@@ -1,98 +1,188 @@
-# Melanoir 회사 프로필
 version: 1
 
 brand:
-  name: 멜라누아
-  legalName: Melanoir
+  name: Melanoir
+  korName: 멜라누아
+  legalName: 멜라누아
   websites:
-    - https://www.melanoir.com
+    - https://melanoir.co.kr
 
-taglineOneLine: "지구에서 가장 안전한 Black. 데이터로 증명한 반영구 색소."
+taglineOneLine: "지구에서 가장 안전한 Black을 추구하다."
 
-industry: "반영구 메이크업 소재 — 순수 멜라닌 기반 색소 브랜드"
+industry: "B2B — 반영구 화장(PMU) 색소 / 위생용품 / 시술 아티스트 전용"
 
 targetAudience:
-  - persona: "반영구 시술 아티스트 (퍼머넌트 메이크업·눈썹·아이라인 전문가)"
+  - persona: "반영구 시술 아티스트 (PMU artist)"
     painPoints:
-      - "색소 안전성 데이터를 직접 확인하기 어려움"
-      - "유해물질·중금속 불검출 여부를 신뢰할 수 있는 공인 자료가 없음"
-      - "고객 피부 반응·자극 이슈로 클레임 리스크 존재"
-    channelsTheyUse: [instagram, naver-blog, tistory, brunch]
-  - persona: "반영구 아카데미·교육 기관 원장"
+      - "기존 색소의 안전성·무균 우려 — 클레임 책임"
+      - "시술 후 자극·트러블 — 고객 신뢰 손상"
+      - "정품 보증·이력 추적이 어려운 시장"
+      - "점도 불균일·번짐 — 시술 정밀도 저하"
+      - "유해물질·중금속 검출 사고 우려"
+    channelsTheyUse: [instagram, naver-blog, youtube, blog]
+  - persona: "PMU 시술 학원·교육기관 운영자"
     painPoints:
-      - "수강생에게 추천할 안전한 색소 브랜드 부재"
-      - "위생·멸균 기준을 충족하는 프리미엄 제품 필요"
-    channelsTheyUse: [instagram, naver-blog]
+      - "수강생에게 추천할 안전 표준 색소 부족"
+      - "교육 단계부터 무균 시스템 도입의 어려움"
+    channelsTheyUse: [naver-blog, instagram, brunch]
 
 tone:
-  preset: relate-kr
+  preset: premium
   voiceNotes: |
-    - '~합니다' 체 기본. 과학적·데이터 중심 톤.
-    - 안전성 수치와 공인 시험 결과를 적극 활용.
-    - 이모지 최소화 (✅ 🔬 정도만). 전문가 대상 커뮤니케이션.
-    - "안전한", "순수한", "증명된" 키워드 활용.
+    - 의료·과학 데이터 우선 — "안전하다"보다 "검출되지 않았다"는 팩트 톤.
+    - "~합니다"체 + 단정적·정확함. 형용사 절제.
+    - "압도적인 안정성", "최고의" 같은 형용사 광고톤 회피 — 데이터로 대체.
+    - "Professionals Only" 강조 — 일반 소비자 대상 X.
+    - 의료기기·의약품 효능 표방 절대 금지 (위생용품 관리법 준수).
+    - 한자·외래어 적절 활용 (B2B 시술 전문가 대상).
   sampleSentences:
-    - "멜라누아 엠보는 28-FREE 유해물질 불검출, 무균 적합, 외부 자극 51% 감소를 데이터로 증명했습니다."
-    - "순수 멜라닌만 — 다른 색소 없이. 단 한 명을 위한 일회용 멸균팩 시스템."
-  preferredTerms:
-    "28-FREE": "28-FREE 유해물질 불검출"
-    "무균": "무균 적합 (Sterility Negative)"
-    "멜라닌": "순수 멜라닌"
+    - "지구에서 가장 안전한 Black을 추구하다."
+    - "다른 색소는 넣지 않았습니다."
+    - "안전하다는 말보다, 검출되지 않았다는 팩트를 믿으세요."
+    - "흔들 필요 없이 균일합니다."
+    - "오직 당신만을 위해 — 단 한 명의 고객을 위해 준비되는 시스템."
 
 banned:
   words:
-    - "최저가"
-    - "100% 보장"
-    - "공짜"
-    - "무료"
-    - "치료"
-    - "의학적"
+    - "최고의"
+    - "최고"
+    - "1위"
+    - "1등"
+    - "유일한"
+    - "유일"
+    - "완벽한"
+    - "절대"
+    - "베스트"
   topics:
+    - "의약품·의료기기 효능 표방"
+    - "치료·완치·예방 주장"
+    - "의학적 작용 표현 (피부 재생·항노화 등)"
     - "경쟁사 직접 비방"
     - "정치·종교"
-    - "의료 효능 주장"
   claims:
-    - "업계 1위"
-    - "유일한"
-    - "최고의"
-    - "세계 최초"
+    - "100% 안전"
+    - "100% 무균"
     - "효과 보장"
+    - "영구 효과"
+    - "치료"
+    - "완치"
+    - "의학적으로 입증"
+    - "임상적으로 증명"  # 단, 공인기관 시험 데이터는 사실대로 인용 OK
+    - "부작용 없음"
 
 visual:
   colors:
-    primary:    "#1A1A1A"
-    accent:     "#C8A96E"
-    background: "#F8F8F6"
-  logoPath: "./assets/logo.png"
-  fontFamily: "Pretendard"
+    primary:    "#000000"   # 핵심 — Pure Black
+    accent:     "#FFFFFF"
+    background: "#FFFFFF"
+    foreground: "#000000"
+    secondary:  "#0A0A0C"   # 브랜드북 Jet Black (10,10,12)
+  fonts:
+    heading: "Pretendard, Inter, sans-serif"   # 브랜드북 primary typeface
+    body:    "Pretendard, Inter, sans-serif"
+    data:    "JetBrains Mono"
+  aestheticDirection: "Premium Clinical Minimalism — 검정 모노톤 + 의료 사이언스 시각. Lab-grade precision. 광고형 컬러풀 X."
 
 hashtags:
   always:
+    - "#Melanoir"
     - "#멜라누아"
-    - "#melanoir"
+    - "#멜라누아엠보"
   pool:
+    # 한국어
+    - "#반영구화장"
     - "#반영구색소"
-    - "#퍼머넌트메이크업"
+    - "#엠보색소"
     - "#눈썹문신"
-    - "#안전한색소"
-    - "#멜라닌색소"
-    - "#28FREE"
+    - "#SMP시술"
+    - "#두피문신"
+    - "#안전색소"
+    - "#순수멜라닌"
     - "#무균색소"
-    - "#반영구아티스트"
+    - "#일회용색소"
+    - "#멸균포장"
+    - "#반영구시술"
     - "#PMU"
+    - "#피그먼트"
+    - "#색소"
+    # 영어
+    - "#permanentmakeup"
+    - "#PMUartist"
+    - "#cosmetictattoo"
+    - "#micropigmentation"
+    - "#scalpmicropigmentation"
+    - "#tattoopigment"
+    - "#sterilepigment"
 
 legal:
   adDisclosureRequired: true
   adHashtag: "#광고"
+  regulatory:
+    category: "위생용품 (위생용품 관리법)"
+    notes: "의약품·의료기기 X — 효능 표방 금지"
 
 channels:
-  enabled: [instagram, naver-blog, tistory, brunch, threads]
+  enabled:
+    - instagram
+    - naver-blog
+    - tistory
+    - brunch
+    - threads
+    - facebook
+    - x
+    - bluesky
+    - mastodon
+    - pinterest
+    - linkedin
+
+writing:
+  formats:
+    - data_driven       # 수치·시험 결과 우선
+    - single_punchline  # "다른 색소는 넣지 않았습니다" 류 단타 임팩트
+  sentenceLength: medium
+  ctaStyle: implicit   # B2B 전문가 — 압박형 CTA X
+  emojiUsage: none
+  referencePosts:
+    - |
+      안전하다는 말보다, 검출되지 않았다는 팩트를 믿으세요.
+
+      28-FREE 유해물질 불검출. 무균 시험 적합. 자극 유발 인자 51% 감소
+      (대조군 14.32 → 멜라누아 6.90, NO assay).
+
+      안전 기준은 수치로 증명되어야 합니다. 멜라누아 엠보의 모든 데이터는
+      공인기관 시험 결과를 따릅니다.
+
+imageStyle:
+  aesthetic: custom
+  customAesthetic: "Premium Clinical Minimalism — 검정 모노톤 + 의료 사이언스 시각, lab-grade precision (브랜드북: monochromatic sophistication · scientific minimalism · the purest black)"
+  colorMood: high_contrast   # 흑백 고대비 (Jet Black #0A0A0C / Pure White)
+  preferAbstract: true    # 추상·과학 시각 우선
+  moodWords: [precise, sterile, professional, premium, scientific, monochrome]
+  avoidElements:
+    - "캐주얼·라이프스타일 사진"
+    - "인물 클로즈업 (B2B 매체이므로)"
+    - "광고 배너 외양"
+    - "컬러풀·플레이풀 톤"
+    - "AI 슬롭 (광택·반사 과다)"
+  referencesBrands:        # schema 최대 3개
+    - "byredo"          # 미니멀 모노톤 럭셔리
+    - "aesop"           # 의약·라보라토리 톤
+    - "linear.app"      # 정밀·미니멀
 
 campaigns:
   defaultGoals: [awareness, lead]
-  cadencePerWeek: 3
+  cadencePerWeek: 2
+
+competitors:
+  - name: "Permablend"
+    notes: "글로벌 PMU 색소 — Hyper Realism 색감 강점"
+  - name: "World Famous Tattoo Ink"
+    notes: "글로벌 PMU/타투 색소"
+  - name: "Tina Davies"
+    notes: "PMU 색소 + 아티스트 트레이닝 결합"
 
 meta:
-  createdAt: "2026-06-01T00:00:00+09:00"
-  updatedAt: "2026-06-01T00:00:00+09:00"
-  filledBy: manual
+  createdAt: "2026-05-10T15:00:00+09:00"
+  updatedAt: "2026-05-10T15:00:00+09:00"
+  filledBy: manual   # melanoir.co.kr + 브랜드북(Pomelli) 기반
+  notes: "임시 캠페인 검증용 — 원본 TOTARO profile은 company-profile.totaro.bak.yaml 에 백업"

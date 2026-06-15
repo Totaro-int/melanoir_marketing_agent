@@ -3,7 +3,7 @@
 // profile to compose a post on threads.net / linkedin.com, attach images, then
 // stop right before "Post" so the user confirms (or auto-clicks if --auto-click).
 //
-//   node bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click]
+//   node bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run | --pre-publish | --auto-click]
 //
 // First run: the persistent context (auth/browser-profile/) is empty, so the user
 // must log into the SNS once. Subsequent runs reuse the cookies.
@@ -11,7 +11,11 @@
 // Safety:
 //   · headless 강제 false. 사용자가 보면서 게이트 통과시켜야 함.
 //   · brief.status[<ch>] !== 'approved' 면 거부 (publish.mjs 와 동일).
-//   · --dry-run 이면 컴포저까지만 채우고 게시 직전에 멈춤. 결과는 dryRun=true 로 저장.
+//   · --dry-run    : 모달 열기 전에 종료. 가장 안전. 결과는 dryRun=true 로 저장.
+//   · --pre-publish: 모달 + 카피 paste + 이미지 첨부 완료까지. gate()에서 멈춤 (게시 클릭 X).
+//                   Chrome 탭 살려두고 disconnect — 사용자가 직접 [공유] 클릭.
+//                   morning-routine 의 핵심 모드.
+//   · --auto-click : gate()에서 자동 5초 카운트다운 후 [공유] 클릭. 진짜 LIVE 발행.
 //   · 셀렉터 실패 시 30초 사용자 수동 개입 대기 후 재시도.
 //
 // 지원 채널: threads, linkedin (사용자 비전 1차 채널).
@@ -32,15 +36,17 @@ const argv = process.argv.slice(2);
 const slug = argv.find((a) => !a.startsWith('--'));
 const channel = argv.find((a) => a.startsWith('--channel='))?.split('=')[1];
 const dryRun = argv.includes('--dry-run');
-const autoClick = argv.includes('--auto-click');
-// --pre-publish: 모달 열고 모든 내용 채운 뒤 gate에서 멈춤. Chrome 탭 유지 (morning-routine 전용).
 const prePublish = argv.includes('--pre-publish');
+const autoClick = argv.includes('--auto-click');
+
+// 우선순위: dryRun > prePublish > autoClick > 수동 prompt
+// dryRun 일 때는 prePublish 무시 (안전)
+const effectivePrePublish = prePublish && !dryRun;
 const attach = argv.includes('--attach') || argv.find((a) => a.startsWith('--attach='));
 const attachUrl = (typeof attach === 'string' ? attach.split('=')[1] : null) || 'http://localhost:9222';
 
 if (!slug || !channel) {
-  ui.err('사용법: browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click] [--pre-publish] [--attach[=URL]]');
-  ui.err('  --pre-publish: 모달+카피+이미지 채우고 gate에서 멈춤. Chrome 탭 유지 (morning-routine 용)');
+  ui.err('사용법: browser-publish.mjs <slug> --channel=<ch> [--dry-run] [--auto-click] [--attach[=URL]]');
   ui.err('  --attach: 사용자 Chrome (--remote-debugging-port=9222 모드) 에 attach (default URL: http://localhost:9222)');
   process.exit(2);
 }
@@ -96,36 +102,49 @@ if (attach) {
   });
 }
 
-const page = context.pages()[0] ?? (await context.newPage());
+// attach 모드 + pre-publish 일 때는 항상 새 탭 — 사용자 기존 탭 보존.
+// 그 외 (--auto-click LIVE) 또는 launch 모드에서도 새 탭 안전 (기존 탭 덮어쓰기 방지).
+// 예외: 페이지가 하나도 없으면 새 페이지 (Chrome 빈 상태).
+const shouldOpenNewTab = attach || effectivePrePublish;
+let page;
+if (shouldOpenNewTab) {
+  page = await context.newPage();
+  ui.dim(`  새 탭 열림 (기존 탭 ${context.pages().length - 1}개 보존)`);
+} else {
+  page = context.pages()[0] ?? (await context.newPage());
+}
 
 let result;
 try {
   if (channel === 'threads') {
-    result = await publishThreads(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishThreads(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'linkedin') {
-    result = await publishLinkedin(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishLinkedin(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'naver-blog') {
-    result = await publishNaverBlog(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishNaverBlog(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'tistory') {
-    result = await publishTistory(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishTistory(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'brunch') {
-    result = await publishBrunch(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishBrunch(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   } else if (channel === 'instagram') {
-    result = await publishInstagram(page, draft, cardPaths, { dryRun, autoClick });
+    result = await publishInstagram(page, draft, cardPaths, { dryRun, autoClick, prePublish: effectivePrePublish });
   }
-  // gate() 에서 사용자가 N 을 누른 경우 publish 함수가 cancelled=true 로 반환.
-  // 이 케이스는 brief.status 를 건드리지 않고 (approved 그대로 유지) result.json 만 기록.
+  // gate() 결과 분기
   const cancelled = result?.cancelled === true;
+  const isPrePublished = result?.prePublished === true;
   saveResult(dir, channel, brief, briefPath, {
     ok: !cancelled,
     via: 'browser',
     dryRun,
+    prePublished: isPrePublished || undefined,  // pre-publish 모드 — 사용자 손에 넘김
     cancelled,
     url: result?.url ?? null,
     publishedAt: nowKstIso(),
-  }, /* failed */ false, /* skipStatusPatch */ dryRun || cancelled);
+  }, /* failed */ false, /* skipStatusPatch */ dryRun || cancelled || isPrePublished);
   if (cancelled) {
     ui.warn(`[${channel}] 사용자 취소 — status 'approved' 유지`);
+  } else if (isPrePublished) {
+    ui.ok(`[${channel}] pre-publish 완료 — Chrome 탭에서 [공유] 클릭`);
   } else {
     ui.ok(`[${channel}] ${dryRun ? 'dry-run 완료' : '발행 완료'}${result?.url ? ' → ' + result.url : ''}`);
   }
@@ -216,15 +235,16 @@ async function gate(page, label) {
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   ui.warn(`  🛑 게시 직전 — ${label}`);
   ui.warn('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  // dry-run safety — auto-click 보다 우선. 절대 게시 안 함.
+  // dry-run safety — pre-publish/auto-click 보다 우선. 절대 게시 안 함.
   if (dryRun) {
-    ui.info('  --dry-run — 게시 클릭 없이 종료 (auto-click 보다 우선)');
+    ui.info('  --dry-run — 게시 클릭 없이 종료 (다른 모드보다 우선)');
     return 'N';
   }
-  // pre-publish: 모달+카피+이미지 채우기 완료. Chrome 탭 그대로 유지. 게시 안 함.
-  if (prePublish) {
-    ui.ok('  --pre-publish — 발행 준비 완료. Chrome 탭에서 [공유] 클릭.');
-    return 'N';
+  // pre-publish — 사용자가 직접 [공유] 클릭하도록 Chrome 탭 살려두고 disconnect
+  if (effectivePrePublish) {
+    ui.info('  --pre-publish — 모달 + 카피 + 이미지 다 채워짐. Chrome 탭에서 사용자가 직접 [공유] 클릭하세요.');
+    ui.dim('  ★ Chrome 탭 유지 (Playwright disconnect 만) ★');
+    return 'PRE_PUBLISH';
   }
   if (autoClick) {
     ui.warn('  --auto-click 지정 — 5초 카운트다운 (Ctrl+C 로 중단)');
@@ -286,17 +306,90 @@ async function publishThreads(page, draft, cardPaths, opts) {
   }
   await page.waitForTimeout(1500);
 
-  // 컴포저 모달 안 textbox 대기
-  const composer = page.locator('[role="textbox"], div[contenteditable="true"]').first();
-  await composer.waitFor({ timeout: SELECTOR_TIMEOUT });
-  await composer.click();
+  // 컴포저 모달 안 textbox 대기 — visibility 체크 우회 (attached 만)
+  // Threads 2026 UI: 모달 떴는데 textbox 자체는 hidden 으로 nested. waitForFirst 의 visibility 체크 우회.
+  const composerSelectors = [
+    'div[data-lexical-editor="true"][contenteditable="true"]',
+    '[role="textbox"][contenteditable="true"][aria-placeholder*="새로운 소식" i]',
+    '[role="textbox"][contenteditable="true"][aria-label*="텍스트 필드" i]',
+    '[role="textbox"][contenteditable="true"]',
+    'div[contenteditable="true"][role="textbox"]',
+    'div[contenteditable="true"]',
+  ];
+  let composer = null;
+  for (const sel of composerSelectors) {
+    const loc = page.locator(sel).first();
+    try {
+      await loc.waitFor({ state: 'attached', timeout: 4000 });
+      composer = loc;
+      ui.dim(`  composer attached: ${sel}`);
+      break;
+    } catch {}
+  }
+  if (!composer) {
+    ui.warn('  composer 셀렉터 다 fail — 모달 placeholder 영역 click 으로 활성화 시도');
+    await page.click('[aria-label*="새로운 소식" i], [aria-placeholder*="새로운 소식" i]', { force: true, timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(500);
+    composer = page.locator(composerSelectors.join(', ')).first();
+  }
+  // hidden 일 수도 — 강제 click + focus (visibility 무시)
+  await composer.click({ force: true }).catch(() => {});
+  await composer.focus({ timeout: 3000 }).catch(() => {});
   await page.waitForTimeout(500);
 
-  ui.step(3, 5, '카피 입력');
-  await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
-  await page.waitForTimeout(150);
-  await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
-  await page.waitForTimeout(800);
+  ui.step(3, 5, '카피 입력 — clipboard paste + keyboard.type fallback');
+  // 1차 — clipboard paste
+  let pasteOk = false;
+  try {
+    await page.evaluate((t) => navigator.clipboard.writeText(t), draft.text);
+    await page.waitForTimeout(150);
+    await page.keyboard.press(process.platform === 'darwin' ? 'Meta+V' : 'Control+V');
+    await page.waitForTimeout(800);
+    // 검증 — composer 안에 내용이 들어갔는지
+    const got = await composer.evaluate((el) => (el.innerText || el.textContent || '').slice(0, 50)).catch(() => '');
+    if (got && got.trim().length > 0) pasteOk = true;
+  } catch (e) {
+    ui.dim(`  clipboard paste 실패: ${e.message.slice(0, 50)}`);
+  }
+  // 2차 — keyboard.type (focus 가 살아있으면 textbox 에 직접 입력)
+  if (!pasteOk) {
+    ui.dim('  paste 미반영 → keyboard.type fallback');
+    await page.keyboard.type(draft.text, { delay: 5 });
+    await page.waitForTimeout(800);
+  }
+  // 3차 검증 — keyboard.type 후에도 비어있으면 Lexical beforeinput 강제 (Threads UI 2026)
+  const verify = await composer.evaluate((el) => (el.innerText || el.textContent || '').trim()).catch(() => '');
+  if (verify.length === 0) {
+    ui.warn('  paste + keyboard 둘 다 미반영 → Lexical beforeinput dispatch 강제');
+    await page.evaluate((txt) => {
+      const candidates = [...document.querySelectorAll('[contenteditable="true"], [role="textbox"]')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.width > 200 && r.height > 30 && el.offsetWidth > 0;
+        })
+        .sort((a, b) => {
+          const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+          return rb.width * rb.height - ra.width * ra.height;
+        });
+      if (!candidates.length) return false;
+      const el = candidates[0];
+      el.focus(); el.click();
+      // Lexical editor 가 beforeinput 으로 입력 받음
+      const evt = new InputEvent('beforeinput', { inputType: 'insertText', data: txt, bubbles: true, cancelable: true });
+      el.dispatchEvent(evt);
+      // fallback: execCommand
+      document.execCommand('insertText', false, txt);
+      return true;
+    }, draft.text);
+    await page.waitForTimeout(800);
+    const verify2 = await composer.evaluate((el) => (el.innerText || el.textContent || '').trim()).catch(() => '');
+    if (verify2.length === 0) {
+      throw new Error('Threads paste 모든 방법 실패 — UI 셀렉터 또는 모달 상태 확인 필요');
+    }
+    ui.dim('  Lexical beforeinput 성공');
+  } else {
+    ui.dim(`  paste OK (${verify.length}자)`);
+  }
 
   if (cardPaths.length) {
     ui.step(4, 5, `이미지 ${cardPaths.length}장 첨부`);
@@ -313,6 +406,7 @@ async function publishThreads(page, draft, cardPaths, opts) {
 
   ui.step(5, 5, '게시 직전 멈춤');
   const decision = await gate(page, 'Threads 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   const postBtn = page.getByRole('button', { name: /^Post$|^게시$/i }).last();
@@ -334,27 +428,62 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
   await page.bringToFront();
   await ensureLoggedIn(page, 'linkedin');
 
-  ui.step(2, 6, 'Start a post 클릭 (한국어 "글쓰기")');
-  // LinkedIn 의 share trigger 는 button / a / div 다 가능 — 광범위 매칭
-  const startBtn = page.locator(
-    'button:has-text("Start a post"), button:has-text("글쓰기"), button:has-text("게시물 작성"), ' +
-    'a:has-text("글쓰기"), a:has-text("Start a post"), ' +
-    '[role="button"]:has-text("글쓰기"), [role="button"]:has-text("Start a post"), ' +
-    'button[aria-label*="Start a post"], button[aria-label*="글쓰기"]'
-  ).first();
-  await startBtn.waitFor({ timeout: SELECTOR_TIMEOUT });
-  await startBtn.click({ force: true });
+  // 로그인 redirect 감지 — li_at 만료 시 빈 작업 방지
+  if (/\/login|\/uas\/login|\/checkpoint/i.test(page.url())) {
+    ui.err('  LinkedIn 로그인 필요 — li_at cookie 만료');
+    throw new Error('LinkedIn 인증 만료 — 로그인 후 재시도');
+  }
 
-  ui.step(3, 6, '컴포저 열림 대기 (selector fallback chain)');
+  ui.step(2, 6, '일반 post 모달 열기 (글쓰기 / Start a post)');
+  // ⚠ article 작성 링크 (긴 글) 가 아니라 피드 일반 post 모달이어야 함.
+  // "글 작성하기" / "Write article" 류는 제외 — :not 으로 거름.
+  // 우선순위: share-box 의 명시적 start-post 버튼 → 일반 버튼 텍스트.
+  const postTriggerSelectors = [
+    'button.share-box-feed-entry__trigger',                              // 가장 안정적 (피드 share-box)
+    'button[aria-label="게시물 작성을 시작합니다" i]',
+    'button[aria-label*="Start a post" i]:not([aria-label*="article" i])',
+    'button:has-text("게시물 작성"):not(:has-text("아티클")):not(:has-text("article"))',
+    'button:has-text("Start a post"):not(:has-text("article"))',
+    '[role="button"]:has-text("글쓰기"):not(:has-text("아티클"))',
+  ];
+  let triggered = false;
+  for (const sel of postTriggerSelectors) {
+    const b = page.locator(sel).first();
+    if (await b.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await b.click({ force: true });
+      ui.dim(`  post trigger: ${sel.slice(0, 50)}`);
+      triggered = true;
+      break;
+    }
+  }
+  if (!triggered) {
+    ui.warn('  post trigger 못 찾음 — share-box 영역 직접 click 시도');
+    await page.locator('.share-box-feed-entry__top-bar, div.feed-shared-news-module').first().click({ force: true }).catch(() => {});
+  }
+  await page.waitForTimeout(1500);
+
+  // article 페이지로 잘못 튀었으면 복구 — 뒤로 가서 다시 /feed/
+  if (/\/article\//i.test(page.url())) {
+    ui.warn('  article 작성 페이지로 감 — 피드로 복구 후 모달 재시도');
+    await page.goto('https://www.linkedin.com/feed/', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(1500);
+    // 모달 전용 셀렉터로 재시도
+    const retry = page.locator('button.share-box-feed-entry__trigger').first();
+    if (await retry.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await retry.click({ force: true });
+      await page.waitForTimeout(1500);
+    }
+  }
+
+  ui.step(3, 6, '컴포저 모달 열림 대기 (selector fallback chain)');
   const editor = await waitForFirst(page, [
+    '.share-creation-state__text-editor div.ql-editor[contenteditable="true"]',  // 모달 안 quill (최우선)
+    'div.editor-content div.ql-editor[contenteditable="true"]',
     'div.ql-editor[contenteditable="true"]',                    // 기존 Quill (2024-)
     '[role="textbox"][contenteditable="true"][aria-label*="텍스트 편집기" i]',
     '[role="textbox"][contenteditable="true"][aria-label*="Text editor" i]',
     '.share-creation-state__text-editor [contenteditable="true"]',
-    '.editor-content [contenteditable="true"]',
-    '[data-test-id*="editor"] [contenteditable="true"]',
     'div[contenteditable="true"][role="textbox"]',
-    'div.share-box-feed-entry__top-bar ~ * [contenteditable="true"]',
   ], SELECTOR_TIMEOUT);
   await page.waitForTimeout(800);
 
@@ -395,6 +524,7 @@ async function publishLinkedin(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '게시 직전 멈춤');
   const decision = await gate(page, 'LinkedIn 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   const postBtn = page.locator(
@@ -697,6 +827,7 @@ async function publishNaverBlog(page, draft, cardPaths, opts) {
 
   ui.step(7, 7, '최종 발행 직전 멈춤');
   const decision = await gate(page, '네이버 블로그 발행');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // 최종 발행 버튼 — layer_btn_area__UzyKH > btn_area__fO7mp > button.confirm_btn__WEaBq
@@ -787,6 +918,15 @@ async function publishTistory(page, draft, cardPaths, opts) {
   ui.dim(`  blog: ${blogName}.tistory.com`);
   await page.goto(`https://${blogName}.tistory.com/manage/newpost`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(3000);
+
+  // 로그인 redirect 감지 — TSSESSION cookie 가 글쓰기 페이지엔 부족할 수 있음.
+  // 빈 작업 (셀렉터 0개) 하지 않고 명확히 인증 실패로 종료 → 빈 탭 방지.
+  const curUrl = page.url();
+  if (/\/auth\/login|accounts\.kakao\.com|\/login/i.test(curUrl)) {
+    ui.err('  Tistory 로그인 필요 — 글쓰기 페이지 접근 권한 부족 (TSSESSION 만료/불충분)');
+    ui.dim('  → Chrome 에서 Tistory 로그인 (카카오 계정 연동) 후 다시 실행');
+    throw new Error('Tistory 인증 부족 — 로그인 후 재시도 (글쓰기 페이지 redirect 됨)');
+  }
 
   // 임시저장 복원 dialog dismiss (네이버처럼 자동 복원할 수 있음)
   await page.evaluate(() => {
@@ -937,6 +1077,7 @@ async function publishTistory(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '최종 발행 직전 멈춤');
   const decision = await gate(page, 'Tistory 발행');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   await page.click('#publish-btn').catch((e) => {
@@ -1292,6 +1433,7 @@ async function publishInstagram(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '게시 직전 멈춤');
   const decision = await gate(page, 'Instagram 게시');
+  if (decision === 'PRE_PUBLISH') return { url: null, prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: null, cancelled: !opts.dryRun };
 
   // Share 버튼
@@ -1479,6 +1621,7 @@ async function publishBrunch(page, draft, cardPaths, opts) {
 
   ui.step(6, 6, '최종 단계 — 발행 (작가 승인) / 작가신청 (미승인) / 그냥 종료');
   const decision = await gate(page, isApproved ? 'Brunch 발행' : 'Brunch — draft 저장만 (작가신청은 수동)');
+  if (decision === 'PRE_PUBLISH') return { url: page.url(), prePublished: true, cancelled: false };
   if (decision !== 'Y') return { url: page.url(), cancelled: !opts.dryRun };
 
   if (isApproved) {

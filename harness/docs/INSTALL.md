@@ -12,9 +12,9 @@ cd marketing_agent
 ## 2. 한 번에 setup
 
 ```bash
-node bin/setup.mjs
+node harness/bin/setup.mjs
 # 또는 Claude Code 플러그인 링크까지:
-node bin/setup.mjs --link=/path/to/your/working/project
+node harness/bin/setup.mjs --link=/path/to/your/working/project
 ```
 
 내부적으로:
@@ -25,20 +25,28 @@ node bin/setup.mjs --link=/path/to/your/working/project
 - `harness/bin/*.mjs` + `harness/statusline/statusline.sh` 실행 권한
 - (선택) `<link>/.claude/plugins/marketing_agent` 심볼릭 링크
 
-## 3. .env.local 채우기
+## 3. .env.local — 기본은 그대로 둬도 됨
 
-최소:
+기본 `CONTENT_ENGINE_PROVIDER=inhouse-slides` 는 **API 키 0개**로 동작.
+카피·슬라이드를 Claude Code 서브에이전트가 생성하고, 이미지는 HTML 카드를
+Playwright 로 스크린샷한다. (ANTHROPIC_API_KEY 안 씀)
+
 ```bash
-CONTENT_ENGINE_PROVIDER=fal     # 또는 mock | openai | inhouse
-FAL_KEY=<https://fal.ai/dashboard/keys>
+CONTENT_ENGINE_PROVIDER=inhouse-slides   # 기본 — 키 불필요
 ```
 
-키 없이 시작하려면 `CONTENT_ENGINE_PROVIDER=mock` 만 두면 됨 (오프라인·결정론).
+**AI 가 그린 사진/일러스트**를 쓰고 싶을 때만 키 추가 (선택):
+```bash
+# CONTENT_ENGINE_PROVIDER=fal
+# FAL_KEY=<https://fal.ai/dashboard/keys>
+```
+
+오프라인·결정론 테스트는 `CONTENT_ENGINE_PROVIDER=mock`.
 
 ## 4. 환경 진단
 
 ```bash
-node bin/doctor.mjs
+node harness/bin/doctor.mjs
 ```
 
 빨간 점이 없으면 OK.
@@ -121,14 +129,14 @@ node harness/bin/chrome-shutdown.mjs --verify
 내부 단계는 4개 스킬이 `harness/commands/_sns-*.md` 가이드를 참조하며 자동 진행:
 | 내부 단계 | 가이드 | 실제 실행 |
 |---|---|---|
-| 환경 점검 | `_sns-init.md` | `bin/doctor.mjs --quick` |
-| 회사 프로필 | `_sns-onboard-company.md` | `bin/profile-validate.mjs` |
-| 캠페인 생성 | `_sns-campaign-new.md` | `bin/campaign-new.mjs` |
-| 카피·이미지 | `_sns-generate.md` | `bin/generate.mjs` + 에이전트 |
-| 검수 | `_sns-preview.md` | `bin/preview.mjs`, `bin/inspect-guidelines.mjs` |
-| 승인/거절 | `_sns-approve.md` / `_sns-reject.md` | `bin/approve.mjs` / `bin/reject.mjs` (학습 hook 자동) |
-| 발행 | `_sns-publish.md` | `bin/publish.mjs` 또는 `bin/browser-publish.mjs` |
-| 자격증명 | `_sns-auth.md` | `bin/auth.mjs` (대화형) |
+| 환경 점검 | `_sns-init.md` | `harness/bin/doctor.mjs --quick` |
+| 회사 프로필 | `_sns-onboard-company.md` | `harness/bin/profile-validate.mjs` |
+| 캠페인 생성 | `_sns-campaign-new.md` | `harness/bin/campaign-new.mjs` |
+| 카피·이미지 | `_sns-generate.md` | `harness/bin/generate.mjs` + 에이전트 |
+| 검수 | `_sns-preview.md` | `harness/bin/preview.mjs`, `harness/bin/inspect-guidelines.mjs` |
+| 승인/거절 | `_sns-approve.md` / `_sns-reject.md` | `harness/bin/approve.mjs` / `harness/bin/reject.mjs` (학습 hook 자동) |
+| 발행 | `_sns-publish.md` | `harness/bin/publish.mjs` 또는 `harness/bin/browser-publish.mjs` |
+| 자격증명 | `_sns-auth.md` | `harness/bin/auth.mjs` (대화형) |
 
 bin 스크립트 직접 호출(고급/디버깅용):
 ```bash
@@ -150,7 +158,7 @@ PUBLISHER_DRY_RUN=true
 
 ## 7. 문제 생기면
 
-- `node bin/doctor.mjs` 결과 캡처
-- `auth/` 자격증명은 절대 공유 금지 (마스킹: `node bin/auth.mjs show <ch>`)
+- `node harness/bin/doctor.mjs` 결과 캡처
+- `auth/` 자격증명은 절대 공유 금지 (마스킹: `node harness/bin/auth.mjs show <ch>`)
 - fal/openai 비용은 provider 대시보드에서 직접 확인
 - 자세한 운영 지침: [OPERATIONS.md](OPERATIONS.md)

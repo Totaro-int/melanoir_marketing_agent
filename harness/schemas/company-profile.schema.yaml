@@ -47,8 +47,7 @@ properties:
     properties:
       preset:
         type: string
-        enum: [relate-kr, b2b, informational, friendly, sales]
-        description: "런타임 tonePreset ID — relate-kr | b2b | informational | friendly | sales"
+        enum: [professional, friendly, witty, bold, calm, premium, custom]
       voiceNotes:
         type: string
         description: "톤에 대한 자유 서술 (예: '~합니다 체. 이모지 절제. 영어 단어 최소화.')"
@@ -170,7 +169,8 @@ properties:
         minItems: 1
         items:
           type: string
-        description: "활성 채널 ID (channels.json 동적 주입). 토큰은 /sns-auth add <ch> 로 별도."
+          enum: [naver-blog, tistory, brunch, threads, linkedin, instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube]
+        description: "활성 채널 ID (블로그 naver-blog/tistory/brunch 포함). 토큰은 /sns-auth add <ch> 로 별도."
 
   campaigns:
     type: object

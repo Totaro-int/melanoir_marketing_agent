@@ -164,8 +164,12 @@ let _chromeAuthCache = { at: 0, data: null };
 const _publishTasks = new Map();  // taskKey ('slug::channel') → { running, pid, exitCode, logPath, ... }
 
 async function readChromeCookieAuth() {
-  // 5분 캐시 — browser-publish 와 race 안 나도록 길게
-  if (Date.now() - _chromeAuthCache.at < 5 * 60_000 && _chromeAuthCache.data) {
+  // 적응형 TTL: browser-publish 가 CDP 점유 중일 때만 5분 캐시(race 방지).
+  // 평소엔 20초 — 채널 로그인/재로그인이 대시보드 30초 자동 폴링에 바로 반영되도록.
+  // (예전엔 항상 5분이라 로그인해도 최대 5분간 옛 상태로 표시되는 문제가 있었음.)
+  const publishActive = [..._publishTasks.values()].some((t) => t.running);
+  const ttl = publishActive ? 5 * 60_000 : 20_000;
+  if (Date.now() - _chromeAuthCache.at < ttl && _chromeAuthCache.data) {
     return _chromeAuthCache.data;
   }
   let browser = null;
@@ -346,6 +350,13 @@ const handlers = {
       return { channel, connected: false, chromeError: chrome._error, recommendation: 'Chrome 9222 모드로 실행 안 됨 — start-demo.ps1 또는 doctor 확인' };
     }
     const info = chrome[channel];
+    // 로그인 감지 시 쿠키 스냅샷 (fire-and-forget) — 강제종료/다음 시작 대비
+    if (info) {
+      try {
+        const p = spawn(process.execPath, [resolve(ROOT, 'harness/bin/cookie-store.mjs'), 'save', `--channel=${channel}`], { detached: true, stdio: 'ignore', cwd: ROOT });
+        p.unref();
+      } catch { /* non-fatal */ }
+    }
     return {
       channel,
       connected: !!info,
@@ -869,6 +880,8 @@ const server = createServer(async (req, res) => {
           } catch (e) { results.fal = { ok: false, error: e.message }; }
         }
 
+        // NOTE: vestigial — ANTHROPIC_API_KEY 는 더는 쓰지 않음 (카피/슬라이드는 서브에이전트가 생성).
+        // 프론트(verifyEnv)가 anthropic 을 보내지 않으므로 이 가드는 실행되지 않음. 응답 형태 유지를 위해 남겨둠.
         if (anthropic) {
           try {
             const r = await fetch('https://api.anthropic.com/v1/models', {

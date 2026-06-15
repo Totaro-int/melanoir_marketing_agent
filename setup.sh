@@ -129,18 +129,7 @@ if [ "${SKIP_ENV:-0}" = "0" ]; then
     fi
   fi
 
-  # 선택적 Anthropic 키 (카피 생성 품질 향상)
-  if [ "$PROVIDER" != "inhouse-slides" ]; then
-    echo
-    echo -e "  ${BD}Anthropic API 키${NC}  (카피 생성 품질 향상, 선택)"
-    dim "  Claude Code 로그인한 계정과 같은 키: https://console.anthropic.com/settings/keys"
-    printf "  ANTHROPIC_API_KEY (Enter 건너뜀): "
-    read -r ANTHROPIC_KEY_VAL
-    if [ -n "$ANTHROPIC_KEY_VAL" ]; then
-      echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY_VAL" >> .env.local
-      ok "ANTHROPIC_API_KEY 저장"
-    fi
-  fi
+  # ANTHROPIC_API_KEY 는 묻지 않음 — 카피·슬라이드는 Claude Code 서브에이전트가 생성 (코드가 키를 읽지 않음)
 fi
 echo
 

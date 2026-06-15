@@ -83,19 +83,34 @@ company-profile.yaml         ← 회사 프로필 (gitignore)
 - 플러그인 업데이트 후 `/plugin reload` 필요.
 - 자세한 설치/운영: `harness/docs/INSTALL.md`, `harness/docs/OPERATIONS.md`
 
-## 🎯 사용자 궁극 목표 (morning routine)
+## 🎯 사용자 궁극 목표 (morning routine — ✓ 검증 완료)
 
 ```
 컴퓨터 켜고 명령어 1개 → 사용자가 [발행] 만 누름.
-  npm run morning  (또는 /sns-morning)
+  npm run morning
   → Chrome 9222 + 대시보드 자동
   → 오늘 캠페인 자동 카피 + 이미지 + 검수
-  → browser-publish 게시 직전까지 (모달 + paste + 이미지 첨부)
-  → Chrome 탭 N개 발행 직전 상태로 열림
-  → 사용자 검토 → [공유] 클릭만
+  → browser-publish --pre-publish (모달 + paste + 이미지 첨부)
+  → 각 채널마다 새 탭에 발행 직전 상태 (사장님 보던 탭 보존)
+  → 사용자 검토 → 각 새 탭에서 [공유]/[발행] 클릭만
 ```
 
+E2E 검증 통과 (2026-06-02):
+- ✅ 3채널 (naver-blog + instagram + threads) 동시 처리
+- ✅ 각 채널 새 탭에 발행 직전 상태 (사용자 기존 탭 보존)
+- ✅ gate() PRE_PUBLISH 분기 — Chrome 탭 살림 + Playwright disconnect
+
 자세한 작업 지시: **`harness/docs/DEVELOPER-WORKORDER.md`** (P0/P1/P2/P3 우선순위)
+
+## 📦 신규 회사 설치 (납품)
+
+설치 당일 runbook: **`harness/docs/ONBOARDING.md`** — 8단계 (설치 → 키 → 브랜드 DNA → 채널 로그인 → 캘린더 → cron → 리허설).
+
+브랜드 DNA → 캘린더 자동 생성:
+```
+node harness/bin/seed-calendar.mjs --topics topics.txt --start <날짜> --channels naver-blog,instagram,threads,linkedin --status approved
+```
+company-profile.yaml (브랜드명·해시태그·톤·채널) 자동 주입. 어느 회사든 재사용.
 
 ## 개발자에게 인계할 때
 

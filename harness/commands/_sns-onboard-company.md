@@ -23,12 +23,39 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 스키마의 `required` 필드를 **이 순서**로 진행한다. 각 단계는 한 번에 하나의 질문만 하고, 사용자가 답한 즉시 다음 질문으로 넘어간다.
 
+0. **(브랜드북 PDF 있으면 먼저)** "브랜드북·브랜드 가이드 PDF 있나요?" → 있으면 `node harness/bin/parse-pdf.mjs <pdf> --out=posts/sources/brandbook.md` 로 텍스트 추출 → 거기서 **태그라인·컬러 HEX·폰트·브랜드 보이스·미학**을 읽어 `taglineOneLine`·`tone.preset`+`voiceNotes`·`visual.colors`/`fonts`·`imageStyle.aesthetic`/`colorMood` 를 **미리 채운다**. 이후 단계는 빈 칸만 묻고, 채워진 건 "이렇게 맞나요?"로 확인만 받는다. (예: "Professional·Scientific" 보이스 → `preset: premium`, "monochromatic" → `colorMood: high_contrast`, "Pretendard #0A0A0C" → visual 에 그대로.)
+
 1. **brand.name** — "회사명이 어떻게 됩니까?"
 2. **taglineOneLine** — "회사를 한 문장으로 소개한다면?" (5~120자, 카피 생성에 직접 사용됨을 안내)
+   - 이어서 **차별점 1개** 추출: "경쟁사·대안이랑 딱 하나만 다른 점을 꼽으면?" → 카피 O(Offer)의 핵심. **`tone.voiceNotes`에 한 줄로 적는다.** (⚠ `competitors` 필드는 copywriter spec에 전달 안 됨 — 카피에 반영되려면 voiceNotes나 painPoints에 있어야 함)
+
 3. **industry** — "산업/카테고리는? (예: 'B2B SaaS - 결제 인프라')"
-4. **targetAudience** (1명 이상) — 페르소나·통점·자주 쓰는 채널을 묶어서 질문
-5. **tone.preset** — 7개 프리셋 중 선택 (`professional / friendly / witty / bold / calm / premium / custom`). 선택 후 `voiceNotes`에 자유 서술 추가
-6. **banned.words / topics / claims** — "절대 쓰면 안 되는 단어·주제·표현이 있나요?" (없으면 `[]` 허용하되, `claims`에는 한국 광고법 위반 위험 표현 예시 보여주기)
+   - ⚠ 답이 **뷰티·반영구(PMU)·화장품·피부/병의원·헬스/식품** 계열이면 → 아래 **"업종 심화 인터뷰"** 섹션의 추가 질문을 4·6단계에 끼워넣는다. (광고법 리스크가 큰 업종이라 통점·금기어를 더 깊게 받아야 함). 채울 깊이의 골드 스탠다드: `examples/company-profile.beauty-pmu.example.yaml`
+
+4. **targetAudience** (1명 이상) — 페르소나는 한 줄로 받되, **통점은 아래 4겹으로 파고든다** (한 번에 하나씩). 이게 전체 카피 품질의 1순위 입력이다.
+
+   a. **결정적 순간** — "고객이 우리를 찾기 직전, 어떤 상황·기분이었나요?" (막연한 '필요해서'가 아니라 구체적 장면)
+   b. **실패한 대안** — "우리한테 오기 전에 뭘 써봤다가 안 됐나요?" (경쟁 대안의 빈틈 = 우리 카피의 각)
+   c. **두려움** — "고객이 결제 직전 가장 망설이는/무서워하는 게 뭔가요?" (이게 P(Problem) 1순위 후보)
+   d. **고객의 언어** — "고객이 실제로 쓰는 단어·말투는요? (전문용어 말고 그들 입말)" → 답을 해당 페르소나의 `dailyVocab` 배열에 저장. copywriter가 카피 어휘 풀로 직접 씀.
+
+   a~c의 답은 구체 문장으로 `painPoints` 배열에 넣는다. 추상어("불편함", "비효율")만 나오면 "예를 들면요?"로 한 번 더 좁힌다.
+
+5. **tone.preset** — 7개 프리셋 중 선택 (`professional / friendly / witty / bold / calm / premium / custom`). 선택 후 **voiceNotes를 다음 3개로 채운다**:
+   - **종결어미** — "~합니다 체 / ~해요 체 / 명사형 중 기본은?" (혼용 비율도)
+   - **금지 말투** — "이런 말투는 절대 쓰지 마세요 하는 게 있나요?" (예: 느낌표 남발, 인사말, 이모지)
+   - **sampleSentences** — "잘 나왔다 싶은 기존 문장 1~3개 붙여넣어 주세요." → 그대로 저장. **붙여넣은 게 있으면 거기서 호흡·어미 패턴을 직접 읽어 voiceNotes에 1줄 요약**한다 (모방 학습의 핵심).
+   - 신뢰가 중요한 업종(뷰티/의료/금융)은 `calm` 또는 `professional` + "단정 광고톤 X, 수치·근거 기반" 권장.
+
+6. **banned.words / topics / claims** — 2단계로 받는다:
+
+   **(1) 자동 차단은 이미 됨 — 다시 안 받아도 됨.** 한국 광고법 7패턴(치료 단정·의학적 효능·효과 보장·부작용 없음·100% 안전·최고/유일/완벽/기적/영구 같은 절대표현·즉각 효과)은 `brand-guardian`이 **모든 캠페인 카피에 자동 block** 한다. 이건 안내만 하고 넘어간다.
+   > profile-validate 가 "최고의·1위·100% 누락" 소프트 경고를 띄울 수 있다 — 카피는 어차피 자동 차단되니 무시해도 발행은 막힌다. 단 banned 에 명시하면 카드 **이미지 텍스트**까지 검사가 넓어지므로, 넣어도 손해는 없다.
+
+   **(2) 브랜드·업종 추가분만 받는다**:
+   - `words` — "브랜드 가이드상 절대 안 쓰는 단어는?" (예: 특정 경쟁사명, 옛 브랜드명, 비속어)
+   - `topics` — "다루면 안 되는 주제는?" (예: 정치·종교, 경쟁사 비방, 특정 시술 부작용 사례) ※ topics는 guardian이 기계 체크 안 함 — copywriter 자가검열 전용이라 **여기서 빠지면 방어선이 없다**. 꼭 받는다.
+   - `claims` — 업종이 광고법 민감 계열이면 아래 "업종 심화" 라이브러리를 보여주고 해당하는 것을 고르게 한다. 일반 업종이면 "과장하면 큰일 나는 표현 있나요?"로 받는다.
 7. **channels.enabled** — "어느 SNS에 발행할 건가요? (1개 이상 골라야 함)" — 아래 11개 카탈로그를 한 번에 보여주고 콤마 또는 줄바꿈으로 받기. 각 옵션 옆에 미디어 요건과 토큰 발급 난이도를 한 줄씩 표기.
 
    ```
@@ -120,6 +147,63 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 
 10. **(선택) visual / hashtags / legal / campaigns / competitors** — 각각 "지금 입력할까요? 나중에 `/sns-onboard update <섹션>`으로 채워도 됩니다." 로 분기
 
+## 업종 심화 인터뷰 (뷰티·반영구(PMU)·화장품·피부/병의원 계열일 때만)
+
+industry가 이 계열이면 4·6단계에 아래를 끼워넣는다. 표시광고법·화장품법·의료법 리스크가 커서 통점·금기어를 일반 업종보다 깊게 받아야 발행 사고가 안 난다. (브랜드명은 1단계 `brand.name`에서 이미 받았으므로 여기선 업종 패턴만 다룬다.)
+
+> 완성 예시(채울 깊이 참고): [`examples/company-profile.beauty-pmu.example.yaml`](../examples/company-profile.beauty-pmu.example.yaml) — 4겹 통점·dailyVocab·voiceNotes 3축·claims 라이브러리가 어떻게 채워지는지 그대로 보여준다.
+> 블로그 채널(naver-blog/tistory/brunch)도 `channels.enabled` 에 직접 넣을 수 있다 (schema enum 에 포함됨). 블로그가 주력이면 enabled 에 naver-blog 를 추가한다.
+
+### A. 판매 구조 먼저 (B2B / B2C 갈림)
+
+"제품을 **시술하는 전문가(원장·샵)** 에게 파나요, **시술받는 일반 고객** 에게 파나요, 둘 다인가요?"
+- **B2B(전문가향)**: persona = 시술 원장/샵 운영자. 통점 = 발색 일관성, 색 안정성(변색), 고객 클레임, 재구매 단가.
+- **B2C(고객향)**: persona = 시술 받을 사람. 통점 = 아래 불안 5종.
+- 둘 다면 `targetAudience`에 페르소나 2개로 나눠 각각 받는다.
+
+### B. 고객 불안 5종 (B2C painPoints 후보 — 하나씩 확인)
+
+반영구/시술 고객이 결제 직전 망설이는 전형. 해당하는 걸 `painPoints`에 **구체 문장**으로:
+1. **통증** — "아프지 않을까"
+2. **부작용·알러지** — "염증·붓기·트러블 안 생기나"
+3. **색 변색** — "시간 지나 붉게/푸르게 변하지 않나" (PMU 최대 불안)
+4. **부자연스러움** — "티 나게 진하거나 어색하지 않을까"
+5. **지속력** — "얼마나 가나, 금방 빠지지 않나"
+
+→ "이 중 고객이 제일 자주 묻는 거 2~3개는?"로 우선순위까지 받는다.
+
+### C. 신뢰 축 (차별점·Offer 재료)
+
+"고객/원장을 안심시키는 우리만의 근거가 뭔가요?" 있는 것만:
+- 무균 시험(ISO 11737), 유해물질·중금속 시험성적서(N.D. 불검출)
+- 발색·지속력 데이터, 색 안정성 시험
+- 인증·등록 현황 (단 "식약처 인증"으로 오인되게 쓰지 말 것 — 아래 D 참조)
+
+→ 카피의 O(Offer)·신뢰 신호. **`painPoints`에 함께 적거나 `tone.voiceNotes`에 메모한다.** (⚠ `competitors` 필드는 copywriter spec에 전달 안 됨)
+
+### D. 광고법 claims 라이브러리 (반영구·화장품 — 해당분만 banned.claims에 추가)
+
+자동 7패턴 **위에** 이 업종에서 특히 위험한 추가 표현. 표를 보여주고 "쓸 위험 있는 것 골라주세요":
+
+| 위험 표현 | 왜 위험 |
+|---|---|
+| "영구", "평생" (반영구인데) | 반영구→영구 과장 — 표시광고법 |
+| "무통", "통증 없는" | 의료 효과 단정 + 개인차 무시 |
+| "1회 완성", "한 번에" | 효과 단정 (개인차 무시) |
+| "식약처 인증/허가/승인 색소" | 색소는 인증제 아님 — 오인 표시 (위반) |
+| "미백", "주름 개선", "재생" | 기능성화장품 아닌데 기능성 주장 (화장품법) |
+| "의료용", "병원급", "메디컬 등급" | 의료기기 오인 |
+| "안전성 입증", "부작용 걱정 없이" | 안전 단정 |
+| 비포/애프터 과장, 경쟁 색소 비방 | 표시광고법 |
+
+→ **안전한 대체 패턴**도 같이 안내 (copywriter.md 광고법 변환 톤과 동일):
+- "100% 안전" → "공인기관 28종 유해물질 N.D. 판정"
+- "부작용 없음" → "자극 인자 평균 대비 51% 낮게 측정"
+- "식약처 인증" → "OO 시험성적서 보유"
+- "영구" → "리터치 주기 OO개월"
+
+---
+
 ## Validation
 
 저장 직전 반드시 다음을 확인:
@@ -127,7 +211,11 @@ description: Use when the user runs `/sns-onboard` or first-time setup, OR when 
 - [ ] 모든 `required` 필드가 채워졌는가
 - [ ] `taglineOneLine` 길이 5~120
 - [ ] `tone.preset`이 enum 값인가
-- [ ] `banned.words`에 한국 광고법 고위험 표현(예: "최고의", "1위", "유일한")이 누락됐다면 추가 권장
+- [ ] **painPoints가 구체적인가** — "불편함"·"비효율" 같은 추상어만 있으면 실패. 결정적 순간/실패한 대안/두려움이 문장으로 들어가야 함
+- [ ] **고객 언어(dailyVocab)** 를 받았는가 (copywriter 어휘 풀에 직접 쓰임)
+- [ ] `sampleSentences`를 붙여받았으면 → voiceNotes에 호흡·어미 1줄 요약을 남겼는가
+- [ ] `banned.topics`를 받았는가 — guardian이 기계 체크 안 하는 유일한 방어선이라 비면 위험
+- [ ] (뷰티/반영구/화장품 계열) 불안 5종 중 해당분 + claims 라이브러리 반영했는가. ※ 자동 7패턴은 재입력 불필요
 - [ ] `legal.adDisclosureRequired`가 false면 사용자에게 한 번 더 확인 (한국 공정위 가이드라인 기본값 true)
 
 ## Modes
@@ -165,7 +253,7 @@ meta:
 
 ## Guardrails
 
-- 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 `examples/company-profile.example.yaml`의 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓)
+- 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓). 일반 업종은 `examples/company-profile.example.yaml`, 뷰티·반영구·화장품 계열은 `examples/company-profile.beauty-pmu.example.yaml`.
 - `company-profile.yaml`은 **gitignore 대상**임을 안내하고, 저장 후 `git status`에 빨간색으로 안 보이는지 확인하라고 한 줄로 안내
 - 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 별도 명령(`/sns-auth add <channel>`, Phase 4)에서 OS 키체인으로 처리
 

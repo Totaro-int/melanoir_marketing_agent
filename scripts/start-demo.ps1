@@ -1,14 +1,17 @@
 # Marketing Agent - Demo Start (Windows PowerShell)
-# Uses $PSScriptRoot — works regardless of where the project lives.
-# Usage:  Right-click → "Run with PowerShell"  또는  powershell -ExecutionPolicy Bypass -File scripts\start-demo.ps1
+# Uses $PSScriptRoot so it works regardless of where the project lives.
+# Usage:  Right-click -> "Run with PowerShell"
+#    or:  powershell -ExecutionPolicy Bypass -File scripts\start-demo.ps1
+#
+# NOTE: ASCII-only log strings for Task Scheduler / Minimized PS host.
 
 $ErrorActionPreference = "Continue"
 
-# 프로젝트 루트 (이 스크립트의 부모 디렉토리)
+# project root (parent of scripts/)
 $ROOT = Split-Path -Parent $PSScriptRoot
 $CHROME_PROFILE = Join-Path $ROOT "auth\chrome-attach-profile"
 
-# Chrome 경로 자동 감지 (32/64bit + user-local)
+# Chrome path auto-detect (32/64bit + user-local)
 $CHROME_CANDIDATES = @(
   "$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
   "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
@@ -19,7 +22,7 @@ foreach ($p in $CHROME_CANDIDATES) {
   if (Test-Path -LiteralPath $p) { $CHROME_EXE = $p; break }
 }
 if (-not $CHROME_EXE) {
-  Write-Host "[ERROR] Chrome 실행 파일 못 찾음. 다음 경로 중 하나에 Chrome 설치 필요:" -ForegroundColor Red
+  Write-Host "[ERROR] Chrome not found at any candidate path:" -ForegroundColor Red
   $CHROME_CANDIDATES | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
   exit 1
 }
@@ -50,6 +53,11 @@ if ($chromeAlive) {
   Write-Host "  [OK] Chrome 9222 started" -ForegroundColor Green
 }
 
+# 1.5 Restore saved cookies into Chrome (missing-only; never overwrites current login)
+Push-Location -LiteralPath $ROOT
+& node "harness\bin\cookie-store.mjs" restore 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor Gray }
+Pop-Location
+
 # 2. Dashboard check + start
 $dashAlive = $false
 try {
@@ -61,7 +69,7 @@ if ($dashAlive) {
   Write-Host "  [OK] Dashboard already running" -ForegroundColor Green
 } else {
   Write-Host "  [..] Starting dashboard server..." -ForegroundColor Yellow
-  # ProcessStartInfo 로 한글 path 처리
+  # ProcessStartInfo handles Korean path safely
   $psi = New-Object System.Diagnostics.ProcessStartInfo
   $psi.FileName = "node"
   $psi.Arguments = "harness\bin\dashboard.mjs --no-open"
@@ -69,7 +77,7 @@ if ($dashAlive) {
   $psi.WindowStyle = "Minimized"
   $psi.UseShellExecute = $true
   [System.Diagnostics.Process]::Start($psi) | Out-Null
-  # 5초 대기 + 5회 retry (시작 시간 변동성 흡수)
+  # 2sec x 5 retry (start time variance)
   $ok = $false
   for ($i = 0; $i -lt 6; $i++) {
     Start-Sleep -Seconds 2
@@ -79,7 +87,7 @@ if ($dashAlive) {
     } catch {}
   }
   if ($ok) { Write-Host "  [OK] Dashboard started" -ForegroundColor Green }
-  else { Write-Host "  [WARN] Dashboard 시작 12초 초과 — 다시 시도하거나 수동: node harness/bin/dashboard.mjs" -ForegroundColor Yellow }
+  else { Write-Host "  [WARN] Dashboard not up in 12s - manual: node harness/bin/dashboard.mjs" -ForegroundColor Yellow }
 }
 
 # 3. Open dashboard tab

@@ -1,291 +1,432 @@
 #!/usr/bin/env node
-// Morning routine — 명령어 1개로 발행 직전까지.
+// morning-routine.mjs — 하루 시작 시 명령어 1개로 발행 직전까지 자동.
 //
-//   node bin/morning-routine.mjs              # 실제 실행 (Chrome 탭 발행 준비)
-//   node bin/morning-routine.mjs --dry-run    # 시뮬레이션 (Chrome 탭 안 열림)
-//   npm run morning
+// 사용자 궁극 목표 (WORKORDER P0-E):
+//   컴퓨터 켜고 `npm run morning` → Chrome 탭 N개 발행 직전 상태 → [공유] 클릭만.
 //
 // 흐름:
-//   1. 환경 검증 (doctor 간략 버전)
-//   2. 오늘 캠페인 목록 추출 (slots.yaml nextRun + campaigns/ pending 상태)
-//   3. 채널별 카피 + 이미지 생성 → brand-guardian 검수 → block 시 1회 재생성
-//   4. browser-publish --pre-publish (모달+카피+이미지 채움, Chrome 탭 유지)
-//   5. 대시보드 알림
+//   1. 환경 검증 (Chrome 9222 / 대시보드 7777) — 안 떠 있으면 자동 시작
+//   2. 오늘 작업 list 추출
+//      · posts/campaigns/*/brief.yaml 중 status 에 'pending' 또는 'approved' 인 채널
+//      · --slug=X 로 특정 캠페인만 지정 가능
+//   3. 각 캠페인-채널 순차 처리:
+//      · draft yaml 없으면 generate + finalize (카피 + 이미지 자동 생성)
+//      · brand-guardian 자동 검수 (block 있으면 SKIP + 보고)
+//      · browser-publish --pre-publish (모달 + paste + 첨부까지, gate 에서 멈춤)
+//   4. Chrome 탭 N개 살아있는 상태로 사용자에게 인계
+//
+// Usage:
+//   node harness/bin/morning-routine.mjs                  # 모든 pending 채널
+//   node harness/bin/morning-routine.mjs --slug=X         # 특정 캠페인만
+//   node harness/bin/morning-routine.mjs --channel=naver-blog
+//   node harness/bin/morning-routine.mjs --max=3          # 최대 3개 채널까지만
+//   node harness/bin/morning-routine.mjs --dry-run        # 시뮬레이션 (Chrome 모달 안 엶)
+//   node harness/bin/morning-routine.mjs --skip-generate  # generate/finalize 스킵 (이미 draft 있다고 가정)
 
-import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync, mkdirSync, writeFileSync } from 'node:fs';
+import { spawnSync, spawn } from 'node:child_process';
 import YAML from 'yaml';
-import { PATHS, ROOT, HARNESS_ROOT, readYaml, nowKstIso, ui } from './_lib.mjs';
+import { ROOT, ui } from './_lib.mjs';
 
-const HERE = dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
-const dryRun = argv.includes('--dry-run');
-const attachUrl = argv.find((a) => a.startsWith('--attach='))?.split('=')[1] || 'http://localhost:9222';
+const slugFilter   = argv.find((a) => a.startsWith('--slug='))?.split('=')[1];
+const channelFilter = argv.find((a) => a.startsWith('--channel='))?.split('=')[1];
+const maxChannels  = Number(argv.find((a) => a.startsWith('--max='))?.split('=')[1] || '5');
+const dryRun       = argv.includes('--dry-run');
+const skipGenerate = argv.includes('--skip-generate');
+const noWaitLogin  = argv.includes('--no-wait-login');
+// 만료 채널 로그인 대기 시간 (초). --wait-login=N 으로 조정. 0 이면 대기 안 함.
+const WAIT_LOGIN_SEC = Number(argv.find((a) => a.startsWith('--wait-login='))?.split('=')[1] || '180');
 
-// ─── 유틸 ──────────────────────────────────────────────────────────────────
+const NODE = process.execPath;
 
-function run(script, args = [], opts = {}) {
-  const result = spawnSync(process.execPath, [resolve(HERE, script), ...args], {
-    encoding: 'utf8',
-    stdio: opts.silent ? 'pipe' : 'inherit',
-    env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' },
-    timeout: opts.timeout ?? 120_000,
-  });
-  return result;
-}
+// ─── 1. 환경 검증 ─────────────────────────────────────────
+async function ensureEnvironment() {
+  ui.step(1, 5, '환경 검증 — Chrome 9222 / 대시보드 7777');
 
-function runJson(script, args = []) {
-  const result = spawnSync(process.execPath, [resolve(HERE, script), ...args, '--json'], {
-    encoding: 'utf8',
-    stdio: 'pipe',
-    env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' },
-    timeout: 60_000,
-  });
-  try { return JSON.parse(result.stdout || '{}'); } catch { return {}; }
-}
-
-function todayKst() {
-  return new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).slice(0, 10);
-}
-
-// ─── 1. 환경 검증 ──────────────────────────────────────────────────────────
-
-ui.info('🌅 Morning routine 시작' + (dryRun ? ' (--dry-run)' : ''));
-ui.info('');
-
-// company-profile.yaml 존재 확인
-if (!existsSync(PATHS.profile)) {
-  ui.err('company-profile.yaml 없음 — /sns-onboard 실행 필요');
-  process.exit(1);
-}
-
-// node_modules 확인
-if (!existsSync(resolve(ROOT, 'node_modules'))) {
-  ui.err('node_modules 없음 — npm install 실행 필요');
-  process.exit(1);
-}
-
-// .env.local 확인
-if (!existsSync(resolve(ROOT, '.env.local'))) {
-  ui.warn('.env.local 없음 — 이미지 생성 실패 가능 (copy만 진행)');
-}
-
-// Chrome 9222 alive 확인 (선택적 — pre-publish 필요 시)
-let chromeAlive = false;
-if (!dryRun) {
+  // Chrome 9222 alive?
+  let chromeAlive = false;
   try {
-    const r = spawnSync('curl', ['-sf', '--max-time', '3', `${attachUrl}/json/version`], {
-      encoding: 'utf8', stdio: 'pipe', timeout: 5000,
-    });
-    chromeAlive = r.status === 0 && r.stdout.includes('webSocketDebuggerUrl');
+    const r = await fetch('http://localhost:9222/json/version', { signal: AbortSignal.timeout(2000) });
+    chromeAlive = r.ok;
   } catch {}
-
-  if (!chromeAlive) {
-    ui.warn(`Chrome 9222 미응답 (${attachUrl}) — browser-publish 단계를 건너뜁니다.`);
-    ui.warn('  Chrome 을 --remote-debugging-port=9222 모드로 먼저 실행하세요.');
-    ui.warn('  예) /Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --remote-debugging-port=9222');
-  }
-}
-
-// ─── 2. 오늘 캠페인 추출 ───────────────────────────────────────────────────
-
-const today = todayKst();
-ui.info(`📅 날짜: ${today}`);
-
-// 2-A: slots.yaml — nextRun 이 오늘인 슬롯
-const SLOTS_PATH = resolve(PATHS.campaignsDir, '..', 'slots.yaml');
-const slotsRaw = existsSync(SLOTS_PATH) ? (() => {
-  try { return YAML.parse(readFileSync(SLOTS_PATH, 'utf8')); } catch { return null; }
-})() : null;
-const slots = Array.isArray(slotsRaw?.slots) ? slotsRaw.slots : [];
-const todaySlots = slots.filter((s) => s.nextRun?.startsWith(today));
-
-// 2-B: campaigns/ — pending 상태 채널이 있는 캠페인
-const campaignQueue = []; // { slug, channel }
-if (existsSync(PATHS.campaignsDir)) {
-  const dirs = readdirSync(PATHS.campaignsDir)
-    .filter((n) => {
-      try { return statSync(resolve(PATHS.campaignsDir, n)).isDirectory(); } catch { return false; }
-    });
-  for (const slug of dirs) {
-    const briefPath = resolve(PATHS.campaignsDir, slug, 'brief.yaml');
-    if (!existsSync(briefPath)) continue;
-    let brief;
-    try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch { continue; }
-    const channels = brief.channels ?? [];
-    for (const ch of channels) {
-      const status = brief.status?.[ch];
-      if (status === 'pending' || status === 'drafting') {
-        campaignQueue.push({ slug, channel: ch, brief });
-      }
-    }
-  }
-}
-
-// 2-C: todaySlots에서 lastSlugs 기반 채널 추가
-for (const slot of todaySlots) {
-  const channels = slot.channels ?? [];
-  const slugsFromSlot = slot.lastSlugs ?? [];
-  for (const slug of slugsFromSlot) {
-    const briefPath = resolve(PATHS.campaignsDir, slug, 'brief.yaml');
-    if (!existsSync(briefPath)) continue;
-    let brief;
-    try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch { continue; }
-    for (const ch of channels) {
-      const status = brief.status?.[ch];
-      if (!['published', 'failed', 'blocked'].includes(status)) {
-        if (!campaignQueue.find((q) => q.slug === slug && q.channel === ch)) {
-          campaignQueue.push({ slug, channel: ch, brief });
+  if (chromeAlive) {
+    ui.ok('  Chrome 9222 alive');
+  } else {
+    ui.warn('  Chrome 9222 미연결 — 자동 시작 시도');
+    if (dryRun) {
+      ui.dim('  --dry-run — Chrome 시작 skip');
+    } else {
+      // 대시보드 API 통해 Chrome 시작 (가장 안전 — OS별 자동 감지 + cookie 보존)
+      try {
+        const r = await fetch('http://localhost:7777/api/chrome/start', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}',
+          signal: AbortSignal.timeout(25_000),
+        });
+        const data = await r.json();
+        if (data.ok) {
+          ui.ok(`  Chrome 시작됨 (${data.browser || 'OK'})`);
+        } else {
+          throw new Error(data.error || 'unknown');
         }
+      } catch (e) {
+        ui.err(`  Chrome 시작 실패: ${e.message}`);
+        ui.dim('  대시보드가 안 떠 있을 수도 — 먼저 scripts/start-demo.ps1 실행 또는 node harness/bin/dashboard.mjs');
+        process.exit(2);
       }
     }
   }
-}
 
-if (campaignQueue.length === 0) {
-  ui.warn('오늘 발행할 캠페인이 없습니다.');
-  ui.info('  새 캠페인: /sns-start 로 생성하거나 slots.yaml 에 nextRun 을 오늘로 설정하세요.');
-  process.exit(0);
-}
-
-ui.info(`🎯 발행 대기 ${campaignQueue.length}개:`);
-for (const { slug, channel } of campaignQueue) {
-  ui.info(`   • ${slug} [${channel}]`);
-}
-ui.info('');
-
-// ─── 3. 채널별 처리 ────────────────────────────────────────────────────────
-
-const prepared = [];   // { slug, channel, status, report? }
-const skipped  = [];   // { slug, channel, reason }
-
-for (const { slug, channel, brief } of campaignQueue) {
-  ui.info(`━━━ ${slug} [${channel}] ━━━`);
-
-  // 3-1. 카피 + 이미지 생성
-  ui.info('  📝 카피 + 이미지 생성 중...');
-  if (!dryRun) {
-    const gen = run('generate.mjs', [slug, `--channel=${channel}`]);
-    if (gen.status !== 0) {
-      ui.warn(`  생성 실패 — SKIP (generate.mjs exit ${gen.status})`);
-      skipped.push({ slug, channel, reason: `generate 실패 (exit ${gen.status})` });
-      continue;
-    }
-  } else {
-    ui.dim('  [dry-run] generate.mjs 스킵');
-  }
-
-  // 3-2. brand-guardian 검수 (inspect-guidelines — deterministic)
-  ui.info('  🔍 가이드라인 검수 중...');
-  let report = null;
-  if (!dryRun) {
-    report = runJson('inspect-guidelines.mjs', [slug, `--channel=${channel}`]);
-
-    if (report?.ok === false) {
-      const codes = (report.blocking ?? []).join(', ') || '미준수';
-      ui.warn(`  block 발견: ${codes} — 재생성 시도 (1회)`);
-
-      // 3-2-1. 1회 재생성 (피드백 없이 단순 재생성)
-      const regen = run('generate.mjs', [slug, `--channel=${channel}`]);
-      if (regen.status !== 0) {
-        ui.warn(`  재생성 실패 — SKIP`);
-        skipped.push({ slug, channel, reason: `재생성 실패, 원인: ${codes}` });
-        continue;
-      }
-
-      // 3-2-2. 재검수
-      report = runJson('inspect-guidelines.mjs', [slug, `--channel=${channel}`]);
-      if (report?.ok === false) {
-        const remaining = (report.blocking ?? []).join(', ') || '미준수';
-        ui.warn(`  재검수 후 block 잔존: ${remaining} — SKIP`);
-        skipped.push({ slug, channel, reason: `block 잔존 (${remaining})` });
-        continue;
-      }
-    }
-    ui.ok('  검수 통과');
-  } else {
-    ui.dim('  [dry-run] inspect-guidelines.mjs 스킵');
-  }
-
-  // 3-3. browser-publish --pre-publish (모달+카피+이미지 채움, 탭 유지)
-  if (!dryRun && chromeAlive) {
-    ui.info(`  🌐 Chrome 탭 발행 준비 중 [${channel}]...`);
-    const pub = run('browser-publish.mjs', [
-      slug, `--channel=${channel}`, '--attach', `--attach=${attachUrl}`, '--pre-publish',
-    ]);
-    if (pub.status !== 0) {
-      ui.warn(`  browser-publish 실패 (exit ${pub.status}) — 수동 발행 필요`);
-      skipped.push({ slug, channel, reason: `browser-publish 실패` });
-      continue;
-    }
-    ui.ok(`  Chrome 탭 준비 완료 — [공유] 클릭만 하면 됩니다`);
-    prepared.push({ slug, channel, status: 'ready', report });
-  } else if (dryRun) {
-    ui.dim('  [dry-run] browser-publish 스킵');
-    prepared.push({ slug, channel, status: 'dry-run', report });
-  } else {
-    // Chrome 없이 — 준비는 됐지만 탭 안 열림
-    ui.warn(`  Chrome 미응답 — 카피/이미지 생성 완료, 수동 발행 필요`);
-    prepared.push({ slug, channel, status: 'ready-no-chrome', report });
-  }
-
-  ui.info('');
-}
-
-// ─── 4. 요약 + 대시보드 알림 ──────────────────────────────────────────────
-
-const readyCount = prepared.filter((p) => p.status === 'ready').length;
-const skipCount  = skipped.length;
-const dryCount   = prepared.filter((p) => p.status === 'dry-run').length;
-
-ui.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-if (dryRun) {
-  ui.ok(`Morning routine 완료 (dry-run) — ${dryCount}개 처리 예정`);
-} else {
-  ui.ok(`Morning routine 완료 — 발행 대기 ${readyCount}개${skipCount ? `, SKIP ${skipCount}개` : ''}`);
-}
-
-if (prepared.length) {
-  ui.info('');
-  ui.info('📋 발행 대기 목록:');
-  for (const { slug, channel, status } of prepared) {
-    const icon = status === 'ready' ? '✅' : status === 'dry-run' ? '🔵' : '⚠️';
-    ui.info(`   ${icon} ${slug} [${channel}]`);
-  }
-}
-
-if (skipped.length) {
-  ui.info('');
-  ui.info('⏭️  SKIP 목록:');
-  for (const { slug, channel, reason } of skipped) {
-    ui.warn(`   • ${slug} [${channel}] — ${reason}`);
-  }
-}
-
-if (!dryRun && readyCount > 0) {
-  ui.info('');
-  ui.info('👉 Chrome 탭에서 각 채널 확인 후 [공유] / [게시] 클릭');
-
-  // 대시보드 알림 (dashboard가 떠 있으면 POST, 없으면 무시)
+  // 대시보드 alive?
+  let dashAlive = false;
   try {
-    const { default: http } = await import('node:http');
-    await new Promise((resolve) => {
-      const body = JSON.stringify({
-        title: `🌅 Morning routine 완료`,
-        message: `발행 대기 ${readyCount}개 · Chrome 탭 확인${skipCount ? ` · SKIP ${skipCount}개` : ''}`,
-        ts: nowKstIso(),
-      });
-      const req = http.request(
-        { hostname: 'localhost', port: 7777, path: '/api/morning-notify', method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } },
-        () => resolve()
-      );
-      req.on('error', () => resolve()); // 대시보드 없으면 무시
-      req.setTimeout(2000, () => { req.destroy(); resolve(); });
-      req.write(body);
-      req.end();
-    });
+    const r = await fetch('http://localhost:7777/api/today', { signal: AbortSignal.timeout(2000) });
+    dashAlive = r.ok;
   } catch {}
+  if (dashAlive) {
+    ui.ok('  대시보드 7777 alive');
+  } else {
+    ui.warn('  대시보드 7777 미연결 — 백그라운드 spawn');
+    if (!dryRun) {
+      const child = spawn(NODE, [resolve(ROOT, 'harness/bin/dashboard.mjs')], {
+        detached: true, stdio: 'ignore', cwd: ROOT,
+      });
+      child.unref();
+      // alive polling 최대 10초
+      for (let i = 0; i < 10; i++) {
+        await new Promise((r) => setTimeout(r, 1000));
+        try {
+          const r = await fetch('http://localhost:7777/api/today', { signal: AbortSignal.timeout(1500) });
+          if (r.ok) { ui.ok('  대시보드 시작됨'); dashAlive = true; break; }
+        } catch {}
+      }
+      if (!dashAlive) ui.warn('  대시보드 10초 안에 안 뜸 — 계속 진행');
+    }
+  }
+}
+
+// ─── 1.5 사전 인증 검증 — 만료 채널 즉시 알림 (P0) ──────────
+// routine 본격 시작 전 /api/channels 로 각 채널 cookie 살아있는지 확인.
+// 만료된 채널은 (a) 데스크탑 알림 (b) 로그인 페이지 자동 오픈 (c) 처리 대상에서 제외.
+// → 5분 timeout stuck / 빈 탭 현상 원천 차단.
+async function preflightAuth(neededChannels) {
+  ui.step(2, 5, '사전 인증 검증 — 채널 cookie 확인');
+  // 저장된 쿠키 복원 — 강제종료/프로필 손상으로 잃은 로그인 되살림 (없는 것만, 현재 로그인 안 건드림)
+  if (!dryRun) {
+    try { spawnSync(NODE, [resolve(ROOT, 'harness/bin/cookie-store.mjs'), 'restore'], { cwd: ROOT, stdio: 'inherit', timeout: 20_000 }); } catch { /* non-fatal */ }
+  }
+  let authMap = {};
+  try {
+    const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(20_000) });
+    const data = await r.json();
+    if (data.chrome && !data.chrome.ok) {
+      ui.warn('  Chrome attach 안 됨 — 인증 검증 skip (그대로 진행)');
+      return { ok: new Set(neededChannels), expired: new Set() };
+    }
+    for (const a of data.auth || []) {
+      if (a.configured) authMap[a.channel] = a.cookie || true;
+    }
+  } catch (e) {
+    ui.warn(`  인증 검증 실패 (${e.message.slice(0, 50)}) — 그대로 진행`);
+    return { ok: new Set(neededChannels), expired: new Set() };
+  }
+
+  const ok = new Set();
+  const expired = new Set();
+  for (const ch of neededChannels) {
+    if (authMap[ch]) ok.add(ch);
+    else expired.add(ch);
+  }
+
+  if (ok.size) ui.ok(`  인증 OK: ${[...ok].join(', ')}`);
+  if (expired.size) {
+    ui.warn(`  ⚠ 인증 만료: ${[...expired].join(', ')} — 로그인 필요`);
+    // 만료 채널 로그인 페이지 자동 오픈 + 데스크탑 알림
+    for (const ch of expired) {
+      try {
+        await fetch('http://localhost:7777/api/channels/connect', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channel: ch }),
+          signal: AbortSignal.timeout(10_000),
+        });
+        ui.dim(`    → ${ch} 로그인 페이지 Chrome 새 탭에 오픈`);
+      } catch {}
+    }
+    notifyDesktop(
+      `로그인 필요: ${[...expired].join(', ')}`,
+      `${expired.size}개 채널 cookie 만료 — Chrome 탭에서 로그인하시면 자동 진행됩니다`,
+    );
+
+    // 로그인 대기 + 자동 재검증 (--no-wait-login 으로 끄기)
+    // 사용자가 그 자리에서 로그인하면 재실행 없이 한 번에 진행됨.
+    if (!noWaitLogin) {
+      ui.info(`  로그인 대기 중... (최대 ${WAIT_LOGIN_SEC}초, 로그인되면 자동 진행)`);
+      const deadline = Date.now() + WAIT_LOGIN_SEC * 1000;
+      while (Date.now() < deadline && expired.size > 0) {
+        await new Promise((r) => setTimeout(r, 5000));
+        try {
+          const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(15_000) });
+          const data = await r.json();
+          const live = {};
+          for (const a of data.auth || []) if (a.configured) live[a.channel] = true;
+          for (const ch of [...expired]) {
+            if (live[ch]) {
+              expired.delete(ch); ok.add(ch);
+              ui.ok(`    ✓ ${ch} 로그인 감지 — 진행 대상에 추가`);
+            }
+          }
+        } catch {}
+      }
+      if (expired.size) ui.warn(`  여전히 미로그인: ${[...expired].join(', ')} — 이번엔 skip`);
+    }
+  }
+  return { ok, expired };
+}
+
+// 데스크탑 알림 (Windows toast / macOS osascript / Linux notify-send)
+function notifyDesktop(title, body) {
+  try {
+    if (process.platform === 'win32') {
+      // PowerShell BurntToast 없이 — balloon tip
+      const ps = `[reflection.assembly]::LoadWithPartialName('System.Windows.Forms') | Out-Null; ` +
+        `$n = New-Object System.Windows.Forms.NotifyIcon; ` +
+        `$n.Icon = [System.Drawing.SystemIcons]::Information; ` +
+        `$n.BalloonTipTitle = '${title.replace(/'/g, "''")}'; ` +
+        `$n.BalloonTipText = '${body.replace(/'/g, "''")}'; ` +
+        `$n.Visible = $true; $n.ShowBalloonTip(10000); Start-Sleep -Seconds 1`;
+      spawnSync('powershell', ['-NoProfile', '-Command', ps], { timeout: 8000 });
+    } else if (process.platform === 'darwin') {
+      spawnSync('osascript', ['-e', `display notification "${body}" with title "${title}"`], { timeout: 5000 });
+    } else {
+      spawnSync('notify-send', [title, body], { timeout: 5000 });
+    }
+  } catch {}
+}
+
+// ─── 2. 오늘 작업 list ────────────────────────────────────
+function collectWork() {
+  ui.step(3, 5, '오늘 작업 list 추출');
+  const campDir = resolve(ROOT, 'posts/campaigns');
+  if (!existsSync(campDir)) {
+    ui.warn('  posts/campaigns/ 없음 — 새 캠페인 만들고 다시 실행');
+    return [];
+  }
+  const work = [];
+  // 오늘 날짜 우선 → 그 다음 가까운 미래 → 과거 순. (캘린더 자연 순서)
+  const today = new Date().toISOString().slice(0, 10);
+  const sortedSlugs = readdirSync(campDir).sort((a, b) => {
+    // slug 앞 YYYY-MM-DD 추출
+    const da = (a.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1] || '9999-99-99';
+    const db = (b.match(/^(\d{4}-\d{2}-\d{2})/) || [])[1] || '9999-99-99';
+    // 오늘 이후 (오늘 포함) 를 먼저, 그 안에서 가까운 날짜 먼저. 과거는 뒤로.
+    const aFuture = da >= today, bFuture = db >= today;
+    if (aFuture !== bFuture) return aFuture ? -1 : 1;  // 미래/오늘 우선
+    if (aFuture) return da.localeCompare(db);            // 미래: 가까운 날 먼저
+    return db.localeCompare(da);                          // 과거: 최근 먼저
+  });
+  for (const slug of sortedSlugs) {
+    if (slugFilter && slug !== slugFilter) continue;
+    const briefPath = resolve(campDir, slug, 'brief.yaml');
+    if (!existsSync(briefPath)) continue;
+    let brief;
+    try { brief = YAML.parse(readFileSync(briefPath, 'utf8')) || {}; }
+    catch (e) { ui.warn(`  ${slug}/brief.yaml 파싱 실패: ${e.message}`); continue; }
+    const status = brief.status || {};
+    for (const [ch, st] of Object.entries(status)) {
+      if (channelFilter && ch !== channelFilter) continue;
+      // drafting / pending / approved / failed 인 채널 작업 대상
+      // (drafting = 새 캠페인, generate 미실행 — routine 이 자동 generate)
+      if (['drafting', 'pending', 'approved', 'failed'].includes(st)) {
+        work.push({ slug, channel: ch, status: st, topic: brief.topic || slug });
+        if (work.length >= maxChannels) break;
+      }
+    }
+    if (work.length >= maxChannels) break;
+  }
+  if (work.length === 0) {
+    ui.info('  오늘 작업 없음 — 모든 캠페인이 published 또는 brief.status 미설정');
+  } else {
+    ui.ok(`  ${work.length}건 작업 (max=${maxChannels})`);
+    for (const w of work) ui.dim(`    · ${w.slug}/${w.channel} [${w.status}]`);
+  }
+  return work;
+}
+
+// ─── 3. 각 캠페인-채널 처리 ───────────────────────────────
+async function processWorkItem(item, idx, total) {
+  const tag = `[${idx + 1}/${total}] ${item.slug}/${item.channel}`;
+  ui.info(`\n━━━ ${tag} ━━━`);
+
+  const channelDir = resolve(ROOT, 'posts/campaigns', item.slug, item.channel);
+
+  // 3-1. draft yaml 있는지
+  const hasDraft = existsSync(channelDir) &&
+    readdirSync(channelDir).some((f) => /^\d{8}-\d{6}\.yaml$/.test(f));
+
+  if (!hasDraft && !skipGenerate) {
+    ui.step(4, 5, `${tag} draft 없음 — generate + finalize`);
+    if (dryRun) {
+      ui.dim('  --dry-run — generate skip');
+    } else {
+      // generate.mjs <slug> --channel=<ch>
+      const r = spawnSync(NODE, [
+        resolve(ROOT, 'harness/bin/generate.mjs'),
+        item.slug, `--channel=${item.channel}`,
+      ], { cwd: ROOT, stdio: 'inherit' });
+      if (r.status !== 0) {
+        ui.err(`  generate 실패 — ${tag} SKIP`);
+        return { ...item, result: 'generate-failed' };
+      }
+      // generate-finalize 가 자동으로 진행되는지 확인 (현재 구조)
+      // 만약 별도라면: generate-finalize.mjs <slug> --channel=<ch>
+      const finalPath = resolve(ROOT, 'harness/bin/generate-finalize.mjs');
+      if (existsSync(finalPath)) {
+        const r2 = spawnSync(NODE, [finalPath, item.slug, `--channel=${item.channel}`], {
+          cwd: ROOT, stdio: 'inherit',
+        });
+        if (r2.status !== 0) ui.warn(`  finalize 실패 — 계속 진행`);
+      }
+    }
+  } else if (hasDraft) {
+    ui.dim(`  ${tag} draft 이미 있음 — generate skip`);
+  } else if (skipGenerate) {
+    ui.warn(`  ${tag} draft 없는데 --skip-generate — SKIP`);
+    return { ...item, result: 'no-draft' };
+  }
+
+  // 3-2. brand-guardian 검수 결과 — draft.yaml 의 guardian.severity 확인
+  const draftYaml = readdirSync(channelDir)
+    .filter((f) => /^\d{8}-\d{6}\.yaml$/.test(f))
+    .sort()
+    .reverse()[0];
+  if (!draftYaml) {
+    ui.warn(`  ${tag} draft 못 찾음 — SKIP`);
+    return { ...item, result: 'no-draft' };
+  }
+  try {
+    const draft = YAML.parse(readFileSync(resolve(channelDir, draftYaml), 'utf8')) || {};
+    const severity = draft.guardian?.severity;
+    if (severity === 'block') {
+      const blocks = draft.guardian?.findings?.filter((f) => f.severity === 'block') || [];
+      ui.err(`  ${tag} guardian block (${blocks.length}건):`);
+      for (const b of blocks.slice(0, 3)) ui.dim(`    · [${b.code}] ${b.detail || ''}`);
+      ui.warn(`  ${tag} SKIP — 카피 수정 후 재실행 필요`);
+      return { ...item, result: 'guardian-block', findings: blocks };
+    }
+    if (severity === 'warn') {
+      const warns = draft.guardian?.findings?.filter((f) => f.severity === 'warn') || [];
+      ui.warn(`  ${tag} guardian warn ${warns.length}건 — 계속 진행 (block 아님)`);
+    }
+  } catch (e) {
+    ui.warn(`  ${tag} draft 파싱 실패: ${e.message}`);
+  }
+
+  // 3-3. browser-publish --pre-publish
+  ui.step(5, 5, `${tag} browser-publish --pre-publish`);
+  if (dryRun) {
+    ui.dim('  --dry-run — Chrome 모달 안 엶 (시뮬레이션만)');
+    return { ...item, result: 'simulated' };
+  }
+  const args = [
+    resolve(ROOT, 'harness/bin/browser-publish.mjs'),
+    item.slug, `--channel=${item.channel}`,
+    '--attach', '--pre-publish',
+  ];
+  const r = spawnSync(NODE, args, { cwd: ROOT, stdio: 'inherit', timeout: 180_000 });
+  if (r.status !== 0) {
+    ui.err(`  ${tag} browser-publish 실패`);
+    return { ...item, result: 'browser-publish-failed' };
+  }
+  ui.ok(`  ${tag} pre-publish 완료 — Chrome 탭에서 [공유] 클릭`);
+  return { ...item, result: 'pre-published' };
+}
+
+// ─── 4. 결과 알림 (콘솔 + 데스크탑) ────────────────────────
+async function notifyDashboard(results) {
+  const ready = results.filter((r) => r.result === 'pre-published');
+  const blocked = results.filter((r) => r.result === 'guardian-block');
+  const authExpired = results.filter((r) => r.result === 'auth-expired');
+  const failed = results.filter((r) => !['pre-published', 'simulated', 'guardian-block', 'auth-expired'].includes(r.result));
+
+  ui.info('\n━━━ 🌅 Morning routine 완료 ━━━');
+  ui.ok(`  발행 대기 ${ready.length}개 (Chrome 탭 확인)`);
+  if (authExpired.length) ui.warn(`  인증 만료 ${authExpired.length}채널 (로그인 필요)`);
+  if (blocked.length) ui.warn(`  guardian block ${blocked.length}개 (카피 수정 필요)`);
+  if (failed.length) ui.err(`  실패 ${failed.length}개`);
+  for (const r of ready) ui.dim(`    ✓ ${r.slug}/${r.channel}`);
+  for (const r of authExpired) ui.dim(`    🔑 ${r.channel} (로그인 필요)`);
+  for (const r of blocked) ui.dim(`    ✗ ${r.slug}/${r.channel} (block)`);
+  for (const r of failed) ui.dim(`    ! ${r.slug}/${r.channel} (${r.result})`);
+
+  // 데스크탑 알림 — 클라이언트가 9시 결과 즉시 인지 (P0)
+  const parts = [`발행 대기 ${ready.length}개`];
+  if (authExpired.length) parts.push(`로그인 ${authExpired.length}`);
+  if (blocked.length) parts.push(`검수차단 ${blocked.length}`);
+  if (failed.length) parts.push(`실패 ${failed.length}`);
+  const title = ready.length > 0
+    ? `🌅 발행 대기 ${ready.length}개 준비 완료`
+    : (authExpired.length ? '🔑 로그인 필요 — 발행 대기 0' : '⚠ Morning routine — 처리 0');
+  notifyDesktop(title, parts.join(' · ') + ' · Chrome 탭 확인');
+
+  // 결과 JSON 로그 (사후 분석용)
+  try {
+    const logPath = resolve(ROOT, 'logs', 'morning-result.json');
+    mkdirSync(resolve(ROOT, 'logs'), { recursive: true });
+    writeFileSync(logPath, JSON.stringify({
+      at: new Date().toISOString(),
+      ready: ready.length, authExpired: authExpired.length,
+      blocked: blocked.length, failed: failed.length,
+      results,
+    }, null, 2), 'utf8');
+  } catch {}
+}
+
+// ─── main ─────────────────────────────────────────────────
+try {
+  ui.info('🌅 Morning routine 시작' + (dryRun ? ' (--dry-run)' : ''));
+  if (slugFilter) ui.dim(`  slug=${slugFilter}`);
+  if (channelFilter) ui.dim(`  channel=${channelFilter}`);
+
+  await ensureEnvironment();
+
+  let work = collectWork();
+  if (!work.length) {
+    ui.info('처리할 작업 없음. 종료.');
+    process.exit(0);
+  }
+
+  // 사전 인증 검증 — 만료 채널 work 에서 제외 (dry-run 은 skip)
+  let expiredSet = new Set();
+  if (!dryRun) {
+    const neededChannels = [...new Set(work.map((w) => w.channel))];
+    const { expired } = await preflightAuth(neededChannels);
+    expiredSet = expired;
+    if (expired.size) {
+      const before = work.length;
+      work = work.filter((w) => !expired.has(w.channel));
+      ui.warn(`  만료 채널 제외: ${before - work.length}건 skip (로그인 후 재실행)`);
+    }
+    if (!work.length) {
+      ui.warn('\n모든 대상 채널 인증 만료. Chrome 탭에서 로그인 후 다시 실행하세요.');
+      notifyDesktop('Morning routine 중단', '모든 채널 로그인 필요 — Chrome 탭 확인');
+      process.exit(0);
+    }
+  }
+
+  const results = [];
+  for (let i = 0; i < work.length; i++) {
+    const r = await processWorkItem(work[i], i, work.length);
+    results.push(r);
+  }
+  // 만료로 skip 한 채널도 결과에 포함 (리포트 정확성)
+  for (const ch of expiredSet) {
+    results.push({ channel: ch, result: 'auth-expired', slug: '(여러 캠페인)' });
+  }
+  await notifyDashboard(results);
+  ui.ok('\n사용자 검토 → 각 Chrome 탭에서 [공유] 클릭하시면 됩니다.');
+} catch (e) {
+  ui.err(`morning-routine 실패: ${e.message}`);
+  console.error(e.stack);
+  process.exit(1);
 }

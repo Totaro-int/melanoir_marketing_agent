@@ -78,14 +78,17 @@ if (!enabled.length) {
   add('channels', 'enabled in profile', 'fail', '/sns-onboard 또는 /sns-onboard update channels — 1개 이상 필요');
 } else {
   add('channels', 'enabled in profile', 'ok', enabled.join(', '));
+  // browser-publish (cookie) 채널은 아래 'cookie-auth' 섹션이 실제 상태를 보여줌.
+  // 여기선 API 토큰 발행만 쓰는 채널 (facebook/x/bluesky/mastodon/pinterest 등) 만 점검.
+  const COOKIE_CHANNELS = ['naver-blog', 'tistory', 'brunch', 'instagram', 'threads', 'linkedin'];
   for (const ch of enabled) {
     const known = knownChannels().includes(ch);
     if (!known) { add('channels', `[${ch}] adapter`, 'fail', '등록되지 않은 채널 ID'); continue; }
+    if (COOKIE_CHANNELS.includes(ch)) continue; // cookie-auth 섹션이 담당 — 중복 경고 제거
     const hasAuth = authFiles.includes(`${ch}.json`);
     const meta = CHANNEL_META[ch];
-    // 토큰 미등록은 warn (자동 dry-run fallback). 사용자가 의도적으로 미등록일 수 있음.
     add('channels', `[${ch}] auth/${ch}.json`, hasAuth ? 'ok' : 'warn',
-      hasAuth ? meta?.media ?? '' : `없음 — /sns-auth add ${ch} (${meta?.auth ?? ''})`);
+      hasAuth ? meta?.media ?? '' : `없음 — API 발행 시 /sns-auth add ${ch} (${meta?.auth ?? ''})`);
   }
 }
 
@@ -116,13 +119,41 @@ try {
 }
 
 // Dashboard 7777 라이브 점검 (선택)
+let dashAlive = false;
 try {
   const r = await fetch('http://localhost:7777/api/today', { signal: AbortSignal.timeout(2000) });
+  dashAlive = r.ok;
   add('dashboard', 'dashboard 7777', r.ok ? 'ok' : 'warn',
     r.ok ? 'live (http://localhost:7777)' : `HTTP ${r.status}`);
 } catch {
   add('dashboard', 'dashboard 7777', 'warn',
     '미실행 — node harness/bin/dashboard.mjs');
+}
+
+// 채널 cookie 인증 (실제 발행 경로) — 대시보드 /api/channels 가 Chrome cookie 를 읽음.
+// auth/<ch>.json (API 토큰) 은 우리 흐름에서 안 쓰므로, browser-publish 채널은 이쪽이 진짜.
+const PUBLISHABLE = ['naver-blog', 'tistory', 'brunch', 'instagram', 'threads', 'linkedin'];
+if (dashAlive) {
+  try {
+    const r = await fetch('http://localhost:7777/api/channels?fresh=1', { signal: AbortSignal.timeout(20000) });
+    const data = await r.json();
+    if (data.chrome && !data.chrome.ok) {
+      add('cookie-auth', 'Chrome cookie 검사', 'warn', 'Chrome 9222 attach 안 됨 — start-demo 먼저');
+    } else {
+      const authMap = {};
+      for (const a of data.auth || []) if (a.configured) authMap[a.channel] = a.cookie || true;
+      const targets = enabled.filter((c) => PUBLISHABLE.includes(c));
+      for (const ch of (targets.length ? targets : PUBLISHABLE)) {
+        const ok = !!authMap[ch];
+        add('cookie-auth', `[${ch}] 로그인`, ok ? 'ok' : 'warn',
+          ok ? `cookie 살아있음 (${authMap[ch]})` : '만료/미로그인 — 마법사로 로그인');
+      }
+    }
+  } catch (e) {
+    add('cookie-auth', '채널 cookie 검사', 'warn', `조회 실패: ${e.message.slice(0, 40)}`);
+  }
+} else {
+  add('cookie-auth', '채널 cookie 검사', 'warn', '대시보드 미실행 — cookie 확인 불가 (start-demo 먼저)');
 }
 
 // marketing-sources.yaml — RSS 등 자동수집 소스 (선택, 없으면 사용자 수동 입력만)

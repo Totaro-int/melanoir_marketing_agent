@@ -7,7 +7,7 @@
 //   node harness/bin/chrome-shutdown.mjs --port=9223
 //   node harness/bin/chrome-shutdown.mjs --verify   # 종료 후 cookies SQLite mtime 확인
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ROOT } from './_lib.mjs';
@@ -77,6 +77,12 @@ async function closeMainWindow(pid) {
 const before = tsBeforeShutdown();
 console.log(`Chrome graceful shutdown (port ${port})`);
 console.log('');
+
+// 종료 전 쿠키 스냅샷 — 강제종료/다음 시작 대비 (실패해도 종료는 계속)
+try {
+  console.log('[0] 쿠키 스냅샷 저장 중...');
+  spawnSync(process.execPath, [resolve(ROOT, 'harness/bin/cookie-store.mjs'), 'save'], { stdio: 'inherit', timeout: 20_000 });
+} catch { /* non-fatal */ }
 
 await tryCdpClose();
 

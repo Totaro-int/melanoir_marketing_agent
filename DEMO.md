@@ -2,7 +2,7 @@
 
 네이버 블로그 발행 시연. 다른 PC 에서도 동일하게 동작.
 
-전제 — `git clone` 후 `node harness/bin/setup.mjs` 실행 완료 + `.env.local` 에 `FAL_KEY` + `ANTHROPIC_API_KEY` 입력 완료. (자세한 설치는 `harness/docs/INSTALL.md` 참고)
+전제 — `git clone` 후 `node harness/bin/setup.mjs` 실행 완료. 기본 inhouse-slides 는 API 키 불필요 (AI 이미지 fal 쓸 때만 `.env.local` 에 `FAL_KEY`). (자세한 설치는 `harness/docs/INSTALL.md` 참고)
 
 ---
 
@@ -139,8 +139,8 @@ node harness/bin/chrome-shutdown.mjs --verify
 ## 6. 다음 시연 전 체크리스트
 
 - [ ] `node harness/bin/setup.mjs` 한 번 돌렸음
-- [ ] `.env.local` 에 `FAL_KEY` + `ANTHROPIC_API_KEY` 박혀있음
-- [ ] `.env.local` 의 `FAL_IMAGE_MODEL` 값에 인라인 주석 (`  # ...`) 없음
+- [ ] (AI 이미지 fal 쓸 때만) `.env.local` 에 `FAL_KEY` 박혀있음 — 기본 inhouse-slides 면 불필요
+- [ ] (fal 쓸 때만) `.env.local` 의 `FAL_IMAGE_MODEL` 값에 인라인 주석 (`  # ...`) 없음
 - [ ] `company-profile.yaml` 회사 프로필 작성 완료
 - [ ] 채널 8개 로그인 완료 ("로그인 유지" 체크)
 - [ ] Chrome 9222 종료 시 X 버튼 또는 `chrome-shutdown.mjs` 만 사용

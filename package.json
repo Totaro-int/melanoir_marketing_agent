@@ -1,8 +1,8 @@
 {
   "name": "melanoir-marketing-agent",
-  "version": "1.0.0",
+  "version": "0.9.1",
   "private": true,
-  "description": "Melanoir SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
+  "description": "Totaro SNS 마케팅 자동화 하네스 — Claude Code 플러그인",
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -22,9 +22,12 @@
     "publish": "node harness/bin/publish.mjs",
     "publish:dry": "PUBLISHER_DRY_RUN=true node harness/bin/publish.mjs",
     "auth": "node harness/bin/auth.mjs",
+    "cookies": "node harness/bin/cookie-store.mjs",
     "status": "node harness/bin/board.mjs",
     "status:watch": "node harness/bin/board.mjs --watch",
     "doctor": "node harness/bin/doctor.mjs",
+    "morning": "node harness/bin/morning-routine.mjs",
+    "morning:dry": "node harness/bin/morning-routine.mjs --dry-run",
     "setup": "node harness/bin/setup.mjs",
     "run": "node harness/bin/run.mjs",
     "schedule": "node harness/bin/schedule-plan.mjs",
@@ -32,8 +35,7 @@
     "queue:dry": "node harness/bin/queue-tick.mjs --dry-run",
     "queue:install": "node harness/bin/install-cron.mjs install",
     "sync-posts": "node harness/bin/sync-posts.mjs",
-    "morning": "node harness/bin/morning-routine.mjs",
-    "morning:dry": "node harness/bin/morning-routine.mjs --dry-run"
+    "seed-calendar": "node harness/bin/seed-calendar.mjs"
   },
   "dependencies": {
     "ajv": "^8.17.1",

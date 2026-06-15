@@ -89,8 +89,9 @@ if (linkTarget) {
 
 console.log();
 console.log(pc.bold('다음 단계:'));
-console.log(pc.dim('  1. ') + 'node bin/doctor.mjs           ' + pc.dim('# 환경 진단'));
-console.log(pc.dim('  2. ') + '에디터로 .env.local 열어 키 채우기 (FAL_KEY 권장)');
-console.log(pc.dim('  3. ') + 'Claude Code 안에서 /sns-onboard   ' + pc.dim('# 회사 프로필 인터뷰'));
-console.log(pc.dim('  4. ') + '/sns-campaign-new "<주제>"  →  /sns-generate  →  /sns-preview  →  /sns-approve  →  /sns-publish --dry-run');
+console.log(pc.dim('  1. ') + 'npm run doctor                ' + pc.dim('# 환경 진단 (전부 green 확인)'));
+console.log(pc.dim('  2. ') + '.env.local — 그대로 둬도 됨 (기본 inhouse-slides 는 API 키 0개)');
+console.log(pc.dim('     ') + pc.dim('AI 이미지 쓸 때만 FAL_KEY 추가: https://fal.ai/dashboard/keys'));
+console.log(pc.dim('  3. ') + 'Claude Code 안에서 /sns-start   ' + pc.dim('# 프로필 인터뷰 → 캠페인 → 검수 → 발행 자동'));
+console.log(pc.dim('  4. ') + '매일 아침 자동화: npm run morning   ' + pc.dim('(또는 scripts/install-morning-cron 등록)'));
 console.log();
