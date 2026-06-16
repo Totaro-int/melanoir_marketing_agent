@@ -124,9 +124,9 @@ for (const slug of slugs) {
       continue;
     }
 
-    const pr = spawnSync(process.execPath, [
-      resolve(here, 'publish.mjs'), slug, `--channel=${ch}`,
-    ], { encoding: 'utf8', env: { ...process.env, MARKETING_AGENT_SKIP_UPDATE_CHECK: '1' } });
+    // 레거시 API 자동발행(publish.mjs) 제거됨 (2026-06). 발행은 browser-publish(사람 게이트)만 —
+    // 큐가 due 로 잡은 항목은 자동 게시하지 않고 needs_attention 으로 표시 → morning/대시보드에서 browser-publish.
+    const pr = { status: 1, stderr: 'browser-publish 수동 발행 필요 (자동 API 발행 제거됨 — 대시보드 [발행] 또는 npm run morning)' };
     if (pr.status !== 0) {
       const reason = (pr.stderr || pr.stdout || 'publish 실패').trim().split('\n').pop();
       // refresh brief (publish may have set failed)

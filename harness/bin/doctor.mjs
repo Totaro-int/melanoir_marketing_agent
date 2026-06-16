@@ -66,16 +66,11 @@ try {
 }
 
 if (!QUICK) {
-// 4) Publisher credentials
+// 4) 발행 — 모든 채널 browser-publish(크롬 쿠키 로그인). 실제 로그인 상태는 아래 'cookie-auth' 섹션.
+//    (레거시 API 토큰/OAuth 발행 레이어는 2026-06 제거됨.)
 const authDir = resolve(ROOT, 'auth');
-const authFiles = existsSync(authDir) ? readdirSync(authDir).filter((f) => f.endsWith('.json')) : [];
-add('publisher', 'auth/ dir', existsSync(authDir) ? (authFiles.length ? 'ok' : 'warn') : 'fail',
-  authFiles.length ? authFiles.join(', ') : 'empty (run: /sns-auth add <channel>)');
-for (const f of authFiles) {
-  const p = resolve(authDir, f);
-  const mode = (statSync(p).mode & 0o777).toString(8);
-  add('publisher', `mode 0600: ${f}`, mode === '600', `mode ${mode}`);
-}
+add('publisher', 'auth/ dir', existsSync(authDir) ? 'ok' : 'fail',
+  existsSync(authDir) ? '쿠키 저장 위치 (auth/cookies/)' : 'setup.mjs 재실행 필요');
 const dryRun = isDryRun();
 add('publisher', 'PUBLISHER_DRY_RUN', dryRun ? 'ok' : 'warn',
   dryRun ? 'ON (safe)' : 'off (real publish enabled)');
@@ -88,17 +83,11 @@ if (!enabled.length) {
   add('channels', 'enabled in profile', 'fail', '/sns-onboard 또는 /sns-onboard update channels — 1개 이상 필요');
 } else {
   add('channels', 'enabled in profile', 'ok', enabled.join(', '));
-  // browser-publish (cookie) 채널은 아래 'cookie-auth' 섹션이 실제 상태를 보여줌.
-  // 여기선 API 토큰 발행만 쓰는 채널 (facebook/x/bluesky/mastodon/pinterest 등) 만 점검.
-  const COOKIE_CHANNELS = ['naver-blog', 'tistory', 'brunch', 'instagram', 'threads', 'linkedin'];
+  // 모든 발행 = browser-publish(쿠키). 채널 ID 유효성만 확인 — 실제 로그인 상태는 아래 'cookie-auth' 섹션.
   for (const ch of enabled) {
-    const known = knownChannels().includes(ch);
-    if (!known) { add('channels', `[${ch}] adapter`, 'fail', '등록되지 않은 채널 ID'); continue; }
-    if (COOKIE_CHANNELS.includes(ch)) continue; // cookie-auth 섹션이 담당 — 중복 경고 제거
-    const hasAuth = authFiles.includes(`${ch}.json`);
-    const meta = CHANNEL_META[ch];
-    add('channels', `[${ch}] auth/${ch}.json`, hasAuth ? 'ok' : 'warn',
-      hasAuth ? meta?.media ?? '' : `없음 — API 발행 시 /sns-auth add ${ch} (${meta?.auth ?? ''})`);
+    if (!knownChannels().includes(ch)) {
+      add('channels', `[${ch}]`, 'fail', `지원하지 않는 채널 (browser-publish 가능: ${knownChannels().join(', ')})`);
+    }
   }
 }
 
