@@ -16,7 +16,8 @@
 - 기본 `CONTENT_ENGINE_PROVIDER=inhouse-slides` 는 **API 키 0개**로 동작.
   카피·슬라이드는 Claude Code 서브에이전트가 만들고, 이미지는 HTML 카드를
   Playwright 로 스크린샷. `ANTHROPIC_API_KEY` 는 **쓰지 않는다**.
-- 키가 필요한 건 **AI 가 그린 사진/일러스트**(fal/openai)를 쓸 때 뿐 → PHASE 4 (선택).
+- 키가 필요한 건 **블로그(naver-blog) 본문 인라인 이미지**(fal) 뿐 →
+  **블로그 채널이 있으면 PHASE 4 필수**, 소셜 카드만이면 키 0개(PHASE 4 생략).
 - ⚠ **실행 환경 (이거 틀리면 발행이 안 됨)**: 발행(브라우저 로그인)은 **로컬에서 도는 Claude Code** 에서만 된다.
   - ✅ 가장 확실: 클라이언트 Mac/PC **터미널에서 `claude` CLI** 로 실행.
   - 🖥 데스크탑 앱이면 Environment 를 **`Local`** 로 (기본 `Remote`=클라우드 리눅스라 로컬 Chrome 이 없어 발행 불가 — `libXdamage`·`ECONNREFUSED 9222` 에러의 정체).
@@ -109,40 +110,42 @@ node harness/bin/profile-validate.mjs
 
 ---
 
-## PHASE 4 — 이미지 생성 API 키 (블로그 인라인 이미지)  🧑
+## PHASE 4 — 블로그 인라인 이미지용 fal 키 (FAL_KEY)  🧑
 
-> 카드(인스타·스레드·링크드인)는 Claude HTML 카드라 **키 불필요**.
-> 단 **블로그(naver-blog) 본문 인라인 이미지는 AI 이미지 API**로 만든다 → 키 1개 필요.
+> **활성 채널이 소셜 카드(instagram·threads·linkedin 등)뿐이면 이 PHASE 건너뛴다 — 키 0개.**
+> 카드는 Claude HTML 카드(`inhouse-slides`)라 API 키가 필요 없다.
+>
+> **단 블로그(naver-blog) 본문 인라인 이미지는 fal 로 생성** → fal 키가 필요하다.
+> 블로그는 카드가 아니라 본문 article + **섹션마다 인라인 이미지**로 나가고, 그 인라인
+> 이미지는 `gen-image.mjs`(fal)로 생성된다 — `CONTENT_ENGINE_PROVIDER` 값과 **무관하게 항상 fal**.
+> 키가 없으면 블로그 생성이 "FAL_KEY 없음"으로 중단된다.
 
-### 4-1. 어떤 API 쓸지 결정 (설치 직전)
+### 4-1. fal 키 발급  🧑
 
-| provider | 발급 콘솔 | 비고 |
-|---|---|---|
-| **fal.ai** (권장·검증됨) | https://fal.ai/dashboard/keys | 가입 즉시 키. abstract/editorial 이미지 — 멜라누아 모노톤에 적합 |
-| openai | https://platform.openai.com/api-keys | gpt-image-1 / DALL-E |
-| google (Gemini) | https://aistudio.google.com/apikey | ⚠ 이미지 provider 추가 필요 (현재 fal/openai 만 내장) |
+🧑 https://fal.ai/dashboard/keys 에서 키 발급(가입 즉시 키). abstract/editorial 이미지 —
+멜라누아 모노톤(jet black + Pretendard)에 적합. (Claude 가 Chrome 새 탭으로 콘솔을 열어줄 수
+있다 → 클라이언트 로그인 → [Create API key] → 키 복사. 자동 클릭이 막히면 직접 생성.)
 
-### 4-2. Chrome MCP로 발급 (Claude Code 안에서)
+### 4-2. 키 저장 + 검증
 
-Claude 가 위 발급 콘솔을 Chrome 새 탭에 연다 → 🧑 클라이언트가 로그인 →
-[Create API key] 클릭 → 키 복사. (자동 클릭이 막히면 클라이언트가 직접 생성)
+**대시보드(권장, PHASE 5 이후)**: http://localhost:7777 → ⚙ 환경 설정 → `FAL_KEY` 입력 →
+**[검증]**(실 API 호출로 잔액 확인) → **[저장]**(`.env.local` 기록 + `.env.local.bak` 백업).
 
-### 4-3. 키 저장 + 검증
-
-대시보드(PHASE 5 이후) http://localhost:7777 → ⚙ 환경 설정 → 키 입력 →
-**[검증]** (실 API 호출로 잔액 확인) → **[저장]** (`.env.local` + `CONTENT_ENGINE_PROVIDER` 자동, `.env.local.bak` 백업).
-
-또는 `.env.local` 직접:
+**또는 `.env.local` 직접** — `CONTENT_ENGINE_PROVIDER` 는 **`inhouse-slides` 그대로 두고**
+`FAL_KEY` 만 추가한다 (소셜 카드는 HTML 카드로, 블로그 이미지는 fal 로):
 ```dotenv
-CONTENT_ENGINE_PROVIDER=fal
-FAL_KEY=...
-# FAL_IMAGE_MODEL 값에 인라인 주석(  # ...) 붙이지 말 것
+CONTENT_ENGINE_PROVIDER=inhouse-slides   # 소셜 카드 = Claude HTML 카드 (키 0)
+FAL_KEY=...                              # 블로그 인라인 이미지 = fal (gen-image.mjs)
+# FAL_IMAGE_MODEL 값에 인라인 주석(  # ...) 붙이지 말 것 (기본 fal-ai/nano-banana-2)
 ```
+> 이미지 전체(소셜 카드까지)를 fal 로 만들고 싶을 때만 `CONTENT_ENGINE_PROVIDER=fal` —
+> 그러면 카드가 HTML 이 아니라 fal 이미지가 되고 PHASE 2 게이트도 fal 로 바뀐다.
 
-> 한글 타이포는 AI 이미지에 그리지 않는다 (깨짐). 텍스트는 글 본문에, 이미지는
-> abstract/editorial 비주얼로 — 블로그 **섹션마다 인라인 배치**된다 (한꺼번에 위에 X).
+> 한글 타이포는 AI 이미지에 그리지 않는다(깨짐). 텍스트는 글 본문에, 이미지는 abstract/
+> editorial 비주얼로 — 블로그 **섹션마다 인라인 배치**된다 (한꺼번에 위에 X).
 
-**✅ 검증 게이트**: 대시보드 [검증] `✓ FAL 통과` 또는 `node harness/bin/doctor.mjs` 의 content-engine fal green.
+**✅ 검증 게이트**: (블로그 채널이 있으면) 대시보드 [검증] `✓ FAL 통과` 또는
+`node harness/bin/doctor.mjs` 의 `content-engine → provider: fal` 가 green.
 
 ---
 
