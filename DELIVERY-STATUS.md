@@ -10,14 +10,13 @@
 
 ---
 
-## ✅ 블로그 라우팅 fix — 빌드+검증 완료, `fix/blog-kind-routing` 브랜치에 있음 (머지 1줄)
+## ✅ 블로그 라우팅 fix — main 머지 완료 (검증 완료, 클론 즉시 정상)
 
-밤사이 **기본 provider 로 블로그 생성 시 카드/placeholder 가 나오던 버그를 직접 고치고 풀 파이프라인으로 검증**했다. core(generate pipeline) 변경이라 §0 동결 영역 → **main 에 자동 머지 안 하고 브랜치에 올려둠. 네가 1줄 머지하면 활성화.**
+기본 provider 로 블로그 생성 시 카드/placeholder 가 나오던 버그를 직접 고치고 풀 파이프라인으로 검증 후 **main 에 머지함**(사용자 승인, 머지 커밋 `4c450b9`). 이제 **클론하면 바로 블로그가 카드 아니라 본문 article + 인라인 이미지로 나온다** — 추가 작업 불필요.
 
 ```bash
-# melanoir 레포에서, 클론·검수 전에 먼저:
-git merge fix/blog-kind-routing      # 활성화 (충돌 없음 — 코드 4파일만)
-# 마음에 안 들면:  git revert <merge-commit>   (또는 머지 안 하고 아래 우회)
+# 이미 main 에 반영됨. 되돌리려면(원치 않을 때만):
+git revert 4c450b9
 ```
 
 **무엇을 고쳤나 (channels.json 의 kind 를 존중하게):**
