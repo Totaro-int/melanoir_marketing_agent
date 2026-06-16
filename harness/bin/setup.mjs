@@ -105,8 +105,12 @@ if (linkTarget) {
 
 console.log();
 console.log(bold('다음 단계:'));
-console.log(dimc('  1. ') + 'node harness/bin/doctor.mjs     ' + dimc('# 환경 진단 (전부 green 확인)'));
-console.log(dimc('  2. ') + '.env.local — 그대로 둬도 됨 (기본 inhouse-slides 는 API 키 0개)');
-console.log(dimc('  3. ') + 'Claude Code 안에서 /sns-start   ' + dimc('# 프로필 인터뷰 → 캠페인 → 검수 → 발행'));
-console.log(dimc('  4. ') + '매일 아침 자동화: npm run morning   ' + dimc('(또는 scripts/install-morning-cron 등록)'));
+console.log(dimc('  1. ') + '터미널에서 ' + bold('claude') + ' 실행 ' + dimc('# 데스크탑 앱이면 Environment=Local — Remote(클라우드)는 발행 불가'));
+console.log(dimc('  2. ') + 'Claude Code 안에서 플러그인 등록 (스킬 활성화 — 아래 그대로 복붙):');
+console.log('       /plugin marketplace add "' + ROOT + '"   ' + dimc('# 경로에 공백/대괄호 있으면 따옴표 유지'));
+console.log('       /plugin install marketing_agent@marketing_agent');
+console.log('       /plugin reload');
+console.log(dimc('  3. ') + 'node harness/bin/doctor.mjs     ' + dimc('# 환경 진단 ("실행환경(발행)" 행이 ok 인지)'));
+console.log(dimc('  4. ') + '/sns-start   ' + dimc('# 프로필 인터뷰 → 캠페인 → 검수 → 발행'));
+console.log(dimc('  5. ') + '매일 아침 자동화: npm run morning   ' + dimc('(또는 scripts/install-morning-cron)'));
 console.log();

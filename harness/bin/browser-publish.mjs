@@ -25,7 +25,7 @@ import { resolve, basename } from 'node:path';
 import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import {
   readYaml, writeYaml, writeJson, findCampaignDir, latestDraftYaml,
-  nowKstIso, ui, promptLine, ROOT,
+  nowKstIso, ui, promptLine, ROOT, detectPublishEnv,
 } from './_lib.mjs';
 
 const SUPPORTED = new Set(['threads', 'linkedin', 'instagram', 'naver-blog', 'tistory', 'brunch']);
@@ -79,6 +79,13 @@ ui.dim(`  카드: ${cardPaths.length}장`);
 
 const { chromium } = await import('playwright');
 
+// 발행 환경 가드 — 클라우드/Remote(헤드리스 리눅스)면 로컬 브라우저 발행 불가. 미리 경고.
+const _penv = detectPublishEnv();
+if (_penv.likelyRemote) {
+  ui.warn(_penv.note);
+  ui.dim('  (그래도 시도는 합니다 — 로컬 9222 터널이 있으면 진행될 수 있음)');
+}
+
 let context, browser;
 if (attach) {
   ui.info(`[${channel}] 사용자 Chrome 에 attach: ${attachUrl}`);
@@ -86,9 +93,19 @@ if (attach) {
   try {
     browser = await chromium.connectOverCDP(attachUrl);
   } catch (e) {
-    ui.err(`Chrome attach 실패: ${e.message}`);
-    ui.err('  Chrome 을 다음 명령으로 재실행하세요:');
-    ui.err('    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\\Users\\WIN10\\AppData\\Local\\Google\\Chrome\\User Data"');
+    ui.err(`Chrome attach 실패 (${attachUrl}): ${e.message}`);
+    if (_penv.likelyRemote) {
+      ui.err('  ▶ 원인: 지금 클라우드/Remote 환경이라 붙을 로컬 Chrome 이 없습니다.');
+      ui.err('     발행은 클라이언트 Mac/PC 로컬에서만 — 데스크톱 앱 Environment=Local 또는 터미널 `claude` CLI 로 전환하세요.');
+    } else {
+      ui.err('  ▶ 9222 포트에 Chrome 이 안 떠 있습니다. 먼저 디버그 모드 Chrome 을 실행하세요:');
+      if (process.platform === 'win32') {
+        ui.err('     powershell -File scripts/start-demo.ps1');
+        ui.err('     # 또는: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port=9222 --user-data-dir="%LOCALAPPDATA%\\Google\\Chrome\\User Data"');
+      } else {
+        ui.err('     bash scripts/start-demo.sh      # macOS/Linux — Chrome 9222 + 대시보드');
+      }
+    }
     process.exit(1);
   }
   // 첫 번째 컨텍스트 사용 (사용자 기존 세션)

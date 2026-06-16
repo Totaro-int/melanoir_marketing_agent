@@ -4,9 +4,12 @@
 
 Claude Code 위에서 동작하는 마케팅 자동화 하네스입니다.
 
-> **⚠️ Claude 데스크탑 앱(Mac/Windows)·웹(claude.ai)에서는 동작하지 않습니다.**
-> 로컬 파일 접근, 터미널 실행, 커스텀 스킬(`/sns-start` 등)은 **Claude Code CLI 전용** 기능입니다.
-> 반드시 터미널에서 `claude` 명령어로 진입해 사용하세요.
+> **⚠️ 발행(SNS 게시)은 "내 컴퓨터에서 로컬로 도는 Claude Code"에서만 됩니다.**
+> - ✅ 가장 확실: 터미널에서 **`claude` CLI** 로 실행 (로컬 파일·브라우저 제어 가능).
+> - 🖥 데스크탑 앱을 쓰면 **Environment 를 반드시 `Local` 로** 바꾸세요. 기본값 `Remote`(클라우드)는 **생성·검수만 되고 발행은 안 됩니다** (로컬 Chrome 제어 불가 — `ECONNREFUSED 9222`·`libXdamage` 에러의 원인).
+> - ❌ claude.ai 웹은 발행 불가.
+>
+> 생성·검수는 어디서든 OK. 헷갈리면 `node harness/bin/doctor.mjs` 의 **"실행환경(발행)"** 행을 확인하세요.
 
 ---
 

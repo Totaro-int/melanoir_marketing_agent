@@ -144,6 +144,29 @@ export function isBlogChannel(id) {
   return channelKind(id) === 'blog';
 }
 
+// 발행 환경 감지 — browser-publish 는 사용자가 "보이는 로컬 브라우저"에 직접 로그인해야 한다.
+// 클라우드/Remote(예: Claude 데스크톱 Remote 모드 = Anthropic 리눅스 샌드박스)는 로컬 Chrome 이
+// 없고 네트워크도 제한돼 발행 불가. 생성은 어디서든 OK, 발행만 Local 필수.
+//   판별: Linux 인데 DISPLAY/WAYLAND_DISPLAY 둘 다 없음 = 헤드리스/클라우드 → 발행 불가 가능성 높음.
+//   (macOS/Windows 로컬, 또는 DISPLAY 있는 Linux 데스크톱은 OK.)
+export function detectPublishEnv() {
+  const platform = process.platform; // 'darwin' | 'win32' | 'linux'
+  const hasDisplay = !!(process.env.DISPLAY || process.env.WAYLAND_DISPLAY);
+  const headlessLinux = platform === 'linux' && !hasDisplay;
+  return {
+    platform,
+    hasDisplay,
+    likelyRemote: headlessLinux,
+    canPublishLocally: !headlessLinux,
+    note: headlessLinux
+      ? '⚠ 헤드리스/클라우드(Remote) 환경으로 보입니다 — 발행(브라우저 로그인)은 로컬에서만 됩니다.\n'
+        + '  · Claude 데스크톱 앱이면 Environment 를 Remote → Local 로 바꾸세요.\n'
+        + '  · 또는 클라이언트 Mac/PC 의 터미널에서 `claude` CLI 로 실행하세요.\n'
+        + '  · 생성·검수는 이 환경에서도 됩니다. 발행만 로컬 필요.'
+      : null,
+  };
+}
+
 // /sns-onboard 단계에서 사용자가 고른 채널. 없으면 빈 배열 — 호출부가 fallback 결정.
 export function enabledChannels(profile) {
   const arr = profile?.channels?.enabled;

@@ -7,7 +7,7 @@ import { existsSync, readFileSync, statSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import pc from 'picocolors';
-import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels, checkForUpdates } from './_lib.mjs';
+import { PATHS, ROOT, HARNESS_ROOT, ui, readYaml, enabledChannels, checkForUpdates, detectPublishEnv } from './_lib.mjs';
 import { listProviders, getActiveProviderId } from '../src/content-engine/registry.mjs';
 import { knownChannels, CHANNEL_META, isDryRun } from '../src/publisher/registry.mjs';
 import { visibleWidth } from '../src/util/width.mjs';
@@ -29,6 +29,13 @@ add('runtime', 'Node version', process.version >= 'v20', process.version);
 const pkg = readPkg();
 add('runtime', 'package.json', !!pkg, pkg ? `${pkg.name}@${pkg.version}` : 'missing');
 add('runtime', 'node_modules', existsSync(resolve(ROOT, 'node_modules')), existsSync(resolve(ROOT, 'node_modules')) ? '' : 'run: npm install');
+
+// 실행 환경 — 발행은 "보이는 로컬 브라우저" 필요. 클라우드/Remote(헤드리스 리눅스)면 생성만 가능.
+const _penv = detectPublishEnv();
+add('runtime', '실행환경(발행)', _penv.canPublishLocally ? 'ok' : 'warn',
+  _penv.canPublishLocally
+    ? `${_penv.platform} — 로컬 발행 OK`
+    : `${_penv.platform} 헤드리스/Remote — 생성만 가능, 발행은 데스크톱 Environment=Local 또는 터미널 claude CLI`);
 
 // 2) Profile
 add('profile', 'company-profile.yaml', existsSync(PATHS.profile),

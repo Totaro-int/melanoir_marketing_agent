@@ -17,6 +17,10 @@
   카피·슬라이드는 Claude Code 서브에이전트가 만들고, 이미지는 HTML 카드를
   Playwright 로 스크린샷. `ANTHROPIC_API_KEY` 는 **쓰지 않는다**.
 - 키가 필요한 건 **AI 가 그린 사진/일러스트**(fal/openai)를 쓸 때 뿐 → PHASE 4 (선택).
+- ⚠ **실행 환경 (이거 틀리면 발행이 안 됨)**: 발행(브라우저 로그인)은 **로컬에서 도는 Claude Code** 에서만 된다.
+  - ✅ 가장 확실: 클라이언트 Mac/PC **터미널에서 `claude` CLI** 로 실행.
+  - 🖥 데스크탑 앱이면 Environment 를 **`Local`** 로 (기본 `Remote`=클라우드 리눅스라 로컬 Chrome 이 없어 발행 불가 — `libXdamage`·`ECONNREFUSED 9222` 에러의 정체).
+  - 생성·검수는 `Remote` 에서도 됨. `node harness/bin/doctor.mjs` 의 **"실행환경(발행)"** 행이 `warn` 이면 Local/CLI 로 전환 후 진행.
 
 ---
 
