@@ -54,6 +54,9 @@ posts/campaigns/**/publish.log
 
 # 노드/툴링
 node_modules/
+# package-lock.json: npm install 이 npm 버전 차이로 재작성 → 트리가 더러워지고 self-update `git pull` 이 충돌.
+# 각 머신에서 로컬 생성하도록 추적 제외 (이 하네스는 느슨한 버전 범위라 재현성 영향 미미).
+package-lock.json
 .pnpm-store/
 dist/
 build/

@@ -83,7 +83,7 @@ export const AUTH_SCHEMAS = {
     ],
   },
   'naver-blog': {
-    note: '네이버 OpenAPI 블로그 글쓰기 — developers.naver.com 에서 앱 등록 후 OAuth2 access_token 발급. helper: node harness/bin/_temp-naver-oauth.mjs',
+    note: '⚠ 기본 발행은 browser-publish(크롬 쿠키 로그인) — OAuth 토큰 불필요. start-demo 로 크롬 띄우고 네이버 1회 로그인하면 끝. 아래 OAuth2 필드는 "서버 자동발행(API)" 을 따로 원할 때만 선택. (OAuth helper: node harness/bin/_temp-naver-oauth.mjs)',
     fields: [
       { key: 'accessToken', label: 'Access Token', secret: true, hint: '네이버 로그인 OpenAPI access_token' },
       { key: 'refreshToken', label: 'Refresh Token', secret: true, optional: true, hint: '갱신용' },

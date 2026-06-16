@@ -105,15 +105,15 @@ HTTP: <status>
 | bluesky | API 직접 (AT Protocol) | App password |
 | mastodon | API 직접 (Instance API) | Instance + token |
 | pinterest | API 직접 (OAuth2) | Board ID |
-| naver-blog | API 직접 (OpenAPI) | OAuth + blogId |
-| tistory | API 직접 (Open API) | OAuth + blogName |
+| **naver-blog** | **browser-publish (크롬 쿠키 로그인) — 기본** | 크롬 1회 로그인 → 쿠키 재사용. **OAuth 토큰 불필요.** API(OAuth)는 선택(서버 자동발행용) |
+| **tistory** | **browser-publish (크롬 쿠키 로그인) — 기본** | 크롬 1회 로그인 → 쿠키 재사용. **OAuth 토큰 불필요.** API(OAuth)는 선택 |
 | **brunch** | **browser-publish 권장** | **공식 API 없음 — `bin/browser-publish.mjs` 활용** |
 | tiktok | API 직접 (영상 .mp4) | 별도 워크플로우 |
 | youtube | API 직접 (영상 .mp4) | 별도 워크플로우 |
 
-## browser-publish 모드 (brunch + 보조)
+## browser-publish 모드 (naver-blog · tistory · brunch — 블로그 기본 발행)
 
-`channels.json` 의 채널이 `publishMode: "browser"` 면 (예: brunch) `bin/browser-publish.mjs` 호출:
+`channels.json` 의 채널이 `publishMode: "browser"` 면 (naver-blog/tistory/brunch) `bin/browser-publish.mjs` 호출 — **OAuth 토큰 없이 크롬 쿠키 로그인**으로 발행:
 
 1. Claude in Chrome 권한 확인
 2. 매체 로그인 페이지 navigate (Kakao SSO 등)
@@ -122,7 +122,7 @@ HTTP: <status>
 5. 사용자 1번 클릭 → 발행 또는 취소
 6. URL 받아서 result.json 저장
 
-> 이 모드는 사용자 세션이 필요하므로 cron 자동화에는 적합하지 않음. 수동 발행 또는 인터랙티브 워크플로우용.
+> 최초 1회 크롬 로그인 후 쿠키가 저장되면 재사용된다(cookie-store). morning-routine 은 이 모드의 **`--pre-publish`**(발행 직전까지만, 게이트에서 멈춤)를 cron 으로 돌려 "발행 직전 화면"을 준비하고, 최종 [발행] 클릭만 사람이 한다. 완전 무인 자동발행(`--auto-click`)만 사용자 세션이 필요.
 
 ## 금지
 
