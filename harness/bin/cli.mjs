@@ -16,8 +16,8 @@ const map = {
   preview:         'preview.mjs',
   approve:         'approve.mjs',
   reject:          'reject.mjs',
-  publish:         'publish.mjs',
-  auth:            'auth.mjs',
+  // 발행은 browser-publish(크롬 쿠키)만 — 레거시 API publish/auth 서브커맨드 제거(2026-06).
+  'browser-publish': 'browser-publish.mjs',
   status:          'board.mjs',
   board:           'board.mjs',
   doctor:          'doctor.mjs',
