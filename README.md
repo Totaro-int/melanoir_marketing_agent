@@ -10,6 +10,7 @@ Claude Code 위에서 동작하는 마케팅 자동화 하네스입니다.
 > - ❌ claude.ai 웹은 발행 불가.
 >
 > 생성·검수는 어디서든 OK. 헷갈리면 `node harness/bin/doctor.mjs` 의 **"실행환경(발행)"** 행을 확인하세요.
+> 🖥 **데스크탑 앱 설치·사용 가이드: `harness/docs/CLAUDE-DESKTOP.md`** (Local 모드 + UI 플러그인 추가)
 
 ---
 
