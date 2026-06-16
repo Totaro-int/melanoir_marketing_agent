@@ -20,7 +20,7 @@
   **블로그 채널이 있으면 PHASE 4 필수**, 소셜 카드만이면 키 0개(PHASE 4 생략).
 - ⚠ **실행 환경 (이거 틀리면 발행이 안 됨)**: 발행(브라우저 로그인)은 **로컬에서 도는 Claude Code** 에서만 된다.
   - ✅ 가장 확실: 클라이언트 Mac/PC **터미널에서 `claude` CLI** 로 실행.
-  - 🖥 데스크탑 앱이면 Environment 를 **`Local`** 로 (기본 `Remote`=클라우드 리눅스라 로컬 Chrome 이 없어 발행 불가 — `libXdamage`·`ECONNREFUSED 9222` 에러의 정체).
+  - 🖥 데스크탑 앱이면 Environment 를 **`Local`** 로 + 플러그인은 **UI(+ → Plugins → Add plugin)** 로 추가 (기본 `Remote`=클라우드라 발행 불가 + 플러그인 안 보임 — `libXdamage`·`ECONNREFUSED 9222` 에러의 정체). **자세히: `harness/docs/CLAUDE-DESKTOP.md`**
   - 생성·검수는 `Remote` 에서도 됨. `node harness/bin/doctor.mjs` 의 **"실행환경(발행)"** 행이 `warn` 이면 Local/CLI 로 전환 후 진행.
 
 ---
