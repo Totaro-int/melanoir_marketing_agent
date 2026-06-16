@@ -122,17 +122,14 @@ legal:
     notes: "의약품·의료기기 X — 효능 표방 금지"
 
 channels:
+  # browser-publish(크롬 쿠키 로그인) 지원 채널만. 레거시 API/OAuth 발행 제거(2026-06)로
+  # facebook/x/reddit/bluesky/mastodon/pinterest 는 비활성.
   enabled:
-    - instagram
     - naver-blog
     - tistory
     - brunch
+    - instagram
     - threads
-    - facebook
-    - x
-    - bluesky
-    - mastodon
-    - pinterest
     - linkedin
 
 writing:

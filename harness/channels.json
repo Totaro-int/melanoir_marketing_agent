@@ -5,12 +5,12 @@
   { "id": "naver-blog","status": "active",   "path": "harness/channels/naver-blog","kind": "blog",   "commonGuide": "harness/channels/blog", "imageMode": "blog-inline", "publishMode": "browser" },
   { "id": "tistory",   "status": "active",   "path": "harness/channels/tistory",   "kind": "blog",   "commonGuide": "harness/channels/blog", "imageMode": "blog-inline", "publishMode": "browser" },
   { "id": "brunch",    "status": "active",   "path": "harness/channels/brunch",    "kind": "blog",   "commonGuide": "harness/channels/blog", "imageMode": "blog-inline", "allowPeople": true, "publishMode": "browser" },
-  { "id": "facebook",  "status": "active",   "path": "harness/channels/facebook",  "kind": "social", "imageMode": "single-image", "allowPeople": true },
-  { "id": "x",         "status": "active",   "path": "harness/channels/x",         "kind": "social", "imageMode": "single-image" },
-  { "id": "reddit",    "status": "active",   "path": "harness/channels/reddit",    "kind": "social", "imageMode": "text-only" },
-  { "id": "bluesky",   "status": "active",   "path": "harness/channels/bluesky",   "kind": "social", "imageMode": "single-image", "allowPeople": true },
-  { "id": "mastodon",  "status": "active",   "path": "harness/channels/mastodon",  "kind": "social", "imageMode": "single-image", "allowPeople": true },
-  { "id": "pinterest", "status": "active",   "path": "harness/channels/pinterest", "kind": "social", "imageMode": "single-image" },
+  { "id": "facebook",  "status": "disabled", "path": "harness/channels/facebook",  "kind": "social", "imageMode": "single-image", "allowPeople": true },
+  { "id": "x",         "status": "disabled", "path": "harness/channels/x",         "kind": "social", "imageMode": "single-image" },
+  { "id": "reddit",    "status": "disabled", "path": "harness/channels/reddit",    "kind": "social", "imageMode": "text-only" },
+  { "id": "bluesky",   "status": "disabled", "path": "harness/channels/bluesky",   "kind": "social", "imageMode": "single-image", "allowPeople": true },
+  { "id": "mastodon",  "status": "disabled", "path": "harness/channels/mastodon",  "kind": "social", "imageMode": "single-image", "allowPeople": true },
+  { "id": "pinterest", "status": "disabled", "path": "harness/channels/pinterest", "kind": "social", "imageMode": "single-image" },
   { "id": "tiktok",    "status": "disabled", "path": "harness/channels/tiktok",    "kind": "video",  "imageMode": "video" },
   { "id": "youtube",   "status": "disabled", "path": "harness/channels/youtube",   "kind": "video",  "imageMode": "video" }
 ]

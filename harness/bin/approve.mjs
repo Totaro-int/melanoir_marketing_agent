@@ -32,7 +32,8 @@ if (brief.status[channel] !== 'preview') {
 brief.status[channel] = 'approved';
 brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
 writeYaml(briefPath, brief);
-ui.ok(`[${channel}] approved.  다음: /sns-publish ${slug} --channel=${channel}  (Phase 4)`);
+ui.ok(`[${channel}] approved.  다음(발행): 대시보드 [발행] 버튼 · npm run morning · 또는`);
+ui.dim(`  node harness/bin/browser-publish.mjs ${slug} --channel=${channel} --attach --pre-publish  (크롬 로그인 후 [공유] 클릭)`);
 
 // 학습 hook — 실패해도 승인 자체는 통과.
 try {

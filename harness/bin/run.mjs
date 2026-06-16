@@ -82,13 +82,12 @@ if (flags.approve) {
   }
 }
 
-// 5) optional publish
+// 5) optional publish — 레거시 API 자동발행 제거됨 (2026-06). 발행은 browser-publish(사람 게이트)만.
 if (flags.publish) {
-  const pubArgs = [slug];
-  if (flags['dry-run']) pubArgs.push('--dry-run');
+  ui.warn('--publish 자동 API 발행은 제거됨 — 발행은 browser-publish(크롬 쿠키 로그인)로만.');
+  ui.dim('  대시보드 [발행] 버튼 · npm run morning · 또는');
   for (const ch of channels) {
-    const r = run('publish.mjs', [...pubArgs, `--channel=${ch}`]);
-    if (r.status !== 0) ui.warn(`[${ch}] publish 실패 — /sns-preview 후 수동 처리`);
+    ui.dim(`  node harness/bin/browser-publish.mjs ${slug} --channel=${ch} --attach --pre-publish`);
   }
 }
 
