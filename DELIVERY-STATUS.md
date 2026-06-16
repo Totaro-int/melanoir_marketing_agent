@@ -26,7 +26,9 @@ git revert 4c450b9
 
 **실행 검증 (코드만 본 거 아님):** 혼합 캠페인 naver-blog→copy-spec / instagram→slide-spec 동시 분기 → 풀 파이프라인(copywriter→image-director→finalizeBlog) → 본문 3,954자·H2 4개·표 1개·**인라인 이미지 4장 @2/31/58/89% 분산·placeholder 0개**·status preview. tistory·brunch→copy, threads→slide, instagram finalize→카드경로(회귀X), morning --dry-run exit0, doctor green. (= "이미지 쭉 나열" 불만, 실제 산출물로 해소 확인.)
 
-**머지 안 하고 가려면 (운영 우회, 코드0):** 블로그 채널만 `--provider=fal` 로 따로 generate(소셜은 inhouse). 단 혼합 캠페인은 채널별로 나눠 돌려야 해서 번거로움 → 그래서 머지(자동 분기)가 깔끔. **추천: 머지.**
+**발행 경로까지 검증 (마지막 고리):** finalizeBlog draft → `browser-publish` 의 `collectCardPaths`(img1~4 수집) + `splitBodyByImageMarkers`(본문 `![](..)` 위치로 분할) 로직을 실제 실행 → **segment 순서 `text → IMG1 → text → IMG2 → text → IMG3 → text → IMG4`** (8 segment, 교차, 몰림 0). 즉 네이버 SmartEditor 에 본문↔이미지가 번갈아 인라인 paste 됨. → "이미지 쭉 나열" 이 아니라 글 흐름 속 이미지 배치가 **생성~발행 전 단계까지 코드로 보장**됨. (라이브 SmartEditor paste 최종 확인만 현장.)
+
+> 전체 체인 검증됨: **copywriter(article+슬롯) → image-director(fal 이미지+치환) → finalizeBlog(조립·placeholder 0) → browser-publish(섹션별 인라인 segment paste)**. 클론하면 `/sns-start` 가 이 경로를 자동으로 탄다.
 
 ---
 
