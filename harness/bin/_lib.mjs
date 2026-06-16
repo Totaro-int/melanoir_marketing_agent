@@ -125,9 +125,23 @@ export function listChannels() {
 }
 
 export function activeChannels() {
+  // channels.json 의 status === 'active' 인 채널만.
+  // 'reference' 분기는 과거 비전 잔여물 — channels.json 에 0개라 dead code 제거 (review-code MEDIUM).
   return listChannels()
-    .filter((c) => c.status === 'active' || c.status === 'beta')
+    .filter((c) => c.status === 'active')
     .map((c) => c.id);
+}
+
+// channels.json 의 채널 kind ('social' | 'blog' | 'video'). 미등록 채널은 'social' 로 안전 기본값.
+export function channelKind(id) {
+  const meta = listChannels().find((c) => c.id === id);
+  return meta?.kind ?? 'social';
+}
+
+// kind === 'blog' 채널 (naver-blog / tistory / brunch). 본문 article + 인라인 이미지가 필요 —
+// 카드뉴스 경로(inhouse-slides)가 아니라 copywriter Blog Mode 로 라우팅해야 한다.
+export function isBlogChannel(id) {
+  return channelKind(id) === 'blog';
 }
 
 // /sns-onboard 단계에서 사용자가 고른 채널. 없으면 빈 배열 — 호출부가 fallback 결정.

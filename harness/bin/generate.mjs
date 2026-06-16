@@ -6,13 +6,13 @@
 
 import { resolve } from 'node:path';
 import {
-  PATHS, readYaml, findCampaignDir, ui,
+  PATHS, readYaml, findCampaignDir, ui, isBlogChannel,
 } from './_lib.mjs';
 import { getProvider } from '../src/content-engine/registry.mjs';
 import { validateChannels } from '../src/publisher/registry.mjs';
 import { writeInhouseSpecs, writeCopySpecs } from './generate-spec.mjs';
 import {
-  finalizeRegularChannels, finalizeInhouseSlides,
+  finalizeRegularChannels, finalizeInhouseSlides, finalizeBlog,
   selectVariant, injectRegenFeedback,
 } from './generate-finalize.mjs';
 
@@ -95,21 +95,39 @@ if (flags['select-variant']) {
   process.exit(0);
 }
 
+// kind-aware 라우팅: channels.json 의 kind:"blog" 채널(naver-blog/tistory/brunch)은
+// provider 무관하게 항상 copywriter Blog Mode (본문 article + 인라인 이미지) 로 간다.
+// 카드뉴스(inhouse-slides) 경로로 보내면 블로그가 "이미지 쭉 나열" 카드가 되거나
+// IMAGE_PLACEHOLDER 가 치환 안 된 채 발행되는 회귀가 생긴다. social 채널은 기존 동작 유지.
+const blogChannels    = channels.filter(isBlogChannel);
+const nonBlogChannels = channels.filter((c) => !isBlogChannel(c));
+
 if (flags.finalize) {
-  if (provider.id === 'inhouse-slides') {
-    await finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels });
-  } else {
-    await finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels, provider, flags });
+  if (blogChannels.length) {
+    await finalizeBlog({ slug, dir, briefPath, brief, profile, channels: blogChannels });
+  }
+  if (nonBlogChannels.length) {
+    if (provider.id === 'inhouse-slides') {
+      await finalizeInhouseSlides({ slug, dir, briefPath, brief, profile, channels: nonBlogChannels });
+    } else {
+      await finalizeRegularChannels({ slug, dir, briefPath, brief, profile, channels: nonBlogChannels, provider, flags });
+    }
   }
   process.exit(0);
 }
 
-if (provider.id === 'inhouse-slides') {
-  // thread cadence: 본문은 연속 텍스트지만 리드 카드 1장은 생성 (imagesFor('thread')=1).
-  // 스레드도 이미지가 붙도록 — 예전엔 여기서 거부했음.
-  await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels, flags, withImages });
-  process.exit(0);
+// ── spec 작성 ──
+if (blogChannels.length) {
+  // blog: provider 무관 — copywriter 가 article + imageSlots 정의, image-director 가 인라인 이미지.
+  await writeCopySpecs({ slug, dir, briefPath, brief, profile, channels: blogChannels, flags });
 }
-
-await writeCopySpecs({ slug, dir, briefPath, brief, profile, channels, flags });
+if (nonBlogChannels.length) {
+  if (provider.id === 'inhouse-slides') {
+    // thread cadence: 본문은 연속 텍스트지만 리드 카드 1장은 생성 (imagesFor('thread')=1).
+    // 스레드도 이미지가 붙도록 — 예전엔 여기서 거부했음.
+    await writeInhouseSpecs({ slug, dir, briefPath, brief, profile, channels: nonBlogChannels, flags, withImages });
+  } else {
+    await writeCopySpecs({ slug, dir, briefPath, brief, profile, channels: nonBlogChannels, flags });
+  }
+}
 process.exit(0);
