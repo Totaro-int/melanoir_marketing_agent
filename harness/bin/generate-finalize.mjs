@@ -392,6 +392,102 @@ export async function finalizeInhouseSlides({ slug, dir, briefPath, brief, profi
   ui.dim(`다음: node bin/preview.mjs ${slug}`);
 }
 
+// ── blog finalize (kind: blog — naver-blog / tistory / brunch) ─────────────
+// image-director(Blog Mode)가 쓴 agent-output.json 을 읽어 발행 직전 draft 로 조립한다.
+//   1. 본문(cards[0].text) 의 IMAGE_PLACEHOLDER_N 을 imageSlots[].url 로 (재)치환
+//   2. url 없는(이미지 미생성) 슬롯의 깨진 ![..](IMAGE_PLACEHOLDER_N) 줄 정리
+//   3. assetUrls = 슬롯 url 순서대로, guardian 본문 검사 → draft.yaml + .md
+// 카드 경로(finalizeInhouseSlides)와 달리 Playwright 캡처 없음 — 본문 markdown 발행형.
+export async function finalizeBlog({ slug, dir, briefPath, brief, profile, channels }) {
+  const _sb = await Promise.allSettled(channels.map(async (channel) => {
+    ui.info(`[${channel}] blog finalize 중...`);
+
+    const channelDir = resolve(dir, channel);
+    const outputPath = resolve(channelDir, 'agent-output.json');
+
+    if (!existsSync(outputPath)) {
+      ui.err(`[${channel}] agent-output.json 없음 — image-director(Blog Mode)가 아직 처리하지 않았습니다.`);
+      ui.dim('  순서: generate(copy-spec) → copywriter → image-director(Blog Mode) → --finalize');
+      return;
+    }
+
+    const agentOutput = JSON.parse(readFileSync(outputPath, 'utf8'));
+    const card0 = (agentOutput.cards ?? [])[0] ?? {};
+    let body    = card0.text ?? '';
+    const slots = card0.imageSlots ?? agentOutput.imageSlots ?? [];
+
+    // 1. placeholder → url (재)치환 + url 순서 수집
+    const urls = [];
+    let missing = 0;
+    for (const slot of slots) {
+      const ph  = slot.placeholder || `IMAGE_PLACEHOLDER_${slot.index}`;
+      const url = slot.url || slot.assetUrl || null;
+      if (url) {
+        urls.push(url);
+        body = body.split(ph).join(url);
+      } else {
+        missing++;
+      }
+    }
+
+    // 2. 미치환 placeholder(이미지 못 만든 슬롯) 가 본문에 남았으면 그 이미지 줄만 제거
+    const leftover = (body.match(/IMAGE_PLACEHOLDER_\d+/g) || []).length;
+    if (leftover) {
+      body = body
+        .replace(/^\s*!\[[^\]]*\]\(\s*IMAGE_PLACEHOLDER_\d+[^)]*\)\s*$/gm, '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trimEnd();
+    }
+
+    // 3. hashtags = profile.always + 본문 frontmatter tags + agent hashtags
+    const fmTags = (body.match(/^tags:\s*\[([^\]]*)\]/m)?.[1] ?? '')
+      .split(',').map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+    const hashtags = [...new Set([
+      ...(profile?.hashtags?.always ?? []),
+      ...(card0.hashtags ?? []),
+      ...fmTags,
+    ])];
+
+    // 본문 텍스트 guardian (카드 비주얼 가드 아님 — 광고법/금기어 본문 검사)
+    const report = inspect({ channel, text: body, hashtags, profile, brief, sourceMaterials: brief.sourceMaterials });
+
+    const ts = nowKstFilename();
+    const imageProvider = agentOutput.meta?.imageProvider || agentOutput.imageProvider || 'fal-ai/nano-banana-2';
+    const draft = {
+      version:     1,
+      slug,
+      channel,
+      generatedAt: nowKstIso(),
+      provider:    { provider: 'copywriter', model: 'claude-subagent' },
+      image:       { provider: 'fal', model: imageProvider },
+      text:        body,
+      hashtags,
+      assets:      [],            // 인라인 url 우선 — 로컬 png 첨부는 발행 어댑터가 처리
+      assetUrls:   urls,          // 섹션 인라인 이미지 url (본문 등장 순서)
+      imageSlots:  slots,         // 발행 시 인라인 위치 매핑용 (position/alt 보존)
+      guardian:    report,
+    };
+
+    writeYaml(resolve(channelDir, `${ts}.yaml`), draft);
+    writeFileSync(resolve(channelDir, `${ts}.md`), renderDraftMd(draft), 'utf8');
+
+    brief.status[channel] = report.ok ? 'preview' : 'drafting';
+
+    if (missing || leftover) {
+      ui.warn(`[${channel}] 이미지 미생성 슬롯 ${missing + leftover}개 — placeholder 정리됨 (FAL_KEY/모델 권한 확인).`);
+    }
+    if (report.ok) ui.ok(`[${channel}] blog preview 준비됨 — 인라인 이미지 ${urls.length}장, warns: ${report.summary.warns}`);
+    else           ui.err(`[${channel}] 가디언 차단 (${report.summary.blocks}건). 본문 검토 후 재생성.`);
+    return urls;
+  }));
+  logSettledErrors(_sb, channels);
+
+  brief.meta = { ...(brief.meta ?? {}), updatedAt: nowKstIso() };
+  writeYaml(briefPath, brief);
+  console.log();
+  ui.dim(`다음: node bin/preview.mjs ${slug}`);
+}
+
 // ── --select-variant=N 처리 ───────────────────────────────────────────────
 
 export async function selectVariant({ slug, dir, briefPath, brief, profile, channel, variantIdx }) {

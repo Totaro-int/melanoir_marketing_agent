@@ -23,14 +23,25 @@ description: Use when generating copy and images for a marketing campaign channe
    → 그 외: provider.generateImage + draft 조립 + guardian 검사
 ```
 
-## Provider별 에이전트 선택
+## kind-aware 라우팅 (먼저 확인 — provider 보다 우선)
+
+`channels.json` 의 `kind: "blog"` 채널(**naver-blog / tistory / brunch**)은 **provider 와 무관하게 항상 블로그 본문 경로**로 간다. `generate.mjs` 가 자동으로 이 채널들을 `copy-spec.json`(copywriter) 으로 라우팅하므로, 기본 provider(inhouse-slides)여도 블로그는 카드뉴스가 되지 않는다.
+
+| 채널 kind | 1단계 spec | 2단계 에이전트 (순서대로) | 3단계 finalize |
+|-----------|-----------|--------------------------|----------------|
+| **blog** (naver-blog/tistory/brunch) | `copy-spec.json` | ① `copywriter.md` (서브에이전트) → 본문 article + `imageSlots` 정의<br>② `image-director.md` (서브에이전트, **Blog Mode**) → 슬롯별 이미지 생성 + `IMAGE_PLACEHOLDER_N` 치환 → `agent-output.json` | `finalizeBlog` — 인라인 이미지 url + 본문 조립 (placeholder 0개) |
+| **social** (instagram/threads/linkedin 등) | provider 따름 (아래) | provider 따름 (아래) | inhouse: Playwright 캡처 / 그 외: provider.generateImage |
+
+> ⚠ 블로그는 반드시 **copywriter → image-director(Blog Mode)** 2개 에이전트를 순서대로 실행해야 인라인 이미지가 채워진다. image-director 를 건너뛰면 본문에 `IMAGE_PLACEHOLDER_N` 가 그대로 남아 발행 시 깨진다.
+
+## Provider별 에이전트 선택 (social 채널에만 적용)
 
 | Provider | 에이전트 | 실행 방식 | spec 파일 |
 |----------|---------|---------|-----------|
-| `inhouse-slides` | `image-director.md` | 인라인 (Write 권한 필요) | `slide-spec.json` |
+| `inhouse-slides` | `image-director.md` (Card Mode) | 인라인 (Write 권한 필요) | `slide-spec.json` |
 | `fal`, `openai`, `anthropic`, `mock` | `copywriter.md` | 서브에이전트 | `copy-spec.json` |
 
-provider 우선순위: `--provider` 플래그 > `CONTENT_ENGINE_PROVIDER` env > `mock`
+provider 우선순위: `--provider` 플래그 > `CONTENT_ENGINE_PROVIDER` env > `inhouse-slides`(기본)
 
 ## 부분 재생성 (카드 단위)
 
