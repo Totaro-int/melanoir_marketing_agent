@@ -5,8 +5,23 @@
 
 ## 한 줄 요약
 
-**내일 `git clone` → `node harness/bin/setup.mjs` → 가이드(PHASE 0~9) 따라가면 설치 완료.**
-멜라누아 레포에 모든 작업 + 동작하는 setup + 프로필 + 30일 주제까지 들어있음.
+**`git clone` → `node harness/bin/setup.mjs` → 가이드(PHASE 0~9) 따라가면 설치 완료.**
+멜라누아 레포에 모든 작업 + 동작하는 setup + 프로필 + 30일 주제 + 브랜드북까지 들어있음.
+
+## 📦 현장 준비물 — 클론 말고 따로 가져갈 파일? → **없음**
+
+`git clone` 만 하면 운영에 필요한 건 다 들어온다 (일부러 커밋해둠):
+
+| 클론에 포함 (가져갈 필요 X) | 현장에서 자동 생성 | 현장에서 클라 자격증명으로 |
+|---|---|---|
+| 코드 전체 | `.env.local` (setup 이 `.env.example` 복사) | **FAL_KEY** — PHASE 4 에서 클라 fal.ai 계정으로 발급 → `.env.local` 자동 저장 |
+| `company-profile.yaml` (브랜드 DNA) | `auth/ out/ posts/` 폴더 (setup) | SNS 쿠키 — 채널 로그인 시 `auth/cookies/` 자동 |
+| `topics.txt` (30 주제) | `node_modules/` (npm install) | |
+| `.env.example` · `company-brandbook.md` | `posts/campaigns/` (seed-calendar) | |
+
+- **따로 USB 로 챙길 파일: 없음.** Totaro 의 `.env.local`·`auth/` 는 *가져가면 안 됨* — Totaro 키/쿠키가 클라 PC 에 남는다. 둘 다 클라 본인 걸로 현장에서 생성.
+- ⚠ **블로그 인라인 이미지엔 FAL_KEY 필요** (소셜 카드는 키 0개) → 블로그 데모하려면 PHASE 4 먼저.
+- 💡 비상용(선택): 현장 키 발급이 막힐 때 대비해 데모용 임시 FAL_KEY 하나만 챙겨가 `.env.local` 에 넣고 시작 → 끝나고 클라 키로 교체.
 
 ---
 
