@@ -59,6 +59,17 @@ if (existsSync(resolve(ROOT, 'node_modules'))) {
   ok('의존성 설치 완료');
 }
 
+// 2.5) Playwright Chromium 바이너리 — npm install 은 패키지만 깐다. 브라우저는 별도로 받아야 한다.
+//      "이 컴퓨터는 되는데 다른 컴퓨터는 안 됨" 의 #1 원인: 카드 캡처 + browser-publish 둘 다 Chromium 필요.
+//      idempotent — 이미 받아져 있으면 빠르게 확인만. (첫 실행 시 네트워크로 ~150MB 다운로드)
+info('Playwright Chromium 설치/확인...');
+{
+  const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const r = spawnSync(npxCmd, ['playwright', 'install', 'chromium'], { cwd: ROOT, stdio: 'inherit', shell: process.platform === 'win32' });
+  if (r.status === 0) ok('Playwright Chromium 준비 완료');
+  else warn('Playwright Chromium 설치 실패 (네트워크 확인) — 수동: npx playwright install chromium');
+}
+
 // 3) .env.local
 const envLocal = resolve(ROOT, '.env.local');
 const envExample = resolve(ROOT, '.env.example');

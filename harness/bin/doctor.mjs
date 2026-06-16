@@ -53,13 +53,16 @@ for (const p of listProviders()) {
   const status = p.health.ok ? 'ok' : (p.id === activeProvider ? 'fail' : 'warn');
   add('content-engine', `provider: ${p.id}`, status, p.health.ok ? '' : (p.health.reason ?? ''));
 }
-if (activeProvider === 'inhouse-slides') {
-  try {
-    execFileSync('node', ['--input-type=module', '-e', "import 'playwright'"], { timeout: 10000, stdio: 'pipe' });
-    add('content-engine', 'playwright', 'ok', '');
-  } catch {
-    add('content-engine', 'playwright', 'fail', 'npm install playwright && npx playwright install chromium');
-  }
+// playwright — 패키지뿐 아니라 Chromium '바이너리'까지 확인 (npm install 은 바이너리를 안 깖 = fresh 머신 함정).
+// inhouse-slides 카드 캡처 + browser-publish(모든 채널) 둘 다 Chromium 필요 → provider 무관하게 항상 검사.
+try {
+  const out = execFileSync('node', ['--input-type=module', '-e',
+    "import{chromium}from'playwright';import{existsSync}from'node:fs';const p=chromium.executablePath();process.stdout.write(p&&existsSync(p)?'OK':'NOBROWSER')",
+  ], { timeout: 15000 }).toString();
+  if (out.includes('OK')) add('content-engine', 'playwright', 'ok', 'Chromium 설치됨');
+  else add('content-engine', 'playwright', 'fail', 'Chromium 바이너리 없음 — 실행: npx playwright install chromium');
+} catch {
+  add('content-engine', 'playwright', 'fail', 'playwright 미설치 — npm install 후 npx playwright install chromium');
 }
 
 if (!QUICK) {
