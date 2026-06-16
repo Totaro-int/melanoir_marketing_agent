@@ -10,19 +10,24 @@
 
 ---
 
-## ⚠ 내일 반드시 — 블로그는 `--provider=fal` 로 생성 (밤중 핵심 발견, 실행 확인)
+## ✅ 블로그 라우팅 fix — 빌드+검증 완료, `fix/blog-kind-routing` 브랜치에 있음 (머지 1줄)
 
-**기본 provider(inhouse-slides)로 블로그를 생성하면 카드(slide-spec)가 나온다 — 블로그 article(Blog Mode)이 아님.** 실행 확인: `generate.mjs <blog> --channel=naver-blog`(기본) → `slide-spec.json`(카드). generate·finalize 가 채널 **kind 가 아니라 provider 로만 분기**하기 때문. (= "이미지 쭉 나열" 불만이 기본 플로우에서 재현될 수 있는 지점.)
+밤사이 **기본 provider 로 블로그 생성 시 카드/placeholder 가 나오던 버그를 직접 고치고 풀 파이프라인으로 검증**했다. core(generate pipeline) 변경이라 §0 동결 영역 → **main 에 자동 머지 안 하고 브랜치에 올려둠. 네가 1줄 머지하면 활성화.**
 
-- ✅ **올바른 블로그 생성**: `--provider=fal` → copy-path → copywriter Blog Mode → image-director Blog Mode → fal 이미지 **섹션별 인라인**. (내 풀 파이프라인 테스트가 이 경로 = 검증됨.)
-- 소셜(IG/스레드/링크드인)은 inhouse-slides(카드)가 맞음.
-- ⚠ **혼합 캠페인 주의**: 멜라누아 캠페인은 1개에 blog+social 다 포함 → 단일 env provider 로 둘 다 못 맞춤(블로그=fal, 소셜=inhouse).
+```bash
+# melanoir 레포에서, 클론·검수 전에 먼저:
+git merge fix/blog-kind-routing      # 활성화 (충돌 없음 — 코드 4파일만)
+# 마음에 안 들면:  git revert <merge-commit>   (또는 머지 안 하고 아래 우회)
+```
 
-**결정 필요 (둘 중 하나):**
-1. **운영 분리(즉시·코드0)** — 블로그 채널은 `--provider=fal`, 소셜은 inhouse 로 따로 generate.
-2. **kind-aware 라우팅 fix(정석)** — generate.mjs + generate-finalize.mjs 가 kind:blog 를 provider 무관 copy-path 로. core 변경이라 §0 인접 → 네 승인 후 내가 작업.
+**무엇을 고쳤나 (channels.json 의 kind 를 존중하게):**
+- `generate.mjs`/`finalize`: `kind:"blog"`(naver-blog/tistory/brunch)은 provider 무관 **본문 article + 인라인 이미지 경로**, social 은 기존 카드 그대로 (회귀 없음).
+- `finalizeBlog` 신설: image-director(Blog Mode) 결과의 `IMAGE_PLACEHOLDER_N` → 이미지 치환, 본문·assetUrls 조립, guardian 검사 → **placeholder 0개** draft.
+- 스킬: 블로그는 copywriter → image-director(Blog Mode) 2개 순서 실행 명시.
 
-→ **검수 때 블로그는 fal 경로로 생성해서 인라인 이미지 확인.** 추천: 우선 1번으로 검수 통과 → 이후 2번으로 자동화 깔끔하게.
+**실행 검증 (코드만 본 거 아님):** 혼합 캠페인 naver-blog→copy-spec / instagram→slide-spec 동시 분기 → 풀 파이프라인(copywriter→image-director→finalizeBlog) → 본문 3,954자·H2 4개·표 1개·**인라인 이미지 4장 @2/31/58/89% 분산·placeholder 0개**·status preview. tistory·brunch→copy, threads→slide, instagram finalize→카드경로(회귀X), morning --dry-run exit0, doctor green. (= "이미지 쭉 나열" 불만, 실제 산출물로 해소 확인.)
+
+**머지 안 하고 가려면 (운영 우회, 코드0):** 블로그 채널만 `--provider=fal` 로 따로 generate(소셜은 inhouse). 단 혼합 캠페인은 채널별로 나눠 돌려야 해서 번거로움 → 그래서 머지(자동 분기)가 깔끔. **추천: 머지.**
 
 ---
 
@@ -72,7 +77,7 @@
 ## 알려진 한계 / 주의
 
 - **이미지**: 카드(인스타·스레드·링크드인)=Claude HTML(키 0). 블로그=AI 이미지 API(fal). 한글은 이미지에 안 그림 → 본문 텍스트로.
-- ✅ **블로그 인라인 이미지 — 풀 파이프라인 실행 검증 완료**: copywriter(AEO 본문 + 5슬롯) → image-director Blog Mode → fal 5장 생성(`gen-image.mjs`, nano-banana-2) → **본문 섹션마다 인라인 치환**(img1 도입후 → §02뒤 → §03뒤 → §04뒤 → 끝, **맨 위 몰림 0·잔여 placeholder 0**) + 에이전트가 육안 품질게이트로 저품질(가짜텍스트·과한 광택) 4장 자동 재생성. 한글은 이미지에 안 그림(본문 텍스트로). → "이미지 쭉 나열" 문제 해소 확인. ⚠ 생성은 `/sns-start` 정상 플로우로 (수동 `--provider=fal --finalize` 는 소셜카드 경로라 블로그 부적합).
+- ✅ **블로그 인라인 이미지 — 풀 파이프라인 실행 검증 완료**: copywriter(AEO 본문 + 5슬롯) → image-director Blog Mode → fal 5장 생성(`gen-image.mjs`, nano-banana-2) → **본문 섹션마다 인라인 치환**(img1 도입후 → §02뒤 → §03뒤 → §04뒤 → 끝, **맨 위 몰림 0·잔여 placeholder 0**) + 에이전트가 육안 품질게이트로 저품질(가짜텍스트·과한 광택) 4장 자동 재생성. 한글은 이미지에 안 그림(본문 텍스트로). → "이미지 쭉 나열" 문제 해소 확인. ✅ **fix 머지(`fix/blog-kind-routing`) 후엔 `/sns-start` 기본 플로우가 블로그를 provider 무관하게 이 경로로 자동 라우팅** (위 banner). 머지 전이면 블로그만 `--provider=fal`.
 - **copywriter 가디언 정합 확인됨**: 절대표현("유일한 근거")·자가검열 메모("100%안전 미사용")를 본문에서 빼면 가디언 block→warn 으로 통과 (실행 확인). 두 규칙 copywriter.md §5 반영 완료.
 - **네이버 쿠키**: 세션 만료 잦음 → morning preflight 가 만료 시 로그인창 자동 + 알림.
 - **Chrome 먹통 시**: stop-demo → start-demo (쿠키 보존 + 복원).
