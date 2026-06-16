@@ -35,24 +35,24 @@ drafting  →  preview  →  approved  →  scheduled / published / failed
 
 `--images=N` 으로 cadence 자동값 무시 (0~10).
 
-## 자격증명 관리
+## 발행 인증 — browser-publish (크롬 쿠키)
 
-저장 위치: `auth/<channel>.json` (mode 0600, gitignored)
+레거시 API/OAuth 토큰 발행은 제거됨(2026-06). 모든 발행은 사용자가 평소 쓰는 크롬에
+**1회 로그인** → 쿠키 재사용. 하네스가 SNS 비밀번호·토큰을 저장하지 않는다.
+
+저장 위치: 로컬 크롬 프로필 (`auth/browser-profile/`, `auth/chrome-attach-profile/` — gitignored). SNS 로그인 세션만 보관.
 
 ```bash
-echo '{"accessToken":"...","userId":"..."}' | node harness/bin/auth.mjs add threads
-node harness/bin/auth.mjs show threads      # 마스킹된 출력
-node harness/bin/auth.mjs check threads     # 어댑터 healthcheck
-node harness/bin/auth.mjs remove threads
-node harness/bin/auth.mjs list
+# 발행 (컴포저까지 채우고 게시 직전 멈춤 → 사람이 [공유] 클릭)
+node harness/bin/browser-publish.mjs <slug> --channel=<ch> --attach --pre-publish
+npm run morning            # 여러 채널 + 대시보드 한 번에
 ```
 
-### 토큰 회전 절차
+### 로그인 회전 절차
 
-1. 채널 콘솔에서 새 토큰 발급
-2. `node harness/bin/auth.mjs add <channel>` 으로 덮어쓰기 (덮어쓰기는 자동)
-3. `/sns-doctor` 또는 `node harness/bin/auth.mjs check <channel>` 으로 확인
-4. (사고 시) `node harness/bin/auth.mjs remove <channel>` + 채널에서 즉시 revoke
+1. 사용자가 크롬에서 해당 채널 로그아웃 → 다시 로그인
+2. `/sns-doctor` 의 `cookie-auth` 섹션으로 로그인 상태 확인 (대시보드 실행 중일 때)
+3. (사고 시) 크롬에서 세션 로그아웃 + 채널 설정에서 기기/세션 revoke
 
 ### BYO API 키 노출 시
 
@@ -88,9 +88,10 @@ node harness/bin/auth.mjs list
 - `.env.local` 에 `CONTENT_ENGINE_PROVIDER=fal` 인지 확인
 - `node harness/bin/doctor.mjs` 의 content-engine 행에서 fal 빨강이면 키/모델 확인
 
-### 발행 실패 (HTTP 401/403)
-- 토큰 만료 또는 scope 부족. `node harness/bin/auth.mjs check <channel>` 후 새 토큰
-- 결과: `posts/campaigns/<slug>/<ch>/result.json` 에 응답 body 저장됨
+### 발행 실패 (browser-publish)
+- 크롬에 해당 채널 로그인이 풀렸을 수 있음 → 크롬에서 다시 로그인 후 재시도
+- Chrome 9222 attach 안 됨 → `npm run morning` 또는 start-demo 로 9222 띄우고 재시도
+- SNS UI 개편으로 셀렉터 변경 가능 → `browser-publish.mjs` 의 채널 셀렉터 점검
 
 ### Threads `media_type=IMAGE` 거부
 - `assetUrls` 가 https public URL 인지 확인 (fal CDN 은 자동으로 OK, mock SVG 는 안 됨)

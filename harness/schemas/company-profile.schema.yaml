@@ -170,7 +170,7 @@ properties:
         items:
           type: string
           enum: [naver-blog, tistory, brunch, threads, linkedin, instagram, facebook, x, reddit, bluesky, mastodon, pinterest, tiktok, youtube]
-        description: "활성 채널 ID (블로그 naver-blog/tistory/brunch 포함). 토큰은 /sns-auth add <ch> 로 별도."
+        description: "활성 채널 ID (블로그 naver-blog/tistory/brunch 포함). 발행은 browser-publish — 크롬에 1회 로그인(별도 토큰 없음)."
 
   campaigns:
     type: object

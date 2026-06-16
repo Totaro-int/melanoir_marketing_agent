@@ -1,7 +1,7 @@
 # Tistory Strategy
 
 > ⚠️ **공통 정보성 블로그 가이드는 [`../blog/strategy.md`](../blog/strategy.md) 참조.**  
-> 본 문서는 티스토리 매체 특수 차이 + 발행 어댑터 안내만.
+> 본 문서는 티스토리 매체 특수 차이 + 발행(browser-publish) 안내만.
 
 ## 한 줄 요약
 **다음 + 구글 SEO 친화. 티스토리는 네이버보다 구글 검색 비중 높음**.  
@@ -44,25 +44,16 @@
 - 댓글·구독자 활성도 = 가중치
 - 광고 도배 → 페널티 (다음·구글 모두)
 
-## 발행 (Phase 4 — Tistory Open API)
+## 발행 — browser-publish (크롬 쿠키)
+
+레거시 Tistory Open API 발행은 제거됨(2026-06). 사용자가 크롬에 티스토리(카카오) 1회 로그인 → 쿠키 재사용.
 
 ```
-POST tistory.com/apis/post/write
-- title, content, visibility (3=공개), category, tag
-- access_token: OAuth2
-- blogName
+node harness/bin/browser-publish.mjs <slug> --channel=tistory --attach --pre-publish
 ```
+→ 블로그 에디터까지 자동으로 채우고 게시 직전에 멈춤. 사람이 [발행] 클릭.
+대시보드 [발행] 버튼 · `npm run morning` 으로도 실행.
 
-**자격증명** (`auth/tistory.json`):
-```json
-{
-  "accessToken": "...",
-  "blogName": "your_blog_name",
-  "categoryId": "0"
-}
-```
-
-어댑터 구현: [`harness/src/publisher/adapters/tistory.mjs`](../../src/publisher/adapters/tistory.mjs)  
 체크리스트: [`./checklist.md`](./checklist.md) (공통 + 티스토리 추가)  
 템플릿: 공통 [`../blog/templates/post.md`](../blog/templates/post.md) 사용
 

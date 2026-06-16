@@ -98,20 +98,10 @@ brand accent only on the hero number, no glow"
 - 채널 = x → 극도 미니멀 + 16:9 + Hero stat 거대화
 - `imageStyle.aestheticDirection` "minimalist" 강제 (다른 톤이어도 X용으론 절제)
 
-## 업로드 (Phase 4 — X API v2)
+## 발행 — 비활성
 
-```
-POST /2/tweets
-- text, media: { media_ids }
-- Bearer token (텍스트만)
-- OAuth1 (이미지 첨부 필요)
-
-이미지 첨부:
-POST /1.1/media/upload (OAuth1)
-→ media_id 받아서 /2/tweets 에 첨부
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/x.mjs`
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

@@ -98,22 +98,10 @@ brand color hex from profile, soft glow background"
 - 채널 = facebook → 밝은/그라디언트 배경 + 1:1 또는 16:9 + 친근 톤
 - 인물 OK (`allowPeople: true`)
 
-## 업로드 (Phase 4 — Facebook Graph API)
+## 발행 — 비활성
 
-```
-POST /{page-id}/photos (이미지)
-POST /{page-id}/feed (텍스트 + 링크)
-- access_token: pageAccessToken
-- message, link, picture
-```
-
-캐러셀:
-```
-POST /{page-id}/photos (각 이미지 published=false)
-POST /{page-id}/feed (attached_media[])
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/facebook.mjs`
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

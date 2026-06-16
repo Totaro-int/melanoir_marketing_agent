@@ -92,18 +92,10 @@ no aggressive marketing visual, natural light"
 - 6-component 공식 적용
 - 채널 = mastodon → 자유 비율, 친근 톤, 인물 OK
 
-## 업로드 (Mastodon API)
+## 발행 — 비활성
 
-```
-POST /api/v1/statuses
-- status, media_ids, visibility (public/unlisted/private/direct)
-- Authorization: Bearer <access_token>
-
-이미지 첨부:
-POST /api/v2/media → media_id
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/mastodon.mjs`
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

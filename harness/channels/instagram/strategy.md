@@ -16,7 +16,7 @@ Instagram(@business) 채널 마케팅 전략. 이 문서는 카피라이팅·이
 | 해시태그 | **5~15개** (Threads/X와 다름. 30개 한도지만 5~15가 효과 최적) |
 | 링크 | 본문 링크 클릭 X — "프로필 링크에서" 표현 권장 |
 | 캐러셀 | 3~10장 카드뉴스 시리즈 (`cadence: series-3 / series-5`) |
-| API | Instagram Graph API (Business Account 필수) |
+| 발행 | browser-publish (크롬 쿠키) |
 
 ## 콘텐츠 원칙
 
@@ -85,18 +85,14 @@ Instagram(@business) 채널 마케팅 전략. 이 문서는 카피라이팅·이
 - `imageStyle.referencesBrands` → 시각 DNA 학습 (linear/stripe/vercel...)
 - 채널 = instagram → 어두운 배경 + Glow B 권장
 
-## 업로드 (Phase 4 — Instagram Graph API)
+## 발행 — browser-publish (크롬 쿠키)
+
+레거시 Instagram Graph API 발행은 제거됨(2026-06). 사용자가 크롬에 인스타그램 1회 로그인 → 쿠키 재사용.
 
 ```
-1. POST /me/media (image_url + caption + media_type=CAROUSEL_ALBUM)
-   → 각 카드별 child media_id 생성
-2. POST /me/media (carousel children + caption + product_tags 옵션)
-   → carousel container creation_id
-3. POST /me/media_publish?creation_id=... → 발행
-4. (선택) GET /me/insights → 도달·노출
+node harness/bin/browser-publish.mjs <slug> --channel=instagram --attach --pre-publish
 ```
-
-자세한 어댑터 구현은 `harness/src/publisher/adapters/instagram.mjs` 참조.
+→ 컴포저(이미지 첨부 포함)까지 자동으로 채우고 게시 직전에 멈춤. 사람이 [공유] 클릭.
 
 ## 참고 링크
 

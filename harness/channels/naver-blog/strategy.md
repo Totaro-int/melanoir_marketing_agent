@@ -1,7 +1,7 @@
 # Naver Blog Strategy
 
 > ⚠️ **공통 정보성 블로그 가이드는 [`../blog/strategy.md`](../blog/strategy.md) 참조.**  
-> 본 문서는 네이버 블로그 매체 특수 차이 + 발행 어댑터 안내만.
+> 본 문서는 네이버 블로그 매체 특수 차이 + 발행(browser-publish) 안내만.
 
 ## 한 줄 요약
 **네이버 D.I.A. + C-Rank 알고리즘 친화 + 검색 의도 충족**.  
@@ -29,24 +29,16 @@
 - **이웃 댓글·서로이웃**: 알고리즘 신호 (커뮤니티 활성도)
 - **광고 분류 시**: 본문 시작에 `본 포스팅은 광고임을 알립니다` 또는 `legal.adHashtag` 표시 (한국 공정위)
 
-## 발행 (Phase 4 — Naver OpenAPI)
+## 발행 — browser-publish (크롬 쿠키)
+
+레거시 Naver OpenAPI 발행은 제거됨(2026-06). 사용자가 크롬에 네이버 1회 로그인 → 쿠키 재사용.
 
 ```
-POST openapi.naver.com/blog/writePost.json
-- title, contents (HTML/markdown), tags, categoryNo
-- Authorization: Bearer <accessToken>
+node harness/bin/browser-publish.mjs <slug> --channel=naver-blog --attach --pre-publish
 ```
+→ 블로그 에디터까지 자동으로 채우고 게시 직전에 멈춤. 사람이 [발행] 클릭.
+대시보드 [발행] 버튼 · `npm run morning` 으로도 실행.
 
-**자격증명** (`auth/naver-blog.json`):
-```json
-{
-  "accessToken": "...",
-  "blogId": "your_blog_id",
-  "categoryNo": 0
-}
-```
-
-어댑터 구현: [`harness/src/publisher/adapters/naver-blog.mjs`](../../src/publisher/adapters/naver-blog.mjs)  
 체크리스트: [`./checklist.md`](./checklist.md) (공통 + 네이버 추가)  
 템플릿: 공통 [`../blog/templates/post.md`](../blog/templates/post.md) 사용
 

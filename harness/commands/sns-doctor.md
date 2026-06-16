@@ -58,31 +58,17 @@ description: 환경 진단 + 자격증명(auth) 관리 + 회사 프로필 업데
 
 ---
 
-## auth 관리 (`/sns-doctor auth ...`)
+## 발행 인증 — browser-publish (크롬 쿠키)
 
-내부: `node harness/bin/auth.mjs <subcommand> ...`
+레거시 API/OAuth 토큰 발행(`auth.mjs`)은 제거됨(2026-06). 모든 발행은 사용자가 평소 쓰는
+크롬에 **1회 로그인** → 쿠키 재사용(browser-publish). 별도 토큰·키 발급·저장 없음.
 
-`add` 서브커맨드는 **대화형** — 채널별 필드를 순서대로 묻고 저장 후 자동 healthcheck.
+- 준비: 크롬에서 각 채널에 직접 로그인 (naver-blog / tistory / brunch / instagram / threads / linkedin).
+- 발행: 대시보드 [발행] 버튼 · `npm run morning` · 또는
+  `node harness/bin/browser-publish.mjs <slug> --channel=<ch> --attach --pre-publish` (게시 직전 멈춤 → 사람이 [공유] 클릭).
+- 쿠키/로그인 상태 점검: `/sns-doctor` 의 `cookie-auth` 섹션 (대시보드 실행 중일 때).
 
-### 채널별 필요 정보
-
-| 채널 | 필드 | 발급처 |
-|------|------|--------|
-| threads | accessToken, userId | Meta App > Threads API |
-| linkedin | accessToken, authorUrn | LinkedIn Developers > OAuth2 |
-| instagram | accessToken, igUserId | Meta App > Instagram Graph API |
-| facebook | pageAccessToken, pageId | Meta App > me/accounts |
-| x | bearerToken (텍스트), oauth1.* (이미지) | X Developer Portal |
-| reddit | clientId, clientSecret, username, password, userAgent, subreddit | reddit.com/prefs/apps |
-| bluesky | service, identifier, appPassword | 설정 > App passwords (5초 발급) |
-| mastodon | instance, accessToken, visibility | Preferences > Development |
-| pinterest | accessToken, boardId | Pinterest Developers |
-| tiktok | accessToken, openId | TikTok for Developers (영상 전용) |
-| youtube | accessToken | Google Cloud > YouTube Data API v3 (영상 전용) |
-
-전체 JSON 예시: `harness/examples/auth/<채널>.example.json`
-
-보안: 평문 `auth/<채널>.json` (mode 0600) 로컬 저장. 자사 서버 미전송. `.gitignore` 포함.
+보안: SNS 비밀번호·토큰을 하네스가 저장하지 않는다. 쿠키는 로컬 크롬 프로필에만 존재(`.gitignore` 포함).
 
 ---
 

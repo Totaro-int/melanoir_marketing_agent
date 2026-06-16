@@ -35,13 +35,13 @@ node bin/install-cron.mjs install        # 자동 실행 설치
 3. `brief.autoPublish === false` 이면 알림만 (`action: notify-only`)
 4. 자동 모드:
    - `status=scheduled` → `approve.mjs` 호출 (가드 검사). 실패 → `needs_attention`
-   - `status=approved` → `publish.mjs` 호출. 실패 → `needs_attention`
+   - `status=approved` → 레거시 자동 API 발행(`publish.mjs`) 제거됨(2026-06) → `needs_attention` (browser-publish 수동 발행 대기)
 
 `needs_attention` 으로 표시된 항목은 사람이 `/sns-preview` 후 직접 수정해야 함.
 사유는 `brief.attentionReason[ch]` 에 한 줄로 기록됨.
 
 ## 권장 운영
 
-- `.env.local` 에 `PUBLISHER_DRY_RUN=true` 두고 며칠 운영 → 페이로드 검토
-- 안정되면 환경변수 제거하고 실 발행
+- 큐는 due 항목을 자동 게시하지 않는다 — `approved` 도달 시 `needs_attention` 으로 표시만.
+- 실제 발행은 사람이: 대시보드 [발행] 버튼 · `npm run morning` · 또는 `browser-publish.mjs --attach --pre-publish`.
 - launchd/cron 로그는 `out/queue-tick.log` 에 누적

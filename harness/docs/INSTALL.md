@@ -135,8 +135,8 @@ node harness/bin/chrome-shutdown.mjs --verify
 | 카피·이미지 | `_sns-generate.md` | `harness/bin/generate.mjs` + 에이전트 |
 | 검수 | `_sns-preview.md` | `harness/bin/preview.mjs`, `harness/bin/inspect-guidelines.mjs` |
 | 승인/거절 | `_sns-approve.md` / `_sns-reject.md` | `harness/bin/approve.mjs` / `harness/bin/reject.mjs` (학습 hook 자동) |
-| 발행 | `_sns-publish.md` | `harness/bin/publish.mjs` 또는 `harness/bin/browser-publish.mjs` |
-| 자격증명 | `_sns-auth.md` | `harness/bin/auth.mjs` (대화형) |
+| 발행 | (커맨드 내 안내) | `harness/bin/browser-publish.mjs` (크롬 쿠키) · 대시보드 [발행] · `npm run morning` |
+| 발행 인증 | (browser-publish) | 크롬에 채널 1회 로그인 → 쿠키 재사용 (별도 토큰/OAuth 없음) |
 
 bin 스크립트 직접 호출(고급/디버깅용):
 ```bash
@@ -159,6 +159,6 @@ PUBLISHER_DRY_RUN=true
 ## 7. 문제 생기면
 
 - `node harness/bin/doctor.mjs` 결과 캡처
-- `auth/` 자격증명은 절대 공유 금지 (마스킹: `node harness/bin/auth.mjs show <ch>`)
+- `auth/` (크롬 프로필·쿠키)은 절대 공유 금지 — SNS 로그인 세션이 들어있음
 - fal/openai 비용은 provider 대시보드에서 직접 확인
 - 자세한 운영 지침: [OPERATIONS.md](OPERATIONS.md)

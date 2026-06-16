@@ -220,8 +220,7 @@ prompt = INDUSTRY MOTIF (profile.industry → 시각 모티프)
 | **카테고리** | 네이버 자체 | Tistory 카테고리 | Brunch 매거진 |
 | **상업성 톤** | 강함 (직접 키워드 OK) | 중간 | 약함 (에디토리얼) |
 | **B2B 적합도** | ★★★ | ★★★ | ★★ (B2C·문화 우세) |
-| **API** | OpenAPI Blog Write (OAuth2) | Tistory Open API (OAuth) | 공식 API 없음 (browser-publish 권장) |
-| **발행 어댑터** | `harness/src/publisher/adapters/naver-blog.mjs` | `harness/src/publisher/adapters/tistory.mjs` | (TBD) |
+| **발행** | browser-publish (크롬 쿠키) | browser-publish (크롬 쿠키) | browser-publish (크롬 쿠키) |
 
 ---
 

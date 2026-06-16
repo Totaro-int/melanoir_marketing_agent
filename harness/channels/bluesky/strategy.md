@@ -93,16 +93,10 @@ no aggressive marketing visual, soft brand presence,
 - 채널 = bluesky → 밝거나 어두운 자유, 친근 톤, glow 약하게
 - `imageStyle.aestheticDirection` "playful" 또는 "editorial"이면 잘 어울림
 
-## 업로드 (AT Protocol)
+## 발행 — 비활성
 
-```
-POST xrpc/com.atproto.repo.createRecord
-- collection: app.bsky.feed.post
-- record: { text, createdAt, embed: { images } }
-- handle + appPassword 인증
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/bluesky.mjs`
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

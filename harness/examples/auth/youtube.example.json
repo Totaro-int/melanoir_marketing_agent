@@ -1,4 +1,4 @@
 {
   "accessToken": "ya29....",
-  "_note": "OAuth2 user access token. refresh_token 으로 갱신은 별도 (auth.mjs check)"
+  "_note": "레거시 API 발행용 예시 (2026-06 제거). 현재 발행은 browser-publish 크롬 쿠키만."
 }
