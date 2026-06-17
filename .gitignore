@@ -38,6 +38,10 @@ posts/sources/*
 posts/insight-photos/*
 !posts/insight-photos/.gitkeep
 
+# 인사이트 카드 토픽 (per-install 콘텐츠) + 실행 로그 (휘발성) — 트리 더럽힘 방지
+insights-topics.txt
+logs/
+
 # 개발 중 디버깅 probe 스크립트 (커밋 X)
 harness/bin/_temp-*
 

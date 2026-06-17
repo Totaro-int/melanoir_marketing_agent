@@ -50,28 +50,34 @@ if (!inRepo) {
     { probe: 'posts/insight-photos/_probe.jpg', rules: ['posts/insight-photos/*', '!posts/insight-photos/.gitkeep'] },
     { probe: 'out/_probe.png',                  rules: ['out/'] },
     { probe: 'node_modules/_probe',             rules: ['node_modules/'] },
+    // 보안은 아니지만 트리를 더럽히는 per-install 콘텐츠 — 갭이면 warn(치명 아님)
+    { probe: 'insights-topics.txt',             rules: ['insights-topics.txt'],  sev: 'warn' },
+    { probe: 'logs/_probe.log',                 rules: ['logs/'],                sev: 'warn' },
   ];
   const isIgnored = (p) => git(['check-ignore', '-q', p]).status === 0;
-  const toAdd = [];
+  const toAdd = [], toAddWarn = [];
   for (const m of MUST_IGNORE) {
     if (!isIgnored(m.probe)) {
-      for (const r of m.rules) if (!toAdd.includes(r)) toAdd.push(r);
+      const bucket = m.sev === 'warn' ? toAddWarn : toAdd;
+      for (const r of m.rules) if (!bucket.includes(r)) bucket.push(r);
     }
   }
+  const allAdd = [...toAdd, ...toAddWarn];
   // 네거션 sanity — 커밋돼야 할 placeholder 가 실수로 무시되면 경고(자동수정 X)
   for (const keep of ['.env.example', 'posts/sources/README.md', 'posts/insight-photos/.gitkeep', 'harness/examples/auth/x.example.json']) {
     if (isIgnored(keep)) rec('git', 'warn', `과보호: ${keep} 가 무시됨 — .gitignore 네거션(!${keep}) 확인 필요`);
   }
-  if (toAdd.length) {
+  if (allAdd.length) {
+    const sev = toAdd.length ? 'critical' : 'warn'; // 민감 경로 누락이면 치명, 정리용만이면 경고
     if (FIX) {
-      const block = `\n# self-check 자동 보강 (민감 경로 보호)\n${toAdd.join('\n')}\n`;
+      const block = `\n# self-check 자동 보강 (gitignore 보호/정리)\n${allAdd.join('\n')}\n`;
       appendFileSync(resolve(ROOT, '.gitignore'), block);
-      rec('git', 'critical', `.gitignore 누락 보호 줄 ${toAdd.length}개 추가: ${toAdd.join(' ')}`, { action: 'fixed' });
+      rec('git', sev, `.gitignore 누락 줄 ${allAdd.length}개 추가: ${allAdd.join(' ')}`, { action: 'fixed' });
     } else {
-      rec('git', 'critical', `.gitignore 가 민감 경로를 안 막음: ${toAdd.join(' ')}`, { action: 'manual', cmd: 'npm run self-check:fix' });
+      rec('git', sev, `.gitignore 미보호${toAdd.length ? '(민감)' : '(정리)'}: ${allAdd.join(' ')}`, { action: 'manual', cmd: 'npm run self-check:fix' });
     }
   } else {
-    rec('git', 'ok', '.gitignore 민감 경로 보호 정상');
+    rec('git', 'ok', '.gitignore 보호 정상');
   }
 
   // 1b) 이미 추적 중인 민감파일 (= 커밋돼 노출)
