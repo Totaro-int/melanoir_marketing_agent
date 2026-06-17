@@ -25,9 +25,20 @@
 3. `start-demo` → SNS 채널 로그인(사장님) 🧑
 4. seed-calendar(30일) → `npm run morning` → 발행 직전 탭 → [공유] 클릭 🧑
 
-## 🟡 진행 중 — 인사이트 카드 기능 (별도, 입력 대기)
+## ✅ 인사이트 카드 기능 — 에이전트 쪽 빌드+검증 완료
 
-- **웹 페이지**: `melanoir-recruitment/web/site/insights/` 빌드 완료(기존 구조 0 변경, 사이트 톤 일치). 로컬 브랜치 `feat/insight-cards`(`d3d7b72`) — **push 권한 대기** (ted-dylan write 없음 → 클라/토타로 계정으로 push 또는 collaborator 추가).
-- **에이전트 매일-발행 파이프라인**: 미빌드. 필요 입력 — ① 위 웹 페이지 라이브, ② **클라 사진 풀**(카드레터 배경, "이미지 클라 자체 제작" 결정). 설계 계약은 `insights/README.md` 에.
+| 영역 | 상태 |
+|---|---|
+| 카드레터 생성기 (`insight-card.mjs`) | ✅ 클라 사진 + 텍스트 오버레이, 4:5 1080x1350, 결정론적 (실사진/폴백 렌더 검증) |
+| 매일 발행 오케스트레이션 (`insight-daily.mjs`) | ✅ 토픽 날짜순환 + 사진풀 → 카드 → 웹발행 + IG캡션 + git commit/push (E2E 실행 검증) |
+| npm 스크립트 | ✅ `insight:card` / `insight:daily` |
+| 가이드 | ✅ `harness/docs/INSIGHT-CARDS.md` (준비→카드1장→매일자동→cron→IG) |
 
-> 자율 /loop 는 발행 준비 마무리로 종료. 인사이트 카드 파이프라인은 위 입력 갖춰지면 재개.
+쓰는 법: `npm run insight:daily -- --website="<melanoir-recruitment>/web/site/insights" --commit --push`
+(매일 cron 한 줄로 자동화 가능 — 가이드 §4)
+
+## 🟡 인사이트 카드 — 남은 입력 (현장에서)
+
+- **웹 페이지**: `melanoir-recruitment/web/site/insights/` 빌드 완료(기존 구조 0 변경). 로컬 브랜치 `feat/insight-cards`(`d3d7b72`) — **push 권한 대기** (ted-dylan write 없음 → 클라/토타로 계정으로 push 또는 collaborator 추가).
+- **클라 사진 풀**: `posts/insight-photos/` 에 브랜드 사진 넣기 (없으면 모노톤 폴백으로 동작). 토픽은 `insights-topics.txt`(예시 복사) 편집.
+- **IG 자동 포스트**: 카드+캡션은 IG-ready. morning 루틴에 카드레터를 IG 이미지로 끼우는 것은 §0 동결 파이프라인(`posts/campaigns/`) 변경 → 별도 승인 작업. 현재는 대시보드/browser-publish 단일 이미지로 발행.
