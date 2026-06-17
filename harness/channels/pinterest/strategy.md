@@ -97,15 +97,10 @@ text overlay area reserved at top or bottom 30%"
 - 채널 = pinterest → **밝은 배경 + 텍스트 오버레이 영역 확보 + 인포그래픽 톤**
 - (선택) 텍스트 오버레이 — 핀 제목을 이미지에 합성 (image-director가 HTML 생성 후 Playwright)
 
-## 업로드 (Pinterest API v5)
+## 발행 — 비활성
 
-```
-POST /v5/pins
-- board_id, title, description, alt_text, link, media_source
-- Authorization: Bearer <access_token>
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/pinterest.mjs`
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

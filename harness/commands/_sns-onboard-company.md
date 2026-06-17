@@ -247,7 +247,7 @@ meta:
 ✅ company-profile.yaml 저장 완료.
 활성 채널: <enabled 콤마 나열>
 다음 단계:
-  1) /sns-auth add <채널>     선택한 채널마다 토큰 등록 (안 하면 dry-run 만 동작)
+  1) 크롬에 각 채널 1회 로그인  browser-publish 가 쿠키 재사용 (별도 토큰/OAuth 불필요)
   2) /sns-campaign-new "<주제>" 첫 캠페인 만들기 (채널 미지정 시 enabled 전부)
 ```
 
@@ -255,7 +255,7 @@ meta:
 
 - 인터뷰 도중 사용자가 "예시 보여줘" 라고 하면 해당 섹션만 발췌해 보여준다 (전체 dump 금지 — 답변 유도 효과↓). 일반 업종은 `examples/company-profile.example.yaml`, 뷰티·반영구·화장품 계열은 `examples/company-profile.beauty-pmu.example.yaml`.
 - `company-profile.yaml`은 **gitignore 대상**임을 안내하고, 저장 후 `git status`에 빨간색으로 안 보이는지 확인하라고 한 줄로 안내
-- 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 별도 명령(`/sns-auth add <channel>`, Phase 4)에서 OS 키체인으로 처리
+- 자격증명(SNS 비밀번호·API 키)는 **이 인터뷰에서 절대 묻지 않는다**. 발행은 browser-publish — 사용자가 평소 쓰는 크롬에 직접 1회 로그인하면 쿠키를 재사용하므로 하네스가 비밀번호·토큰을 저장하지 않는다.
 
 ## Don't
 

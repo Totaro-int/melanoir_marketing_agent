@@ -85,29 +85,10 @@ factual presentation only"
 - 일반적으로 호출 안 함 (이미지 거의 안 씀)
 - 호출 시 데이터 차트 또는 단순 스크린샷만
 
-## 업로드 (Phase 4 — Reddit OAuth2)
+## 발행 — 비활성
 
-```
-POST /api/submit
-- sr: <subreddit>
-- title, kind: self|link
-- text (self) 또는 url (link)
-- access_token (OAuth2 password grant)
-```
-
-자세한 어댑터: `harness/src/publisher/adapters/reddit.mjs`
-
-**자격증명** (`auth/reddit.json`):
-```json
-{
-  "clientId": "...",
-  "clientSecret": "...",
-  "username": "...",
-  "password": "...",
-  "userAgent": "marketing_agent/0.9 by your_username",
-  "defaultSubreddit": "..."
-}
-```
+이 채널은 비활성(`channels.json` status=disabled). 레거시 API/OAuth 발행은 2026-06 제거됨.
+현재 browser-publish(크롬 쿠키)는 naver-blog / tistory / brunch / instagram / threads / linkedin 만 지원.
 
 ## 참고
 

@@ -358,8 +358,7 @@
 │   ├─ evaluate.mjs                  ← card 평가
 │   ├─ preview.mjs                   ← 미리보기
 │   ├─ approve.mjs                   ← 승인
-│   ├─ publish.mjs                   ← API 발행 (OAuth)
-│   ├─ browser-publish.mjs           ← Chrome 자동화 (threads, linkedin)
+│   ├─ browser-publish.mjs           ← 크롬 쿠키 발행 (naver-blog/tistory/brunch/instagram/threads/linkedin)
 │   ├─ board.mjs                     ← 칸반
 │   ├─ slots.mjs                     ← 슬롯 관리 (반복용)
 │   ├─ inspect-guidelines.mjs        ← 가이드라인 재검수 (본문+카드 통합)

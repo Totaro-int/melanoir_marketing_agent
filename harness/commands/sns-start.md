@@ -545,23 +545,14 @@ draft 카피, 가디언 결과, 자산 경로를 채널별로 출력.
 ### 7단계 — 승인 + 발행 (publishMode=immediate 만)
 승인된 채널마다 순서대로:
 1. `node harness/bin/approve.mjs <slug> --channel=<ch>`
-2. **발행 라우팅** — 아래 규칙으로 `publish.mjs` (API) 또는 `browser-publish.mjs` (Chrome 자동화) 선택:
-   - **`--via=browser` 플래그 명시** → 무조건 `browser-publish.mjs` (단 미지원 채널은 안내 후 skip — 현재 지원: threads, linkedin)
-   - **`--via=api` 플래그 명시** → 무조건 `publish.mjs`
-   - **플래그 없음 (기본)**:
-     - `auth/<ch>.json` 존재 → `publish.mjs` (API)
-     - `auth/<ch>.json` 없음 + 채널이 browser-publish 지원 (threads/linkedin) → `browser-publish.mjs` 안내 후 사용자 확인:
-       ```
-       [<ch>] auth/<ch>.json 없음. Chrome 자동화로 발행할까요?
-         [Y]   browser-publish.mjs 실행 (브라우저 열림, 사용자가 게시 직전 확인)
-         [N]   publish.mjs --dry-run 으로 폴백
-         [A]   /sns-doctor auth add <ch> 안내 후 중단
-       ```
-     - `auth/<ch>.json` 없음 + browser-publish 미지원 → `publish.mjs --dry-run` 강제 + "자격증명 추가: `/sns-doctor auth add <ch>`" 안내.
+2. **발행** — 모든 채널 browser-publish(크롬 쿠키 로그인) 단일 경로. 레거시 API/OAuth 발행(`publish.mjs`)은 제거됨(2026-06).
+   - 현재 browser-publish 지원: naver-blog, tistory, brunch, instagram, threads, linkedin. (미지원 채널은 안내 후 skip)
+   - 크롬에 해당 채널이 1회 로그인되어 있어야 함 (쿠키 재사용). 안 되어 있으면 로그인 안내 후 사용자가 로그인.
 3. 실행:
-   - **API**: `node harness/bin/publish.mjs <slug> --channel=<ch> [--dry-run]`
-   - **Browser**: `node harness/bin/browser-publish.mjs <slug> --channel=<ch> [--dry-run]`
-   - **`--dry-run` 전파 규칙**: `/sns-start --dry-run` 으로 진입했다면 위 두 명령에도 반드시 `--dry-run` 을 붙여 전달한다 (3단계 publishMode 결정 시 기억해 둔 `dryRun` 플래그를 그대로 사용). API 모드는 dry-run 시 네트워크 호출 없이 payload 출력, browser 모드는 컴포저까지만 채우고 게시 직전에 멈춰 사용자가 시각적으로 확인 후 종료.
+   - `node harness/bin/browser-publish.mjs <slug> --channel=<ch> --attach --pre-publish`
+     → 컴포저까지 자동으로 채우고 **게시 직전에 멈춤**. 사용자가 시각 확인 후 [공유]/[발행] 클릭.
+   - 한 번에 여러 채널 + 대시보드까지: `npm run morning`.
+   - **`--dry-run` 전파 규칙**: `/sns-start --dry-run` 으로 진입했다면 `--dry-run` 을 붙여 컴포저까지만 채우고 게시 직전에 멈춰 사용자가 확인 후 종료한다 (3단계에서 기억해 둔 `dryRun` 플래그 사용).
 
 ### 8단계 — 완료
 **칸반 자동 표시 (2차)**: `node harness/bin/board.mjs <slug>`

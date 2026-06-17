@@ -5,7 +5,7 @@
 //   - brief.autoPublish === true (false면 알림만)
 //
 // 자동 발행 실패 → status=needs_attention + attentionReason[ch]=<reason>.
-// 사람이 /sns-preview 확인 후 /sns-approve & /sns-publish 수동.
+// 사람이 /sns-preview 확인 후 /sns-approve, 발행은 browser-publish(대시보드 [발행]·npm run morning) 수동.
 //
 // Usage:
 //   node bin/queue-tick.mjs              # 실제 처리
@@ -64,7 +64,7 @@ for (const slug of slugs) {
 
     if (!auto) {
       results.push({ slug, channel: ch, action: 'notify-only', dueAt: at, currentStatus: status });
-      log(`🔔 ${slug} [${ch}] due — 자동발행 꺼짐, /sns-publish 수동`);
+      log(`🔔 ${slug} [${ch}] due — 자동발행 꺼짐, browser-publish 수동 (대시보드 [발행]·npm run morning)`);
       continue;
     }
 
@@ -138,7 +138,7 @@ for (const slug of slugs) {
     } else {
       results.push({ slug, channel: ch, action: 'published', dueAt: at });
       log(`✅ ${slug} [${ch}] 발행 완료`);
-      // publish.mjs가 디스크의 brief.yaml을 갱신했으므로 다음 채널 처리 전에 reload.
+      // 발행 단계가 디스크의 brief.yaml을 갱신했을 수 있으므로 다음 채널 처리 전에 reload.
       // 안 하면 다음 채널의 markAttention 경로에서 stale brief를 write back 해서
       // 방금 published 된 채널 상태를 approved 로 되돌림 → 중복 발행 위험.
       try { brief = YAML.parse(readFileSync(briefPath, 'utf8')); } catch {}

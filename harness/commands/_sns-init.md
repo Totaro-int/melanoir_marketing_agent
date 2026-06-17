@@ -14,7 +14,7 @@ description: 새 사용자(고객사)를 위한 첫 가이드. setup → onboard
 4. **`/sns-onboard`** — 회사 프로필 인터뷰
 5. **`/sns-campaign-new "<주제>"`** — 첫 캠페인
 6. **`/sns-generate <slug>`** → **`/sns-preview <slug>`** → **`/sns-approve`**
-7. **`/sns-auth add <channel>`** + **`/sns-publish ... --dry-run`** → 페이로드 확인 후 실 발행
+7. **발행** — 채널별 토큰/OAuth 불필요. 크롬에 SNS 1회 로그인 → 대시보드 [발행] 버튼 · **`npm run morning`** · 또는 **`node harness/bin/browser-publish.mjs <slug> --channel=<ch> --attach --pre-publish`** (쿠키 재사용, 사람이 [공유] 클릭)
 
 각 단계는 별도 명령으로 분리되어 있어 사용자가 멈추거나 다시 시작하기 쉬움.
 
@@ -24,7 +24,7 @@ description: 새 사용자(고객사)를 위한 첫 가이드. setup → onboard
 - [ ] `.env.local` 의 `FAL_KEY` 설정
 - [ ] 첫 캠페인 single 카드로 전체 사이클 1회 (mock provider 로 안전)
 - [ ] dry-run 페이로드 사람 검토
-- [ ] LinkedIn / Threads OAuth 토큰 발급 → `/sns-auth add`
+- [ ] 크롬에 각 채널 1회 로그인 (browser-publish 가 쿠키 재사용 — 별도 토큰/OAuth 불필요)
 - [ ] 실 발행 1회 (single 카드)
 - [ ] series-3 카드뉴스 1회
 - [ ] `/sns-status --watch` 로 보드 확인

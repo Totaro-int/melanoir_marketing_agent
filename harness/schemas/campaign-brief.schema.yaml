@@ -1,5 +1,5 @@
 # campaign-brief.schema.yaml v1
-# /sns-campaign-new 가 생성하고, /sns-preview, /sns-publish 가 갱신.
+# /sns-campaign-new 가 생성하고, 이후 preview·approve·발행(browser-publish) 단계가 갱신.
 
 $schema: "https://json-schema.org/draft/2020-12/schema"
 $id: "https://totaro.example.com/schemas/marketing_agent/campaign-brief/v1"
@@ -42,7 +42,7 @@ properties:
   autoPublish:
     type: boolean
     default: true
-    description: "schedule 도달 시 자동 발행 여부. false면 알림만, 사람이 /sns-publish 손으로 호출."
+    description: "schedule 도달 시 자동 승인까지. 실제 발행은 사람이 browser-publish(대시보드 [발행]·npm run morning)로 — 레거시 자동 API 발행은 제거됨(2026-06)."
   attentionReason:
     type: object
     description: "needs_attention 사유 (자동 발행 실패 등)"

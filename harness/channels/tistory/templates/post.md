@@ -12,7 +12,7 @@
 3. **카테고리 지정** — URL 슬러그과 일치하게
 4. **Visibility = 3** (공개)
 5. **첫 줄에 외부 링크 절대 금지** — 다음 알고리즘 페널티
-6. **Front-matter 형식** (어댑터가 파싱):
+6. **Front-matter 형식** (browser-publish 가 파싱):
    ```
    ---
    title: "<제목>"

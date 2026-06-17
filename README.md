@@ -205,7 +205,7 @@ Claude 안에서 딱 한 줄:
 에이전트 (4개)        copywriter / image-director / brand-guardian / publisher
   │  호출
   ▼
-bin 스크립트 (25개)   generate.mjs / publish.mjs / board.mjs ...
+bin 스크립트 (25개)   generate.mjs / browser-publish.mjs / board.mjs ...
 ```
 
 ### 커맨드와 스킬의 관계

@@ -65,10 +65,10 @@
 4. 이미지 첨부 (Unsplash 검색 또는 업로드)
 5. 발행 직전 멈춤 → 사용자 1번 클릭
 
-### 옵션 2: dry-run (현재 default)
-`auth/brunch.json` 없으면 자동 dry-run. 본문·이미지 paths만 출력.
+### 옵션 2: dry-run
+`--dry-run` 플래그 시 컴포저까지만 채우고 게시 직전에 멈춤 (본문·이미지 확인용).
 
-자세한 어댑터: [`harness/src/publisher/adapters/brunch.mjs`](../../src/publisher/adapters/brunch.mjs) (browser-publish 기반)
+발행: browser-publish (크롬 쿠키) — `node harness/bin/browser-publish.mjs <slug> --channel=brunch --attach --pre-publish`
 
 ## 회사 프로필 매핑
 
