@@ -5,10 +5,14 @@
 // 고정 레이아웃이라 결정론적 — LLM/서브에이전트 불필요. cron/morning 에서 바로 호출 가능.
 // (이미지 소스 = 클라가 제공한 사진 풀. 에이전트는 텍스트만 오버레이.)
 //
+// 브랜드 정체성(핸들·워드마크·폰트·컬러)은 company-profile.yaml 에서 자동으로 읽는다.
+// = 클라가 브랜드 지침을 posts/sources/ 에 넣고 /sns-onboard 로 profile 에 반영 → 카드가 그 브랜드로.
+//
 // Usage:
-//   node harness/bin/insight-card.mjs --title="..." [--subtitle=] [--category=] [--handle=@melanoir] \
+//   node harness/bin/insight-card.mjs --title="..." [--subtitle=] [--category=] \
 //        (--photo=<사진 경로> | --photo-dir=<클라 사진 풀 폴더>) [--date=YYYY-MM-DD] [--out=<png>] \
-//        [--website=<.../web/site/insights 경로>]   # 주면 그 사이트에 발행(cards/<date>.jpg + cards.json)
+//        [--website=<.../web/site/insights 경로>]   # 주면 그 사이트에 발행(cards/<date>.png + cards.json)
+//   브랜드 override(보통 불필요 — profile 에서 자동): [--brand=] [--wordmark=] [--handle=@x] [--font=] [--base-color=#hex]
 //
 // 출력: 카드 PNG (1080x1350, IG 포트레이트 4:5). --website 주면 사이트 insights/ 에도 기록.
 
@@ -32,9 +36,25 @@ const title = flag('title');
 if (!title) { console.error('❌ --title 필수. 예: --title="색소 안전성은 데이터로 증명한다"'); process.exit(2); }
 const subtitle = flag('subtitle', '');
 const category = flag('category', '');
-const handle = flag('handle', '@melanoir');
 const W = Number(flag('width', 1080));
 const H = Number(flag('height', 1350));
+
+// ── 브랜드 정체성 — company-profile.yaml(브랜드 지침 distill 결과)에서 읽고 --flag 로 override ──
+// 클라이언트는 브랜드 지침(브랜드북 PDF 등)을 posts/sources/ 에 넣고 /sns-onboard 로 profile 에 반영.
+// 그러면 핸들·워드마크·폰트·컬러가 그 브랜드에 맞게 자동 적용된다(멜라누아 하드코딩 X).
+let _profile = {};
+try {
+  const { PATHS, readYaml } = await import('./_lib.mjs');
+  if (existsSync(PATHS.profile)) _profile = readYaml(PATHS.profile) || {};
+} catch { /* 프로필 없으면 아래 기본값 */ }
+const brandName = String(flag('brand', _profile.brand?.name || 'Brand'));
+const wordmark = String(flag('wordmark', brandName)).toUpperCase();
+const handle = flag('handle', '@' + brandName.toLowerCase().replace(/[^a-z0-9_.]/g, ''));
+const fontStack = flag('font', _profile.visual?.fonts?.heading
+  ? `${_profile.visual.fonts.heading}, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif`
+  : '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans CJK KR", sans-serif');
+const baseColor = String(flag('base-color', _profile.visual?.colors?.secondary || _profile.visual?.colors?.primary || '#0a0a0c'));
+const topColor = lightenHex(baseColor, 28);
 
 // 날짜 (KST local 컴포넌트 — toISOString UTC 롤백 방지)
 function todayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -55,8 +75,15 @@ if (photo && !existsSync(photo)) { console.error(`❌ --photo 없음: ${photo}`)
 
 // ── 카드레터 HTML (고정 레이아웃: 사진 풀블리드 + 하단 스크림 + 텍스트 오버레이) ──
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+function lightenHex(hex, amt) { // 폴백 그라디언트 상단색 — 브랜드 base 를 amt 만큼 밝게
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(String(hex).trim());
+  if (!m) return '#2a2a30';
+  const n = parseInt(m[1], 16);
+  const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.min(255, v + amt));
+  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
 function photoCss() {
-  if (!photo) return 'background:radial-gradient(120% 120% at 30% 18%, #2a2a30 0%, #0a0a0c 70%);'; // 사진 없을 때 모노톤 폴백
+  if (!photo) return `background:radial-gradient(120% 120% at 30% 18%, ${topColor} 0%, ${baseColor} 70%);`; // 사진 없을 때 브랜드 모노톤 폴백
   const b64 = readFileSync(photo).toString('base64');
   const mime = extname(photo).toLowerCase() === '.png' ? 'image/png' : extname(photo).toLowerCase() === '.webp' ? 'image/webp' : 'image/jpeg';
   return `background-image:url('data:${mime};base64,${b64}');background-size:cover;background-position:center;`;
@@ -66,7 +93,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:${W}px; height:${H}px; }
   .card { position:relative; width:${W}px; height:${H}px; overflow:hidden;
-          font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans CJK KR",sans-serif;
+          font-family:${fontStack};
           color:#fff; ${photoCss()} }
   .scrim { position:absolute; inset:0;
            background:linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,0) 32%, rgba(0,0,0,.78) 100%); }
@@ -91,7 +118,7 @@ const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
       ${subtitle ? `<p class="sub">${esc(subtitle)}</p>` : ''}
     </div>
   </div>
-  <div class="mark">MELANOIR</div>
+  <div class="mark">${esc(wordmark)}</div>
 </div></body></html>`;
 
 // ── 렌더 (screenshot.mjs = Playwright HTML→PNG 재사용) ──────────────────────────

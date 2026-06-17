@@ -6,6 +6,33 @@
 > 이미지 소스 = **클라가 제공한 사진 풀**. 에이전트는 텍스트만 올린다(생성 이미지 아님).
 > 레이아웃 고정 = 결정론적. LLM/서브에이전트 불필요 → cron 으로 바로 돌릴 수 있다.
 
+> **브랜드 정체성(핸들·워드마크·폰트·컬러)은 자동.** 카드는 `company-profile.yaml` 에서 브랜드명·`visual.colors`·`visual.fonts`
+> 를 읽어 그 브랜드로 그린다. 그 profile 은 클라가 **브랜드 지침(브랜드북 등)을 `posts/sources/` 에 넣고 `/sns-onboard`**
+> 로 distill 한 결과다 (아래 §0). 멜라누아면 Jet Black `#0A0A0C` + Pretendard + `@melanoir`/`MELANOIR` 가 자동 적용.
+
+---
+
+## 0) 브랜드 지침 → 에이전트 (한 번만, 모든 생성의 토대)
+
+클라이언트 브랜드 지침을 에이전트가 따르게 하는 경로. **카피·인사이트 카드 둘 다** 이 profile 을 참조한다.
+
+```
+posts/sources/          ← 여기에 브랜드 지침을 넣는다 (브랜드북 PDF / md / txt). gitignore.
+   브랜드북.pdf
+```
+
+```bash
+# 1) PDF면 텍스트 추출 (md 가 이미 있으면 생략)
+node harness/bin/parse-pdf.mjs "posts/sources/브랜드북.pdf" --out=posts/sources/brandbook.md
+# 2) 온보딩 — Claude 가 posts/sources/ 의 지침을 읽어 company-profile.yaml 로 distill
+#    (태그라인·컬러 HEX·폰트·브랜드 보이스·금지어·미학 → tone/visual/banned/hashtags)
+/sns-onboard
+```
+
+→ 결과 `company-profile.yaml` 을 **copywriter·brand-guardian·inspect-guidelines·insight-card 가 전부 참조**.
+즉 브랜드 지침을 한 번 `posts/sources/` 에 넣어 profile 에 반영하면, 그 브랜드 톤·금지어·컬러·폰트로 에이전트가 돈다.
+(멜라누아는 이미 반영됨 — `posts/sources/melanoir-brandbook.md` → profile 의 tone/visual/banned.)
+
 ---
 
 ## 1) 한 번만 준비 (설치 시)
