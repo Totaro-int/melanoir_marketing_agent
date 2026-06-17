@@ -3,6 +3,11 @@
 > 한 줄: **`git clone` → 가이드(`harness/docs/CLAUDE-CODE-INSTALL.md`) PHASE 0~9 → 발행 직전 화면.**
 > 발행은 **로컬에서 도는 Claude Code**(터미널 `claude` CLI 또는 데스크톱 Environment=Local)에서만.
 
+> 🧪 **fresh-env E2E 통과 (2026-06-17)** — 빈 머신 가정으로 `git clone → setup → 핸드오버 팩` 재현:
+> ① 팩 적용 후 git **완전 CLEAN** ② doctor 전 항목 ✓ ③ self-check 정상 ④ insight-daily(멜라누아 프로필 자동) ·
+> seed-calendar(5캠페인) · generate(copy/slide-spec) · morning:dry · 플러그인 매니페스트(스킬3·커맨드4·에이전트6) 전부 동작.
+> (LLM 에이전트 카피/이미지 + 실제 브라우저 발행은 Claude Code 런타임에서 — 설계대로.)
+
 ## ✅ 출시 준비 완료 — 코어 에이전트 (push 됨)
 
 | 영역 | 상태 |
