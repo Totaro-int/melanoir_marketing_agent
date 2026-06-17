@@ -27,7 +27,7 @@ cd <레포 폴더>
 node harness/bin/setup.mjs
 ```
 
-자동으로: npm install · `.env.local` 생성 · runtime dirs · 실행 권한.
+자동으로: npm install · **Playwright Chromium 설치**(fresh 머신 필수) · `.env.local` 생성 · runtime dirs · 실행 권한 · **자가 점검(self-check) 1회**.
 
 ---
 
@@ -50,22 +50,35 @@ node harness/bin/doctor.mjs      # env / content-engine 초록색 확인
 
 ## 3. 브랜드 DNA 배치
 
-`company-profile.yaml` 을 프로젝트 루트에 둠. 없으면 예시 복사 후 편집:
+`company-profile.yaml` 은 gitignore(=레포에 없음). 셋 중 하나로 채운다:
 
+**(A) 핸드오버 팩 — 멜라누아 재납품 (가장 빠름)**
+담당자가 가진 납품 팩(`_melanoir-delivery-pack/`)의 파일을 복사:
 ```bash
-cp harness/examples/company-profile.example.yaml company-profile.yaml
+cp company-profile.yaml <클론>/                    # 브랜드 DNA (이미 튜닝됨)
+cp -r posts/sources/* <클론>/posts/sources/         # 브랜드북 원문 + 캠페인 토픽
+cp insights-topics.txt <클론>/                      # 인사이트 카드 토픽
 ```
 
-핵심 필드 (캘린더·카피·해시태그에 자동 반영):
-- `brand.name` / `brand.korName`
-- `industry`
-- `tone.preset` (relate-kr / b2b / informational / friendly / sales)
-- `hashtags.always` + `hashtags.pool`
-- `channels.enabled`
+**(B) 브랜드북에서 새로 — 다른 클라**
+브랜드 지침(브랜드북 PDF 등)을 `posts/sources/` 에 넣고 `/sns-onboard` → Claude 가 distill.
+```bash
+node harness/bin/parse-pdf.mjs "posts/sources/브랜드북.pdf" --out=posts/sources/brandbook.md
+/sns-onboard
+```
+
+**(C) 예시에서 수기**
+```bash
+cp harness/examples/company-profile.example.yaml company-profile.yaml   # 편집
+```
+
+핵심 필드 (캘린더·카피·해시태그·인사이트카드에 자동 반영): `brand.name`/`korName` · `industry` ·
+`tone.preset` · `visual.colors`/`fonts` · `hashtags.always`/`pool` · `channels.enabled`.
 
 검증:
 ```bash
 node harness/bin/doctor.mjs      # profile 초록색
+node harness/bin/self-check.mjs  # 보안·git위생·런타임 (납품 전 권장)
 ```
 
 ---
