@@ -15,8 +15,12 @@
 | 자가 업데이트 | ✅ 스킬 사용 시 감지 → `git pull --autostash` (fresh-clone E2E 검증) |
 | 깨끗한 git | ✅ package-lock 추적 해제 (npm install 후에도 트리 clean) |
 | 문서 일관성 | ✅ `/sns-publish`·`/sns-auth` 등 옛 참조 0개 (32파일 정리) |
+| **자가 점검·자동 수정** | ✅ `npm run self-check`(:fix) — 보안·git위생·런타임 (setup 끝 자동 1회). 갭/추적민감파일/PUBLIC/Playwright 검사 + 안전 자동수정 |
+| 브랜드 지침 → 에이전트 | ✅ `posts/sources/` 드롭 → `/sns-onboard` → profile → 카피·검수·인사이트카드 자동 참조 (insight-card 브랜드 정체성 profile 연동) |
 
-레포: melanoir `8f82ca1` · 템플릿(marketing_agent) `b10186a` — doctor 모든 항목 정상.
+레포: melanoir `a28fb7b` · 템플릿(marketing_agent) `698d3ea` — doctor·self-check 정상.
+
+> ⚠ melanoir 레포는 PUBLIC — 클라 민감데이터 커밋 금지(self-check 가 감시). 비공개 전환 권장: `gh repo edit Totaro-int/melanoir_marketing_agent --visibility private`
 
 ## 🧑 발행(go-live) 체크리스트 — 현장에서 사람이
 
