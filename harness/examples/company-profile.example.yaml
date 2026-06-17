@@ -70,7 +70,8 @@ legal:
 
 channels:
   # /sns-onboard 에서 고른 SNS. 미선택 채널은 /sns-campaign-new 에 명시해도 발행 거부됨.
-  enabled: [threads, linkedin, instagram, x]
+  # 발행 가능 채널(browser-publish): naver-blog, tistory, brunch, instagram, threads, linkedin
+  enabled: [naver-blog, threads, linkedin, instagram]
 
 campaigns:
   defaultGoals: [awareness, lead]
@@ -78,10 +79,10 @@ campaigns:
 
 competitors:
   - name: "예시결제A"
-    url: https://example.com/예시결제A
+    url: https://example.com/competitor-a
     notes: "대형 가맹점 위주, SMB 온보딩 마찰 있음"
   - name: "예시결제B"
-    url: https://example.com/예시결제B
+    url: https://example.com/competitor-b
     notes: "개발자 친화적, 정산 자동화는 약함"
 
 meta:
