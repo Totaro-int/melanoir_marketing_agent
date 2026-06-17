@@ -1,4 +1,5 @@
-# 회사 프로필 로컬 오버라이드
+# 회사 프로필·자격증명 — 절대 커밋 금지
+company-profile.yaml
 company-profile.local.yaml
 marketing-sources.yaml
 *.local.yaml
@@ -28,6 +29,14 @@ posts/slots.yaml
 
 # 학습된 사용자 선호도 (개인 데이터, approve/reject 시 자동 누적)
 posts/preferences.yaml
+
+# 브랜드 지침 원문 (클라가 넣는 브랜드북 PDF/md 등 — 개인 데이터). 안내 README 만 커밋.
+posts/sources/*
+!posts/sources/README.md
+
+# 인사이트 카드 배경용 클라 사진 풀 (개인 데이터). .gitkeep 만 커밋.
+posts/insight-photos/*
+!posts/insight-photos/.gitkeep
 
 # 개발 중 디버깅 probe 스크립트 (커밋 X)
 harness/bin/_temp-*
