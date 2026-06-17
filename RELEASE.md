@@ -41,4 +41,4 @@
 
 - **웹 페이지**: `melanoir-recruitment/web/site/insights/` 빌드 완료(기존 구조 0 변경). 로컬 브랜치 `feat/insight-cards`(`d3d7b72`) — **push 권한 대기** (ted-dylan write 없음 → 클라/토타로 계정으로 push 또는 collaborator 추가).
 - **클라 사진 풀**: `posts/insight-photos/` 에 브랜드 사진 넣기 (없으면 모노톤 폴백으로 동작). 토픽은 `insights-topics.txt`(예시 복사) 편집.
-- **IG 자동 포스트**: 카드+캡션은 IG-ready. morning 루틴에 카드레터를 IG 이미지로 끼우는 것은 §0 동결 파이프라인(`posts/campaigns/`) 변경 → 별도 승인 작업. 현재는 대시보드/browser-publish 단일 이미지로 발행.
+- **IG 자동 포스트**: 카드+캡션은 IG-ready. **지금**은 IG 앱/웹에 카드 PNG 직접 업로드 + 캡션 붙여넣기(수동). browser-publish 는 캠페인 바인딩이라 임의 이미지를 못 받음 → morning 자동 IG 포스트는 insight-daily 가 IG 캠페인 디렉토리도 생성하거나 browser-publish ad-hoc 모드 추가 필요, 둘 다 §0 동결 닿아 **사용자 승인 후 별도 작업**. (자세히: `harness/docs/INSIGHT-CARDS.md` §5)

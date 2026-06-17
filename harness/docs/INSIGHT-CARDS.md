@@ -87,13 +87,16 @@ npm run insight:daily -- \
 
 ## 5) 인스타그램 발행
 
-`insight:daily` 가 만든 **카드 PNG + 캡션**으로 인스타에 단일 이미지 포스트:
-- 손쉬운 길: 대시보드/`browser-publish` 의 단일 이미지 포스트로 카드 PNG 첨부 + 캡션 붙여넣기 → [공유] 클릭.
-- 카드는 4:5(1080x1350) 포트레이트라 IG 피드에 바로 맞는다.
+`insight:daily` 가 만든 **카드 PNG**(`cards/<날짜>.png`) **+ 캡션**(`cards/<날짜>.caption.txt`)으로
+인스타 단일 이미지 포스트. 카드는 4:5(1080x1350) 포트레이트라 IG 피드에 바로 맞는다.
 
-> IG 자동 포스트(morning 루틴에 카드레터를 IG 이미지로 끼우기)는 §0 동결 파이프라인
-> (`posts/campaigns/`)을 건드려야 해서 별도 승인 작업으로 분리. 현재는 카드+캡션이
-> **IG-ready** 상태로 나오고, 발행은 기존 browser-publish/대시보드 경로를 쓴다.
+**지금 되는 길 (수동):** 인스타그램 앱/웹에 그 카드 PNG 를 올리고 캡션 텍스트를 붙여넣어 발행.
+
+**자동화 (향후, 승인 필요):** `browser-publish` 는 캠페인 바인딩이라(`<slug>` + `posts/campaigns/<slug>/<channel>/draft.yaml` 필요)
+임의 이미지를 바로 못 받는다. morning 루틴으로 IG 자동 포스트하려면 둘 중 하나 —
+(a) `insight-daily` 가 IG 캠페인 디렉토리(`posts/campaigns/insight-<날짜>/instagram/` + `draft.yaml` + `img1.png`)도 생성해
+기존 browser-publish 가 집어가게, 또는 (b) browser-publish 에 ad-hoc 이미지 모드 추가.
+둘 다 §0 동결(캠페인 구조/draft schema)에 닿아 **사용자 승인 후 별도 작업**. 현재는 카드+캡션이 IG-ready 로 나오고 수동 발행.
 
 ---
 
