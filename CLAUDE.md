@@ -81,6 +81,7 @@ company-profile.yaml         ← 회사 프로필 (gitignore)
 
 - `auth/`, `company-profile.yaml`, `.env.local` 은 `.gitignore` 대상. 절대 커밋하지 않는다.
 - 플러그인 업데이트 후 `/plugin reload` 필요.
+- **납품/운영 전 `npm run self-check`** — 보안·git위생·런타임 점검 + 자동 수정(`:fix`). setup 끝에서 자동 1회 실행. (`harness/docs/SELF-CHECK.md`)
 - 자세한 설치/운영: `harness/docs/INSTALL.md`, `harness/docs/OPERATIONS.md`
 
 ## 🎯 사용자 궁극 목표 (morning routine — ✓ 검증 완료)

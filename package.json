@@ -24,6 +24,8 @@
     "status": "node harness/bin/board.mjs",
     "status:watch": "node harness/bin/board.mjs --watch",
     "doctor": "node harness/bin/doctor.mjs",
+    "self-check": "node harness/bin/self-check.mjs",
+    "self-check:fix": "node harness/bin/self-check.mjs --fix",
     "morning": "node harness/bin/morning-routine.mjs",
     "morning:dry": "node harness/bin/morning-routine.mjs --dry-run",
     "setup": "node harness/bin/setup.mjs",

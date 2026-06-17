@@ -114,6 +114,13 @@ if (linkTarget) {
   }
 }
 
+// 7) 자가 점검 — 보안·git위생·런타임 사고 조기 발견 (npm install 끝나 node_modules 준비된 뒤라 안전).
+console.log();
+console.log(bold('🛡 자가 점검 (보안·git위생·런타임):'));
+try {
+  spawnSync('node', [resolve(HARNESS_ROOT, 'bin/self-check.mjs'), '--quick'], { cwd: ROOT, stdio: 'inherit' });
+} catch { /* self-check 가 치명을 만나도 setup 자체는 완료로 둔다 (위에 이미 출력됨) */ }
+
 console.log();
 console.log(bold('다음 단계:'));
 console.log(dimc('  1. ') + '터미널에서 ' + bold('claude') + ' 실행 ' + dimc('# 데스크탑 앱이면 Environment=Local — Remote(클라우드)는 발행 불가'));

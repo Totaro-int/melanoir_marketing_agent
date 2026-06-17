@@ -209,6 +209,8 @@ for (const r of rows) {
   console.log(`  ${ICON[r.status]}  ${r.name}${pad}${pc.dim(r.detail)}`);
 }
 console.log();
+console.log(pc.dim('  보안·git 위생·자동수정: ') + 'npm run self-check' + pc.dim('  (납품 전 권장 · --fix 로 자동 보강)'));
+console.log();
 
 const fails = rows.filter((r) => r.status === 'fail').length;
 const warns = rows.filter((r) => r.status === 'warn').length;
