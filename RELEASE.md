@@ -8,6 +8,22 @@
 > seed-calendar(5캠페인) · generate(copy/slide-spec) · morning:dry · 플러그인 매니페스트(스킬3·커맨드4·에이전트6) 전부 동작.
 > (LLM 에이전트 카피/이미지 + 실제 브라우저 발행은 Claude Code 런타임에서 — 설계대로.)
 
+## ✅ 외주요청 4건 반영 — main (2026-06-18)
+
+멜라누아 OUTSOURCE_REQUEST (브랜드 표기 락 + 가디언 + IG). 데이터 원천 = 클라 SSoT `melanoir-recruitment/외주전달_블로그_AC/07·08`.
+
+| 작업 | 내용 | 검증 |
+|---|---|---|
+| A 표기 통일 | "28종/28-FREE" → "필수 항목 All N.D." (9곳) | `grep 28종\|28-FREE harness` = 0건 |
+| B self-check 가드 | 금지 토큰 되살아나면 FAIL (회귀 방지) | 주입→FAIL(exit2)·제거→PASS |
+| C brand-guardian +2 | forbidden·layer-leak block, fact-SSoT(range/저신뢰) warn | 6케이스 정상, 데이터 룩업만(스키마·7패턴 불변) |
+| D IG 배경 매칭 | imagePromptFor 슬라이드별 visualSubject(모티프표) | 5카드→5고유 SUBJECT, 하위호환 |
+
+- 데이터: `facts.json`(8) + `product-claims.json`(4) = 07 §2·§4 직렬화. gitignore + 핸드오버 팩. 상류(07) 우선 거버넌스.
+- layer-leak 검사는 brief 에 `layer:A~D` 있을 때 작동(없으면 skip). 토픽 레이어 = 클라 `09_topic_tags.md`.
+- ⚠ 제품수치 정밀값·성적서번호는 melanoir.co.kr 게시 기준 클라 확정 필요(07§4).
+- 커밋: `a9f7b32`(A·B) · `d8eeb84`(C·D).
+
 ## ✅ 출시 준비 완료 — 코어 에이전트 (push 됨)
 
 | 영역 | 상태 |
