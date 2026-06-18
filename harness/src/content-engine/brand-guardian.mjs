@@ -6,6 +6,21 @@
 // - AEO 패턴 검증 (FAQ Q.N/A., 표, 헤딩 구조)
 // - 자료 인용 검증 (sourceMaterials 있으면 [참고] 섹션 있어야)
 // - 톤 일관성 (정중체 ↔ 친근체 혼용 검출)
+// - (멜라누아) facts.json/product-claims.json 룩업 — layer-leak·무출처수치·금지표현 (08_guardian_checks_spec)
+
+import { readFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// 브랜드 데이터 (상류 SSoT export, 레포 루트 — gitignore). 없으면 관련 검사 graceful skip.
+//   facts.json ← 외주전달_블로그_AC/07_fact_ssot_v2.md · product-claims.json ← 07 §4 + 08
+const _REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+function _loadJson(name) {
+  try { const p = resolve(_REPO_ROOT, name); return existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : null; }
+  catch { return null; }
+}
+const FACTS = _loadJson('facts.json');
+const PRODUCT_CLAIMS = _loadJson('product-claims.json');
 
 // ─── 한국 광고법 자동 패턴 ──────────────────────────────────────
 // 모든 캠페인에 자동 적용 (profile.banned 따로 등록 안 해도 됨).
@@ -130,6 +145,30 @@ export function inspect({ channel, text, hashtags = [], profile, brief = null, s
   }
   for (const c of banned.claims ?? []) {
     if (text.includes(c)) findings.push({ severity: 'block', code: 'banned.claim', detail: c });
+  }
+
+  // ─── (멜라누아) 08_guardian_checks_spec — facts.json/product-claims.json 룩업 ──
+  // 데이터 없으면 skip(graceful). 의미 판정(제품 귀속 vs 기준 설명, 전체 수치 매핑)은 guideline-reviewer LLM 단계가 담당.
+  const _layer = String(brief?.layer ?? '').trim().toUpperCase();
+  // (1) 금지 표현 — 확정 표기 위반은 레이어 불문 block (TASK A를 놓쳐도 출력단에서 차단)
+  for (const p of PRODUCT_CLAIMS?.forbidden_phrasings ?? []) {
+    if (text.includes(p)) findings.push({ severity: 'block', code: 'forbidden_phrasing', detail: `금지 표현 "${p}" (07/08 확정 표기 위반)` });
+  }
+  // (2) 레이어 누수 — 교육(A/C)에 제품 시험수치 귀속 → block (제품 수치는 B/D 전용, 07 §4)
+  if (PRODUCT_CLAIMS && (_layer === 'A' || _layer === 'C')) {
+    for (const tok of PRODUCT_CLAIMS.tokens ?? []) {
+      if (text.includes(tok)) findings.push({ severity: 'block', code: 'layer_leak', detail: `교육(${_layer}) 레이어에 제품 수치 "${tok}" 귀속 — B/D 전용 (07 §4)` });
+    }
+  }
+  // (3) Fact-SSoT — range/contested·저신뢰 사실은 보수적 표기 확인(warn). 전체 수치 매핑은 LLM 단계.
+  for (const f of FACTS?.facts ?? []) {
+    if (!(f.match ?? []).some((m) => text.includes(m))) continue;
+    if (f.state === 'range' || f.state === 'contested') {
+      findings.push({ severity: 'warn', code: 'fact_range', detail: `${f.id} ${f.statement}: ${f.state} — 단일값 단정 금지(범위 표기). ${f.usage_note ?? ''}` });
+    }
+    if (f.confidence === 'low' || f.confidence === 'medium') {
+      findings.push({ severity: 'warn', code: 'fact_low_confidence', detail: `${f.id} ${f.statement}: confidence ${f.confidence} — 보수적 표현 권고` });
+    }
   }
 
   // ─── 한국 광고법 자동 검증 (코드 내장 — block) ──

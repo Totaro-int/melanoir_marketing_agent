@@ -49,9 +49,12 @@ export async function finalizeRegularChannels({ slug, dir, briefPath, brief, pro
       const { cardIndex: cIdx, cardTotal, role } = spec.partial;
       const cardIdx   = cIdx - 1;
       const newCard   = (output.cards ?? [{ text: output.text ?? '', hashtags: output.hashtags ?? [] }])[0];
+      const visualSubject = pickVisualSubject(newCard, role);
+      if (!isValidMotif(visualSubject)) ui.warn(`[${channel}] 카드 ${cIdx} visualSubject "${visualSubject}" 모티프 목록 밖`);
+      ui.dim(`  [${channel}] 카드 ${cIdx} (${role}) SUBJECT: ${visualSubject}`);
 
       const newImg = await provider.generateImage({
-        prompt:          imagePromptFor(channel, brief, profile, role, cIdx, cardTotal),
+        prompt:          imagePromptFor(channel, brief, profile, role, cIdx, cardTotal, { text: newCard.text, visualSubject }),
         visual:          profile.visual ?? {},
         aspect,
         count:           1,
@@ -64,7 +67,7 @@ export async function finalizeRegularChannels({ slug, dir, briefPath, brief, pro
       });
 
       const updatedCards = (existing.cards ?? []).map((c, i) =>
-        i === cardIdx ? { role, text: newCard.text } : c
+        i === cardIdx ? { role, text: newCard.text, visualSubject } : c
       );
       const updatedPaths = [...(existing.assets ?? [])];
       const updatedUrls  = [...(existing.assetUrls ?? [])];
@@ -109,10 +112,13 @@ export async function finalizeRegularChannels({ slug, dir, briefPath, brief, pro
     for (let i = 0; i < cardCount; i++) {
       const role    = spec.cards[i].role;
       const outCard = outputCards.find((c) => c.index === i + 1) ?? outputCards[i];
-      cards.push({ role, text: outCard.text, hashtags: outCard.hashtags ?? [] });
+      const visualSubject = pickVisualSubject({ text: outCard.text }, role);
+      if (!isValidMotif(visualSubject)) ui.warn(`[${channel}] 카드 ${i + 1} visualSubject "${visualSubject}" 모티프 목록 밖 (브랜드 비주얼 B-4 확인)`);
+      ui.dim(`  [${channel}] 카드 ${i + 1}/${cardCount} (${role}) SUBJECT: ${visualSubject}`);
+      cards.push({ role, text: outCard.text, hashtags: outCard.hashtags ?? [], visualSubject });
 
       const r = await provider.generateImage({
-        prompt:          imagePromptFor(channel, brief, profile, role, i + 1, cardCount),
+        prompt:          imagePromptFor(channel, brief, profile, role, i + 1, cardCount, { text: outCard.text, visualSubject }),
         visual:          profile.visual ?? {},
         aspect,
         count:           1,
@@ -616,7 +622,32 @@ export function injectRegenFeedback({ slug, dir, brief, channels }) {
 
 // ── imagePromptFor ────────────────────────────────────────────────────────
 
-export function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total = 1) {
+// ── (멜라누아) IG 카드 배경 ↔ 슬라이드 매칭 — 클레임 유형 → 모티프 통제표 (요청 TASK D / 브랜드 비주얼 B-4) ──
+// 캠페인 전체 topic 만 쓰던 배경을 슬라이드(카드) 단위 visualSubject 로 통제. 텍스트와 배경이 따로 노는 문제 해소.
+const MOTIF_SUFFIX = 'fine art scientific photography, single key light, deep shadow, monochromatic black and white, no text or letters or logos';
+const MOTIF_TABLE = [
+  { test: /불검출|all\s*n\.?\s*d|n\.d\.|검출\s*안/i,                         subject: 'a clean row of empty laboratory vials' },
+  { test: /0\.00|97\s*%|51\s*%|14\.32|6\.90|생존률|자극\s*지수|시험\s*수치|정량|측정/i, subject: 'a lab precision measurement instrument close-up' },
+  { test: /멜라닌|melanin|성분|분자|색소\s*본질|pigment\s*powder/i,            subject: 'melanin pigment powder macro' },
+  { test: /피부|발색|시술|적용|on[-\s]?skin/i,                                subject: 'pigment on skin contact macro' },
+  { test: /엠보|embo|앰플|ampoule|일회용|캡슐|unit[-\s]?dose|제품/i,           subject: 'a 0.5g unit-dose ampoule macro' },
+  { test: /뺄셈|빼[다고는]|덜어|철학|미니멀|minimal|없[다음]/i,                 subject: 'a single vial with minimal negative space' },
+];
+const CTA_SUBJECT = 'a single vial with a restrained warm-metallic highlight';
+const VALID_MOTIFS = [...MOTIF_TABLE.map((m) => m.subject), CTA_SUBJECT];
+
+// 카드 텍스트·역할 → visualSubject. 명시값 우선 → role=cta → 내용 매칭 → 폴백(철학 모티프).
+export function pickVisualSubject(card, role) {
+  if (card?.visualSubject) return card.visualSubject;
+  if (role === 'cta') return CTA_SUBJECT;
+  const t = String(card?.text ?? '');
+  for (const m of MOTIF_TABLE) if (m.test.test(t)) return m.subject;
+  return 'a single vial with minimal negative space';
+}
+export function isValidMotif(subject) { return VALID_MOTIFS.includes(subject); }
+
+export function imagePromptFor(channel, brief, profile, role = 'single', n = 1, total = 1, card = null) {
+  const subject = card?.visualSubject || brief.topic;  // 슬라이드별 주제 우선, 없으면 캠페인 topic
   const colors    = profile?.visual?.colors ?? {};
   const font      = profile?.visual?.fontFamily ?? '';
   const imgStyle  = profile?.imageStyle ?? {};
@@ -670,9 +701,12 @@ export function imagePromptFor(channel, brief, profile, role = 'single', n = 1, 
   // ── 이미지 성격 (abstract / concrete) ─────────────────────────────────
   // IMPORTANT: Never ask image models to render text/typography — Korean characters will be garbled.
   // All text overlay is handled at the post-processing / inhouse-slides layer.
-  const abstractDesc = imgStyle.preferAbstract === false
-    ? `Concrete imagery: real objects, spaces, textures, or scenes that evoke the feeling of "${brief.topic}". No text, no letters, no characters of any kind.`
-    : `Abstract visual composition using color, shape, light, and depth to evoke the mood of "${brief.topic}". Pure visual — absolutely no text, letters, numbers, or typographic elements anywhere in the image.`;
+  const abstractDesc = card?.visualSubject
+    // 슬라이드별 모티프가 지정되면 그 주제를 구체적으로 묘사 (배경↔텍스트 매칭)
+    ? `Concrete subject: ${subject}. ${MOTIF_SUFFIX}. Absolutely no text, letters, numbers, or typography anywhere.`
+    : (imgStyle.preferAbstract === false
+        ? `Concrete imagery: real objects, spaces, textures, or scenes that evoke the feeling of "${subject}". No text, no letters, no characters of any kind.`
+        : `Abstract visual composition using color, shape, light, and depth to evoke the mood of "${subject}". Pure visual — absolutely no text, letters, numbers, or typographic elements anywhere in the image.`);
 
   // ── 레퍼런스 브랜드 ────────────────────────────────────────────────────
   const refsDesc = imgStyle.referencesBrands?.length
@@ -707,6 +741,7 @@ export function imagePromptFor(channel, brief, profile, role = 'single', n = 1, 
     'PURELY VISUAL IMAGE. ABSOLUTELY NO TEXT, LETTERS, WORDS, OR CHARACTERS OF ANY LANGUAGE ANYWHERE IN THE IMAGE.',
     `SNS card visual. ${channelNote}`,
     `TOPIC: ${brief.topic}`,
+    card?.visualSubject ? `SUBJECT (이 슬라이드 배경 모티프): ${subject}` : '',
     audienceHint,
     '',
     `STYLE: ${aestheticDesc}`,
