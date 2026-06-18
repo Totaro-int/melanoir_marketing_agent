@@ -55,10 +55,12 @@ node harness/bin/doctor.mjs      # env / content-engine 초록색 확인
 **(A) 핸드오버 팩 — 멜라누아 재납품 (가장 빠름)**
 담당자가 가진 납품 팩(`_melanoir-delivery-pack/`)의 파일을 복사:
 ```bash
-cp company-profile.yaml <클론>/                    # 브랜드 DNA (이미 튜닝됨)
-cp -r posts/sources/* <클론>/posts/sources/         # 브랜드북 원문 + 캠페인 토픽
-cp insights-topics.txt <클론>/                      # 인사이트 카드 토픽
+cp company-profile.yaml <클론>/                              # 브랜드 DNA (이미 튜닝됨)
+cp facts.json product-claims.json <클론>/                    # 가디언 수치/제품 SSoT (TASK C·D)
+cp -r posts/sources/* <클론>/posts/sources/                  # 브랜드북 원문 + 캠페인 토픽
+cp insights-topics.txt <클론>/                               # 인사이트 카드 토픽
 ```
+> `facts.json`·`product-claims.json` 없으면 가디언 신규검사는 graceful skip(에러 X). 상류 SSoT=`melanoir-recruitment/외주전달_블로그_AC/07`.
 
 **(B) 브랜드북에서 새로 — 다른 클라**
 브랜드 지침(브랜드북 PDF 등)을 `posts/sources/` 에 넣고 `/sns-onboard` → Claude 가 distill.
