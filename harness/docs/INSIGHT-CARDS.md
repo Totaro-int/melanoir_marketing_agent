@@ -54,7 +54,7 @@ cp harness/examples/insights-topics.example.txt insights-topics.txt
 한 줄 = 한 인사이트, `카테고리 | 제목 | 서브타이틀`. 날짜로 순환(매일 다음 줄).
 
 ```
-소재 인사이트 | 색소 안전성은 '검출 안 됨' 데이터로 증명한다 | 28종 불검출 · 무균 시험 적합
+소재 인사이트 | 색소 안전성은 '검출 안 됨' 데이터로 증명한다 | 필수 항목 All N.D. · 무균 시험 적합
 멜라닌 과학 | 자연이 설계한 가장 안전한 블랙, 멜라닌 | 피부가 본래 쓰는 광보호 분자를 색소로
 ```
 
@@ -70,7 +70,7 @@ cp harness/examples/insights-topics.example.txt insights-topics.txt
 
 ```bash
 npm run insight:card -- --title="색소 안전성은 데이터로 증명한다" \
-  --subtitle="28종 유해물질 불검출" --category="소재 인사이트" \
+  --subtitle="필수 항목 All N.D.(불검출)" --category="소재 인사이트" \
   --photo-dir=posts/insight-photos
 # → out/insight-<날짜>.png (1080x1350, IG 4:5)
 ```

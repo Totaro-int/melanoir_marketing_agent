@@ -106,6 +106,27 @@ if (!inRepo) {
     rec('git', 'ok', '추적된 민감파일 없음');
   }
 
+  // 1b-2) brand-lock 회귀 가드 (BRAND_LOCKS.md L-01/L-02) — 확정 표기가 되살아나면 FAIL(치명).
+  //   토큰을 '28'+'종' 식으로 분할 저장 = 이 파일 자신이 자기매칭되는 것 방지.
+  //   git grep = 추적 파일만 검색(gitignore·node_modules 제외) → 옛 표기가 커밋되면 잡힘.
+  {
+    const FORBIDDEN = ['28' + '종', '28-' + 'FREE', '@melanoir' + '.official'];
+    const lockHits = [];
+    for (const tok of FORBIDDEN) {
+      const hits = (git(['grep', '-nF', '-e', tok, '--', 'harness']).stdout || '').trim();
+      if (hits) lockHits.push({ tok, hits });
+    }
+    if (lockHits.length) {
+      for (const f of lockHits) {
+        const where = f.hits.split(/\r?\n/).slice(0, 6).join('\n        ');
+        rec('git', 'critical', `BRAND-LOCK 금지 토큰 "${f.tok}" 되살아남:\n        ${where}`,
+          { action: 'manual', cmd: '확정 표기로 재치환 (필수 항목 All N.D. / @melanoir_official)' });
+      }
+    } else {
+      rec('git', 'ok', 'BRAND-LOCK 확정 표기 정상 (금지 토큰 0)');
+    }
+  }
+
   // 1c) 미커밋 변경 — 자동수정으로 .gitignore/untrack 후 커밋 안내
   const dirty = (git(['status', '--porcelain']).stdout || '').split(/\r?\n/).filter((l) => l && !l.startsWith('??')).length;
   if (FIX && dirty) rec('git', 'warn', `git 변경 ${dirty}건 — 검토 후 커밋·푸시 필요: git add -A && git commit && git push`);
