@@ -3,6 +3,9 @@ company-profile.yaml
 company-profile.local.yaml
 marketing-sources.yaml
 *.local.yaml
+# 클라 데이터 SSoT export (BRAND_LOCKS 절대금지: 추적 전환 = PUBLIC 노출). 상류=melanoir-recruitment/외주전달_블로그_AC/07
+facts.json
+product-claims.json
 .env
 .env.*
 !.env.example
