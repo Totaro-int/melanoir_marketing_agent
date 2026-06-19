@@ -20,6 +20,7 @@
     "approve": "node harness/bin/approve.mjs",
     "reject": "node harness/bin/reject.mjs",
     "browser-publish": "node harness/bin/browser-publish.mjs",
+    "deck": "node harness/bin/copy-deck.mjs",
     "cookies": "node harness/bin/cookie-store.mjs",
     "status": "node harness/bin/board.mjs",
     "status:watch": "node harness/bin/board.mjs --watch",
