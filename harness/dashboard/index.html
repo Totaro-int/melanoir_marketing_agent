@@ -1073,6 +1073,7 @@
     <button onclick="openNewCampaign()" style="width:100%; margin-bottom:14px; padding:12px 14px; background:var(--accent); border:0; color:#0a0a0c; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer;">+ 새 캠페인</button>
     <div class="nav-item active" data-tab="calendar">🗓 캘린더</div>
     <div class="nav-item" data-tab="today">📅 오늘 요약</div>
+    <div class="nav-item" data-tab="deck">📝 복붙 덱</div>
     <div class="nav-item" data-tab="campaigns">📋 캠페인</div>
     <div class="nav-item" data-tab="sources">📚 자료 라이브러리</div>
     <div class="nav-item" data-tab="history">📤 발행 히스토리</div>
@@ -1214,6 +1215,7 @@ function setTab(tab) {
   const titles = {
     calendar: ['캘린더', '날짜를 클릭해서 그날의 캠페인을 확인하세요'],
     today: ['오늘 요약', '오늘 진행 중인 캠페인 빠른 보기'],
+    deck: ['복붙 덱', '채널별 완성 카피 — 복사해서 직접 붙여넣기 (자동발행 X · 봇 의심 0)'],
     campaigns: ['캠페인', '전체 캠페인 + 채널별 상태'],
     history: ['발행 히스토리', '채널별 발행 결과 + URL'],
     channels: ['채널 연결', '클릭하면 Chrome 에서 로그인 페이지 열림 — 쿠키 영구 보존'],
@@ -1287,6 +1289,69 @@ function renderToday() {
   }
   html += '</div>';
   return html;
+}
+
+// ── 복붙 덱 (수동 발행 보조 — 자동화 X, 봇 의심 0) ──────────────────
+function renderDeck() {
+  return '<div id="deck-root"><div class="empty">⏳ 카피 불러오는 중…</div></div>';
+}
+const DECK_PLAT = {
+  instagram:    ['Instagram', 'https://www.instagram.com', '새 게시물 → 이미지 첨부 → 캡션 붙여넣기'],
+  threads:      ['Threads', 'https://www.threads.net', '새 스레드 → 붙여넣기 → 이미지 첨부'],
+  linkedin:     ['LinkedIn', 'https://www.linkedin.com/feed/', '게시물 작성 → 붙여넣기 → 이미지 첨부'],
+  'naver-blog': ['네이버 블로그', 'https://blog.naver.com', '글쓰기 → 본문 붙여넣기 → 이미지 섹션 순서대로'],
+  tistory:      ['티스토리', 'https://www.tistory.com/manage', '글쓰기 → 붙여넣기'],
+  brunch:       ['브런치', 'https://brunch.co.kr', '글쓰기 → 붙여넣기'],
+};
+async function loadDeckOnce() {
+  const root = document.getElementById('deck-root');
+  if (!root) return;
+  let items = (cache.today && cache.today.items) || [];
+  if (!items.length) {
+    try { const all = await fetch('/api/campaigns').then((r) => r.json()); items = (all.campaigns || []).slice(0, 5); } catch (e) {}
+  }
+  if (!items.length) { root.innerHTML = '<div class="empty"><div class="empty-emoji">📭</div>발행할 캠페인이 없어요<br><span style="color:var(--text-mute);font-size:12px;">/sns-start 로 캠페인을 먼저 만드세요</span></div>'; return; }
+  const BLOG = ['naver-blog', 'tistory', 'brunch'];
+  let html = '<p style="color:var(--text-mute);font-size:13px;margin:0 0 14px;">⚠ 자동 발행 아님 — 채널별 [복사] → 플랫폼 열기 → 붙여넣기 → 직접 게시. (봇 의심 0)</p>';
+  let any = false;
+  for (const c of items) {
+    const chans = Object.keys(c.channelData || {}).filter((ch) => DECK_PLAT[ch]).sort((a, b) => (BLOG.includes(b) - BLOG.includes(a)) || a.localeCompare(b));
+    for (const ch of chans) {
+      let d; try { d = await fetch('/api/draft?slug=' + encodeURIComponent(c.slug) + '&channel=' + encodeURIComponent(ch)).then((r) => r.json()); } catch (e) { continue; }
+      if (!d || !d.text) continue;
+      any = true;
+      html += deckCard(c, ch, d);
+    }
+  }
+  root.innerHTML = any ? html : '<div class="empty">완성된 draft 가 없어요 — 캠페인 생성/검수 후 다시 보세요.</div>';
+}
+function deckCard(c, ch, d) {
+  const meta = DECK_PLAT[ch];
+  const blog = ['naver-blog', 'tistory', 'brunch'].includes(ch);
+  const body = (d.title ? d.title + '\n\n' : '') + (d.text || '');
+  let imgs = '';
+  for (let i = 0; i < (d.images || []).length; i++) {
+    const im = d.images[i];
+    imgs += '<a href="' + im.url + '" target="_blank" download title="이미지 저장" style="display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;color:var(--text-mute);font-size:11px;"><img src="' + im.url + '" loading="lazy" style="width:76px;height:95px;object-fit:cover;border-radius:8px;border:1px solid var(--border);"/>' + (blog ? '섹션 ' + (i + 1) : '이미지 ' + (i + 1)) + '</a>';
+  }
+  return '<div class="card" style="margin-bottom:14px;">' +
+    '<div class="card-row" style="align-items:center;margin-bottom:4px;">' +
+      '<div class="card-title">' + escapeHtml(meta[0]) + ' <span style="font-size:12px;color:var(--text-mute);font-weight:400;">' + (blog ? '블로그(본문)' : '소셜') + ' · ' + escapeHtml(c.topic || c.slug) + '</span></div>' +
+      '<a href="' + meta[1] + '" target="_blank" class="pill" style="border-color:var(--accent);color:var(--accent);">플랫폼 열기 ↗</a>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--text-mute);margin-bottom:8px;">' + escapeHtml(meta[2]) + '</div>' +
+    '<textarea readonly style="width:100%;min-height:' + (blog ? 150 : 96) + 'px;background:var(--panel-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px;font-size:13px;line-height:1.6;resize:vertical;font-family:inherit;">' + escapeHtml(body) + '</textarea>' +
+    '<div style="display:flex;align-items:center;gap:10px;margin-top:9px;">' +
+      '<button onclick="deckCopy(this)" style="background:var(--accent);color:#0a0a0c;border:0;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;">📋 본문 복사</button>' +
+      '<span style="font-size:12px;color:var(--text-mute);">' + body.length + '자</span>' +
+    '</div>' +
+    (imgs ? '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">' + imgs + '</div>' : '<div style="font-size:12px;color:var(--text-mute);margin-top:10px;">첨부 이미지 없음</div>') +
+    '</div>';
+}
+function deckCopy(btn) {
+  const ta = btn.closest('.card').querySelector('textarea');
+  try { navigator.clipboard.writeText(ta.value); } catch (e) { ta.select(); document.execCommand('copy'); }
+  const o = btn.textContent; btn.textContent = '✓ 복사됨'; setTimeout(() => { btn.textContent = o; }, 1400);
 }
 
 function renderOnboardingStatus() {
@@ -1947,6 +2012,7 @@ function renderCompany() {
 function renderTab(tab) {
   const map = {
     today: renderToday,
+    deck: renderDeck,
     calendar: renderCalendar,
     campaigns: renderCampaigns,
     history: renderHistory,
@@ -1958,6 +2024,7 @@ function renderTab(tab) {
   document.getElementById('content').innerHTML = (map[tab] || (() => '?'))();
   if (tab === 'env') loadEnvOnce();
   if (tab === 'sources') loadSourcesOnce();
+  if (tab === 'deck') loadDeckOnce();
 }
 
 // ─── 자료 라이브러리 탭 ────────────────────────────────────────
