@@ -21,6 +21,7 @@
     "reject": "node harness/bin/reject.mjs",
     "browser-publish": "node harness/bin/browser-publish.mjs",
     "deck": "node harness/bin/copy-deck.mjs",
+    "studio": "node harness/bin/card-studio.mjs",
     "cookies": "node harness/bin/cookie-store.mjs",
     "status": "node harness/bin/board.mjs",
     "status:watch": "node harness/bin/board.mjs --watch",
