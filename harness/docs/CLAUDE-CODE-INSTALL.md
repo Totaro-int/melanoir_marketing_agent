@@ -84,16 +84,20 @@ claude                                        # 레포 폴더에서 진입
 
 ---
 
-## PHASE 2 — 환경 진단
+## PHASE 2 — 환경 진단 (= 설치 확인)
+
+설치가 제대로 됐는지 **두 명령으로 확인**한다:
 
 ```bash
-node harness/bin/doctor.mjs
+node harness/bin/doctor.mjs       # 런타임·키·Playwright·채널 진단
+node harness/bin/self-check.mjs   # 보안·git위생·런타임 (자동수정: self-check.mjs --fix)
 ```
 
 **✅ 검증 게이트**: 아래가 전부 green 이어야 다음으로.
-- `runtime` (Node/package.json/node_modules)
+- `runtime` (Node/package.json/node_modules) · `실행환경(발행)` ok
 - `env` (`.env.local`, `CONTENT_ENGINE_PROVIDER=inhouse-slides`)
 - `content-engine` → `playwright` green (없으면 `npx playwright install chromium`)
+- self-check: `모두 정상` (🚨 치명 0). 치명이면 `node harness/bin/self-check.mjs --fix`
 
 > 이 시점에 `publisher`/`channels`/`cookie-auth` 경고는 **정상**이다 (아직 로그인 전).
 > 빨간 `✗` 가 runtime/env/content-engine 에 있으면 멈추고 detail 대로 처리.
@@ -309,6 +313,12 @@ npm run morning
 > "매일 아침 컴퓨터 켜면 자동으로 발행 직전까지 준비됩니다.
 > 알림 뜨면 Chrome 탭 확인 → 검토 후 [공유] 클릭.
 > Naver 는 로그인 만료 시 알림이 뜨니 그때만 다시 로그인하시면 됩니다."
+
+## 추가 도구 (대시보드 탭 — start-demo 하면 자동 기동)
+
+발행 자동화 외에, 대시보드(http://localhost:7777) 사이드바에 두 도구가 있다:
+- **📝 복붙 덱** — 채널별 완성 카피를 [복사] → 플랫폼에 직접 붙여넣기. 브라우저 자동발행이 봇으로 의심될 때 쓰는 수동 발행. (단독: `npm run deck`)
+- **📸 카드 스튜디오** — 배경 사진 업로드 + 그 위에 정보성 텍스트 → 인스타 카드레터 PNG. 라이브 미리보기 + 다운로드. (단독: `npm run studio` · 자세히 `harness/docs/COPY-DECK.md`·`INSIGHT-CARDS.md`)
 
 ## 막히면
 
