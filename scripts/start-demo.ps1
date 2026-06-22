@@ -90,6 +90,22 @@ if ($dashAlive) {
   else { Write-Host "  [WARN] Dashboard not up in 12s - manual: node harness/bin/dashboard.mjs" -ForegroundColor Yellow }
 }
 
+# 2.5 Card Studio (7799) - dashboard '카드 스튜디오' tab embeds it
+$studioAlive = $false
+try { $r = Invoke-WebRequest -Uri "http://localhost:7799/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction SilentlyContinue; if ($r.StatusCode -eq 200) { $studioAlive = $true } } catch {}
+if ($studioAlive) {
+  Write-Host "  [OK] Card Studio already running" -ForegroundColor Green
+} else {
+  $psi2 = New-Object System.Diagnostics.ProcessStartInfo
+  $psi2.FileName = "node"
+  $psi2.Arguments = "harness\bin\card-studio.mjs"
+  $psi2.WorkingDirectory = $ROOT
+  $psi2.WindowStyle = "Minimized"
+  $psi2.UseShellExecute = $true
+  [System.Diagnostics.Process]::Start($psi2) | Out-Null
+  Write-Host "  [OK] Card Studio (http://localhost:7799)" -ForegroundColor Green
+}
+
 # 3. Open dashboard tab
 Push-Location -LiteralPath $ROOT
 & node "scripts\_open-dashboard-tab.mjs" 2>&1 | Out-Null

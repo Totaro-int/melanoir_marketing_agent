@@ -1074,6 +1074,7 @@
     <div class="nav-item active" data-tab="calendar">🗓 캘린더</div>
     <div class="nav-item" data-tab="today">📅 오늘 요약</div>
     <div class="nav-item" data-tab="deck">📝 복붙 덱</div>
+    <div class="nav-item" data-tab="studio">📸 카드 스튜디오</div>
     <div class="nav-item" data-tab="campaigns">📋 캠페인</div>
     <div class="nav-item" data-tab="sources">📚 자료 라이브러리</div>
     <div class="nav-item" data-tab="history">📤 발행 히스토리</div>
@@ -1216,6 +1217,7 @@ function setTab(tab) {
     calendar: ['캘린더', '날짜를 클릭해서 그날의 캠페인을 확인하세요'],
     today: ['오늘 요약', '오늘 진행 중인 캠페인 빠른 보기'],
     deck: ['복붙 덱', '채널별 완성 카피 — 복사해서 직접 붙여넣기 (자동발행 X · 봇 의심 0)'],
+    studio: ['카드 스튜디오', '배경 사진 + 정보성 텍스트 → 인스타 카드레터 (이미지 위 글)'],
     campaigns: ['캠페인', '전체 캠페인 + 채널별 상태'],
     history: ['발행 히스토리', '채널별 발행 결과 + URL'],
     channels: ['채널 연결', '클릭하면 Chrome 에서 로그인 페이지 열림 — 쿠키 영구 보존'],
@@ -1294,6 +1296,15 @@ function renderToday() {
 // ── 복붙 덱 (수동 발행 보조 — 자동화 X, 봇 의심 0) ──────────────────
 function renderDeck() {
   return '<div id="deck-root"><div class="empty">⏳ 카피 불러오는 중…</div></div>';
+}
+
+// ── 카드 스튜디오 (배경 업로드 + 텍스트 오버레이 → 인스타 카드레터) — 단독 서버 7799 임베드 ──
+function renderStudio() {
+  return '<div style="margin-bottom:12px;color:var(--text-mute);font-size:13px;line-height:1.7;">'
+    + '배경 사진 + 정보성 텍스트 → 인스타 카드레터(이미지 위 글). 아래에 안 뜨면 터미널에서 '
+    + '<code style="color:var(--text);background:var(--panel-2);padding:2px 6px;border-radius:5px;">npm run studio</code> 실행 (start-demo 에 포함됨). '
+    + '<a href="http://localhost:7799/" target="_blank" style="color:var(--accent);">새 탭으로 열기 ↗</a></div>'
+    + '<iframe src="http://localhost:7799/" style="width:100%;height:780px;border:1px solid var(--border);border-radius:12px;background:#fff;"></iframe>';
 }
 const DECK_PLAT = {
   instagram:    ['Instagram', 'https://www.instagram.com', '새 게시물 → 이미지 첨부 → 캡션 붙여넣기'],
@@ -2013,6 +2024,7 @@ function renderTab(tab) {
   const map = {
     today: renderToday,
     deck: renderDeck,
+    studio: renderStudio,
     calendar: renderCalendar,
     campaigns: renderCampaigns,
     history: renderHistory,

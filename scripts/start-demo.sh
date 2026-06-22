@@ -88,6 +88,16 @@ else
   else echo "  [WARN] Dashboard 12초 안에 안 뜸 — 수동: node harness/bin/dashboard.mjs"; fi
 fi
 
+# 2.5 카드 스튜디오 (7799) — 대시보드 '📸 카드 스튜디오' 탭이 임베드
+if curl -s -o /dev/null -w "%{http_code}" http://localhost:7799/health 2>/dev/null | grep -q "^200$"; then
+  echo "  [OK] 카드 스튜디오 already running"
+else
+  cd "$ROOT"
+  nohup node harness/bin/card-studio.mjs >/dev/null 2>&1 &
+  disown $!
+  echo "  [OK] 카드 스튜디오 (http://localhost:7799)"
+fi
+
 # 3. Open dashboard tab (macOS: open / Linux: xdg-open)
 if command -v open >/dev/null 2>&1; then
   open "http://localhost:7777/" 2>/dev/null && echo "  [OK] Dashboard tab activated (open)"
