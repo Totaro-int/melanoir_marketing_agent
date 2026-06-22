@@ -7,8 +7,9 @@ import { provider as openai }        from './providers/openai-images.mjs';
 import { provider as fal }           from './providers/fal.mjs';
 import { provider as anthropic }     from './providers/anthropic.mjs';
 import { provider as inhouseSlides } from './providers/inhouse-slides.mjs';
+import { provider as mock }          from './providers/mock.mjs';
 
-const ALL = { openai, fal, anthropic, 'inhouse-slides': inhouseSlides };
+const ALL = { openai, fal, anthropic, 'inhouse-slides': inhouseSlides, mock };
 
 export function getActiveProviderId() {
   return process.env.CONTENT_ENGINE_PROVIDER || 'inhouse-slides';
